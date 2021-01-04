@@ -2,10 +2,10 @@ image: atlassian/default-image:2
 
 pipelines:
     branches:
-      coral_public:
+      master:
         - step:
            script:
              - git remote add sync git@github.com:BenMql/coral.git
-             - git checkout coral_public
+             - git checkout master
              - git pull
              - git push sync 
