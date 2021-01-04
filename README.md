@@ -1,29 +1,10 @@
-# README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+# Coral v1.0 #
 
-### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+Coral is a spectral PDEs solver for the plane-layer geometry, written in modern Fortran and highly scalable. 
+The name comes from the initial motivation, which was __Co__nvection in __Ra__pidly rotating __L__ayers (eventhough the code has now a much more general scope).
 
-### How do I get set up? ###
+The current version is v1.0.1.
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+For tutorials, see the wiki.
