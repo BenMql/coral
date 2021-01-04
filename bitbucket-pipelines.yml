@@ -1,7 +1,11 @@
-clone:
-  depth: full
+image: atlassian/default-image:2
+
 pipelines:
-  default:
-    - step:
-        script:
-          - git push --mirror git@github.com:BenMql/coral.git
+    branches:
+      coral_public:
+        - step:
+           script:
+             - git remote add sync git@github.com:BenMql/coral.git
+             - git checkout coral_public
+             - git pull
+             - git push sync 
