@@ -1,0 +1,12 @@
+>>Volume :: uu ;; Period= 100 <<
+>>Volume :: uv ;; Period= 100 <<
+>>Volume :: tw ;; Period= 100 <<
+>>Volume :: ww ;; Period= 100 <<
+>>Volume :: uFull ;; Period= 100 <<
+>>Volume :: tFull ;; Period= 100 <<
+>>ZSlice :: uFull ;; Period= 100 ;; Position= 32 <<
+>>XSlice :: tFull ;; Period= 100 ;; Position= 10 <<
+>>YSlice :: tFull ;; Period= 100 ;; Position= 12 <<
+>>ZSlice :: tFull ;; Period= 100 ;; Position= 14 <<
+>>Profile:: tFull ;; Period= 50 <<
+>>EOF<<

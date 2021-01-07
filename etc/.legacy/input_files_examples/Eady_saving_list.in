@@ -1,0 +1,60 @@
+11 ! DO NOT FORGET TO UPDATE THAT NUMBER  
+1  ! u Volume ==================== 01 
+0
+0
+0
+10000
+2  ! v Volume ==================== 02 
+0
+0
+0
+10000
+3  ! w Volume ==================== 03 
+0
+0
+0
+10000
+4  ! w Volume ==================== 04 
+0
+0
+0
+10000
+43 ! vertical vorticity ========== 05 
+0
+0
+1
+1000
+4  ! temperature ================= 06
+0
+0
+1
+1000
+43 ! vertical vorticity ========== 07 
+1
+0
+0
+1000
+4  ! temperature ================= 08
+1
+0
+0
+1000
+3  ! vertical velocity =========== 09
+1
+0
+0
+1000
+43 ! vertical vorticity ========== 10 
+0
+1
+0
+1000
+4  ! temperature ================= 11
+0
+1
+0
+1000
+3  ! vertical velocity =========== 12
+1
+0
+1000

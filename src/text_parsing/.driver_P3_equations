@@ -1,0 +1,62 @@
+Program f_call_c
+   use cwraps
+   use P3_equations
+   Implicit None
+   Integer :: num
+   Integer :: ierr
+   integer, allocatable, dimension(:), target :: length
+   character(len=:), allocatable , target :: arr_of_lines(:)
+   integer :: iline, icar
+   integer :: compteur
+
+   Type(all_recipes) :: master_recipe
+   Type(list_of_parameters), allocatable, dimension(:) :: params         
+
+   
+
+   ierr = parse_text(num, 1, C_loc(length), C_loc(arr_of_lines))   
+   Allocate(length(1:num))
+   Allocate(character(1024) :: arr_of_lines(num))
+   Do iline = 1,num
+   Do icar = 1,1024
+        arr_of_lines(iline)(icar:icar) = '$'
+   end Do
+   end Do
+   
+
+   ierr = parse_text(num, 2, C_Loc(Length), C_loc(arr_of_lines))   
+
+   write(*,*) '====================================================='
+
+   Call Initialize_list_of_parameters(arr_of_lines, master_recipe%params)
+
+   Call master_recipe%Initialize(arr_of_lines)
+
+   Write(*,*) "============================"
+   Write(*,*) "============================"
+   Write(*,*) "============================"
+   Write(*,*) "============================"
+   Write(*,*) "============================"
+   compteur = 0
+   !do compteur = 1,size(masterreci, 1)          
+   !print *, "===================================="
+   !Write(*,*) 'Equation:',reci(compteur)%iEqn                        
+   !Write(*,*) 'Variable:',reci(compteur)%ivar                        
+   !Write(*,*) 'kx_expnt:',reci(compteur)%kx_exponent                 
+   !Write(*,*) 'ky_expnt:',reci(compteur)%ky_exponent                 
+   !Write(*,*) 'kz_expnt:',reci(compteur)%kz_exponent                 
+   !Write(*,*) 'Num.Fctr:',reci(compteur)%zsca                        
+   !end do
+   !Write(*,*) reci%next%iEqn                        
+   !Write(*,*) reci%next%next%iEqn                        
+   !Write(*,*) reci%next%next%next%next%next%next%iEqn                        
+   !Write(*,*) reci%iEqn                        
+   !Write(*,*) reci%iEqn                        
+   !Write(*,*) reci%iEqn                        
+   !Write(*,*) reci%iEqn                        
+   !Write(*,*) reci%iEqn                        
+   !Write(*,*) reci%iEqn                        
+   !Write(*,*) reci%iEqn                        
+   !Write(*,*) reci%iEqn                        
+End Program f_call_c
+

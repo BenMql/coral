@@ -1,0 +1,39 @@
+0          ! ........... RESOLUTION ............ !
+512        ! 01 ! (INT) ... along X         ! 01 !
+512        ! 02 ! (INT) ... along Z         ! 02 !
+0          ! ............ GEOMETRY ............. !
+1.0d0      ! 04 ! (DBL) x/z aspect ratio    ! 04 !
+1.0d0      ! 05 ! (DBL) gap (should=1.0_dp) ! 05 !
+0.5d0      ! 06 ! (DBL) center              ! 06 !                        
+0          ! ........ DIM.LESS NUMBERS ......... !
+1.d0       ! 08 ! (DBL) Prandtl             ! 08 !
+1.d10      ! 09 ! (DBL) Rayleigh            ! 09 !
+0.1d0      ! 10 ! (DBL) H over ell          ! 10 ! 
+0          ! ....... Boundary Condition ........ !
+.false.    ! 12 ! set fixed temperature(top)! 12 !
+.false.    ! 13 ! set fixed temperature(bot)! 13 !
+.false.    ! 14 ! set no-slip velocity (top)! 14 !
+.false.    ! 15 ! set no-slip velocity (bot)! 15 !
+0          ! .......... DNS OPTIONS ............ !
+.true.     ! 17 ! (BOO) Radiative Heating   ! 17 !
+0          ! .......... TIMESTEPPING ........... !
+0.00001d0  ! 19 ! (DBL) maximum timestep    ! 19 !
+0.3d0      ! 20 ! (DBL) timestep tolerance  ! 20 !
+.true.     ! 21 ! (BOO) CFL On/Off          ! 21 !
+0.6d0      ! 22 ! (DBL) CFL Factor          ! 22 !
+'ARS_443'  ! 23 ! (CHAR(len=7)) tstep scheme! 23 !
+0          ! ......... SAVE & RESTART .......... !
+.false.    ! 25 ! (BOO) quicksave restart   ! 28 !
+.false.    ! 26 ! (BOO) add 01 10 11 noise  ! 29 !
+0.15d0     ! 27 ! (DBL) noise relative amp. ! 30 !
+.false.    ! 28 ! (BOO) expand x?           ! 31 !
+1          ! 29 ! (INT) expand x factor     ! 32 !
+0          ! ... INITIAL TEMPERATURE PROFILE ... !
+.false.    ! 31 ! (Boo) prescribe background T?  !
+0          ! ........... TIME LIMIT ............ !
+160000.d0  ! 33 ! (DBL) Time limit (in sec.)! 36 ! 
+0          ! ........... TIME LIMIT ............ !
+1000       ! 35 ! (INT) profiles out. freq. ! 35 !
+1000       ! 36 ! (INT) slices   out. freq. ! 36 !
+./
+

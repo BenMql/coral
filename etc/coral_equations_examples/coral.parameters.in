@@ -1,0 +1,19 @@
+0           ! ........... RESOLUTION ............ !
+100         ! 01 ! (INT) ... along X         ! 01 !
+128         ! 02 ! (INT) ... along Y         ! 02 !
+96          ! 03 ! (INT) ... along Z         ! 03 !
+0           ! ............ GEOMETRY ............. !
+1.0d0      ! 05 ! (DBL) x/z aspect ratio    ! 05 !
+1.0d0      ! 06 ! (DBL) y/z aspect ratio    ! 06 !
+1.d0        ! 07 ! (DBL) gap (should=1.0_dp) ! 07 !
+0.5d0       ! 08 ! (DBL) center              ! 08 !
+0           ! .......... TIMESTEPPING ........... !
+0.001d0    ! 10 ! (DBL) maximum timestep    ! 10 !
+0.3d0       ! 11 ! (DBL) timestep tolerance  ! 11 !
+0.2d0       ! 12 ! (DBL) CFL Factor          ! 12 !
+'ARS_222'   ! 13 ! scheme                    ! 13 !
+0           ! ......... QUICKSAVE RESTART ....... !
+.False.     ! 15 ! (BOO) quicksave restart   ! 15 !
+0           ! ............ TIMER ................ !
+7200.d0   ! 17 ! (DBL) Time limit (in sec.)! 17 !
+

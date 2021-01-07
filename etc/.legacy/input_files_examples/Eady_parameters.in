@@ -1,0 +1,31 @@
+0         ! ........... RESOLUTION ............ !
+512       ! 01 ! (INT) ... along X              !
+512       ! 02 ! (INT) ... along Y              !
+24        ! 03 ! (INT) ... along Z              !
+0         ! ............ GEOMETRY ............. !
+100.d0     ! 05 ! (DBL) Lx (adim: alpha_0*Lx/lambda_0)  
+100.d0     ! 06 ! (DBL) Ly (adim: alpha_0*Ly/lambda_0)
+1.0d0     ! 07 ! (DBL) layer gap  (adim:1)   
+0.5d0     ! 08 ! (DBL) layer center (adim:0.5)  
+0         ! ........ DIM.LESS NUMBERS ......... !
+0.008d0    ! 10 ! (DBL) viscosity nu (adim: tilde{nu}_perp*Ro_0*alpha_0) 
+0.001d0    ! 11 ! (DBL) viscosity nu (along z) (adim: tilde{nu}_z*Ro_0/alpha_0)
+0.008d0    ! 12 ! (DBL) diffusivity nu_b (adim: tilde{nu}_{b;perp}*Ro_0*alpha_0) 
+0.001d0    ! 13 ! (DBL) diffusivity nu_b (along z ) (adim: tilde{nu}_{b;z}*Ro_0/alpha_0)
+0.01d0     ! 14 ! (DBL) Shear (adim:Ro_0)  
+1.0d0     ! 15 ! (DBL) buoyancy alpha.g (adim:1)
+600.d0    ! 16 ! (DBL) linear stratification N2            
+25.0d0    ! 17 ! (DBL) Coriolis f-param (adim:1/alpha_0) 
+2.d0      ! 18 ! (DBL) bottom friction (adim:kappa_O*Ro_0/alpha_0)
+1         ! 19 ! (INT) horiz. hypervisc. (lap = 1)  
+0         ! .......... TIMESTEPPING ........... !
+0.3d0     ! 21 ! (DBL) maximum timestep         !
+0.3d0     ! 22 ! (DBL) timestep tolerance       !
+.True.    ! 23 ! (BOO) CFL On/Off               !
+0.5d0     ! 24 ! (DBL) CFL Factor               !
+'ARS_443' ! 25 ! scheme                         ! 
+0         ! ......... QUICKSAVE RESTART ....... !
+.True.   ! 27 ! (BOO) quicksave restart        !
+0.0001d0   ! 28 ! (DBL) initial noise amplitude 
+0         ! ............ TIMER ................ !
+84500.d0  ! 30 ! (DBL) Time limit (in sec.)     !

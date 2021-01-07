@@ -1,0 +1,27 @@
+0         ! ........... RESOLUTION ............ !
+128       ! 01 ! (INT) ... along X         ! 01 !
+128       ! 02 ! (INT) ... along Z         ! 02 !
+0         ! ............ GEOMETRY ............. !
+1.d0      ! 04 ! (DBL) x/lambda_wave ratio ! 04 !
+6.d0      ! 05 ! (DBL) depth/lambda        ! 05 !
+0         ! ........ DIM.LESS NUMBERS ......... !
+0.5d0     ! 08 ! (DBL) Rossby              ! 08 !
+2.0d0     ! 09 ! (DBL) Ekman               ! 09 !
+0.d0      ! 10 ! (DBL) wind stress         ! 10 !
+0         ! .......... TIMESTEPPING ........... !
+0.5d0     ! 19 ! (DBL) maximum timestep    ! 19 !
+0.3d0     ! 20 ! (DBL) timestep tolerance  ! 20 !
+.True.    ! 21 ! (BOO) CFL On/Off          ! 21 !
+0.5d0     ! 22 ! (DBL) CFL Factor          ! 22 !
+ARS_443   ! 23 ! scheme                    ! 23 ! 
+0         ! ......... QUICKSAVE RESTART ....... !
+.False.   ! 25 ! (BOO) quicksave restart   ! 25 !
+.False.   ! 26 ! (BOO) add noise (01,10,11)! 26 !
+0.d0      ! 27 ! (DBL) Noise relative amp. ! 27 !
+.False.   ! 28 ! (BOO) shrink x?           ! 28 !
+1         ! 29 ! (Int) shrink x factor     ! 29 !
+0         ! ............ TIMER ................ !
+80000.d0  ! 33 ! (DBL) Time limit (in sec.)! 33 !
+0         ! ..........  OUTPUT  ............... !
+500       ! 35 ! (INT) output profiles freq! 35 !
+500       ! 36 ! (INT) output slices freq. ! 36 !

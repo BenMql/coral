@@ -1,0 +1,63 @@
+0          ! ........... RESOLUTION ............ !
+64         ! 01 ! (INT) ... along X         ! 01 !
+64         ! 02 ! (INT) ... along Y         ! 02 !
+48         ! 03 ! (INT) ... along Z         ! 03 !
+0          ! ............ GEOMETRY ............. !
+3.0d0      ! 05 ! (DBL) x/z aspect ratio    ! 05 !
+3.0d0      ! 06 ! (DBL) y/z aspect ratio    ! 06 !
+1.0d0      ! 07 ! (DBL) gap (should=1.0_dp) ! 07 !
+0.5d0      ! 08 ! (DBL) center              ! 08 !                        
+90.0d0     ! 09 ! (DBL) Latitude in degree  ! 09 ! pole = 90.d0; equator=0.d0                        
+.True.     ! 10 ! (BOO) Upright case?       ! 10 ! forces latitude=90.d0
+0          ! ........ DIM.LESS NUMBERS ......... !
+3.d0       ! 12 ! (DBL) Prandtl             ! 12 !
+1.d3       ! 13 ! (DBL) 1/Ek                ! 13 !
+2.d5       ! 14 ! (DBL) Rayleigh            ! 14 !
+0.d0       ! 15 ! (DBL) heat flux along y   ! 15 ! INACTIVE
+0.d0       ! 16 ! (DBL) H_over_ell          ! 16 ! 
+0          ! ....... Boundary Condition ........ !
+.True.     ! 18 ! set fixed temperature(top)! 18 !
+.True.     ! 18 ! set fixed temperature(bot)! 18 !
+.True.     ! 19 ! set no-slip velocity (top)! 19 !
+.True.     ! 19 ! set no-slip velocity (bot)! 19 !
+0          ! .......... DNS OPTIONS ............ !
+.false.    ! 21 ! (BOO) rescaled version    ! 21 !
+.false.    ! 22 ! (BOO) impose nusselt_y    ! 22 ! INACTIVE
+.True.     ! 23 ! (BOO) Nonlinearity On/Off ! 23 !
+.False.    ! 25 ! (BOO) Radiative Heating   ! 24 !
+0          ! .......... TIMESTEPPING ........... !
+0.001d0    ! 26 ! (DBL) maximum timestep    ! 26 !
+0.3d0      ! 27 ! (DBL) timestep tolerance  ! 27 !
+.true.     ! 28 ! (BOO) CFL On/Off          ! 28 !
+0.3d0      ! 29 ! (DBL) CFL Factor          ! 29 !
+'ARS_222'  ! 30 ! (CHAR(len=7)) tstep scheme! 30 !
+0          ! ---------  FFT LIBS  -------------- !
+1          ! 32 ! (INT) FFTW=1, p3dfft = 2  ! 32 ! IGNORE THAT
+0          ! 33 ! (INT) p3dfft: nprow       ! 33 ! IGNORE THAT
+0          ! 34 ! (INT) p3dfft: npcol       ! 34 ! IGNORE THAT
+0          ! ......... OUTPUTS ................. !
+.True.     ! 36 ! (BOO)  output directory   ! 36 !
+'IGNORED'  ! 37 ! (CHAR) output directory   ! 37 !
+0          ! ....... SINGLE MODE RESTART ....... !
+.False.    ! 41 ! (BOO) single mode start   ! 41 ! .False. unless good reason
+0.40323d0  ! 42 ! (DBL) kx_target           ! 42 ! IGNORE THAT
+1.24093d0  ! 43 ! (DBL) ky_target           ! 43 ! IGNORE THAT
+0          ! ......... SAVE & RESTART .......... !
+.False.    ! 45 ! (BOO) quicksave restart   ! 45 !
+.False.    ! 46 ! (BOO) add 01 10 11 noise  ! 46 !
+0.15d0     ! 47 ! (DBL) noise relative amp. ! 47 !
+1.00d0     ! 48 ! (DBL) Rescale mean temp   ! 48 ! IGNORE THAT
+.False.    ! 49 ! (BOO) shrink x?           ! 49 ! IGNORE THAT
+1          ! 50 ! (INT) shrink x factor     ! 50 ! IGNORE THAT
+.False.    ! 51 ! (BOO) shrink y?           ! 51 ! IGNORE THAT
+1          ! 52 ! (INT) shrink y factor     ! 52 ! IGNORE THAT
+.False.    ! 53 ! (BOO) expand x?           ! 53 ! IGNORE THAT
+1          ! 54 ! (INT) expand x factor     ! 54 ! IGNORE THAT
+.False.    ! 55 ! (BOO) expand y?           ! 55 ! IGNORE THAT
+1          ! 56 ! (INT) expand y factor     ! 56 ! IGNORE THAT
+0          ! ... INITIAL TEMPERATURE PROFILE ... !
+.false.    ! 58 ! (Boo) prescribe background T? ! 58 ! IGNORE THAT
+0          ! ........... TIME LIMIT ............ !
+160000.d0  ! 60 ! (DBL) Time limit (in sec.)! 60 ! 
+./
+

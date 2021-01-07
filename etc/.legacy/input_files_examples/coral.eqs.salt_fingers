@@ -1,0 +1,39 @@
+>>VarLin :: u <<
+>>VarLin :: v <<
+>>VarLin :: w <<
+>>VarLin :: p << 
+>>VarLin :: theta <<
+>>VarLin :: salt  <<
+>>VarQuad :: uu := u.u <<
+>>VarQuad :: uv := u.v <<
+>>VarQuad :: uw := u.w <<
+>>VarQuad :: vv := v.v <<
+>>VarQuad :: vw := v.w <<
+>>VarQuad :: ww := w.w <<
+>>VarQuad :: ut := u.theta <<
+>>VarQuad :: vt := v.theta <<
+>>VarQuad :: wt := w.theta <<
+>>VarQuad :: us := u.salt <<
+>>VarQuad :: vs := v.salt <<
+>>VarQuad :: ws := w.salt <<
+>>Param :: Prandtl := 1.00d0 << 
+>>Param :: tau := 0.1d0 <<
+>>Param :: iRo := 0.11d0 <<
+>>Eqn_d/dt :: + u <<
+>>Eqn_lin  :: + Prandtl.dx.dx.u + Prandtl.dy.dy.u + Prandtl.dz.dz.u - dx.p <<
+>>Eqn_NL   :: - dx.uu - dy.uv - dz.uw <<
+>>Eqn_d/dt :: + v <<
+>>Eqn_lin  :: + Prandtl.dx.dx.v + Prandtl.dy.dy.v + Prandtl.dz.dz.v - dy.p <<
+>>Eqn_NL   :: - dx.uv - dy.vv - dz.vw <<
+>>Eqn_d/dt :: + w <<
+>>Eqn_lin  :: + Prandtl.dx.dx.w + Prandtl.dy.dy.w + Prandtl.dz.dz.w - dz.p + Prandtl.theta - Prandtl.salt <<
+>>Eqn_NL   :: - dx.uw - dy.vw - dz.ww <<
+>>Eqn_d/dt :: null
+>>Eqn_lin  :: + dx.u + dy.v + dz.w <<
+>>Eqn_NL   :: null 
+>>Eqn_d/dt :: + theta <<
+>>Eqn_lin  :: + dx.dx.theta + dy.dy.theta + dz.dz.theta - w <<
+>>Eqn_NL   :: - dx.ut - dy.vt - dz.wt <<
+>>Eqn_d/dt :: + salt <<
+>>Eqn_lin  :: + tau.dx.dx.salt + tau.dy.dy.salt + tau.dz.dz.salt - iRo.w <<
+>>Eqn_NL   :: - dx.us - dy.vs - dz.ws <<
