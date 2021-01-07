@@ -62,17 +62,38 @@ class plane_layer_volume:
        Call to this routine must specify only one x, y, or z location (as suitable for a slice).
        '''
        # check that the call has the proper form:
-       if not(
-              (
-               (x==-100000) and (y==-100000) and (-self.NZ < z < self.NZ) 
-              )
-             ):
-           print ('incorrect input')
-           return 0
-       else: 
-           myFig=plt.figure()
-           plt.pcolormesh(self.xgrid, self.ygrid, self.dat[varInt][:,:,z].T)
-           return myFig
+       if ((x==-100000) and (y==-100000)):
+           if not(-self.NZ < z < self.NZ):
+              print ('incorrect input')
+              return 0
+           else: 
+              myFig=plt.figure()
+              plt.pcolormesh(self.xgrid, self.ygrid, self.dat[varInt][:,:,z].T)
+              plt.title(self.lut[varInt]+', index z='+str(z))
+              return myFig
+       # check that the call has the proper form:
+       elif ((x==-100000) and (z==-100000)):
+           if not(-self.NY < y < self.NY):
+              print ('incorrect input')
+              return 0
+           else: 
+              myFig=plt.figure()
+              plt.pcolormesh(self.xgrid, self.zgrid, self.dat[varInt][:,y,:].T)
+              plt.title(self.lut[varInt]+', index y='+str(y))
+              return myFig
+       elif ((y==-100000) and (z==-100000)):
+           if not(-self.NX < x < self.NX):
+              print ('incorrect input')
+              return 0
+           else: 
+              myFig=plt.figure()
+              plt.pcolormesh(self.ygrid, self.zgrid, self.dat[varInt][x,:,:].T)
+              plt.title(self.lut[varInt]+', index x='+str(x))
+              return myFig
+       else:
+              print ('incorrect input')
+              return 0
+
 
    def spectrum_FFC(self, pos_in_list):
       ''' this *function* returns the power spectum of self.dat[pos_in_list], i.e.
