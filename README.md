@@ -8,15 +8,14 @@ The name comes from the initial motivation, which was Convection in Rapidly rota
 
 The current version is v1.0.1 
 
-## Content
 
-### Tutorials
-+ [Installation](./1_Installation)
-+ [First Run](./2_First_run)
-+ [Restarting a run](./3_Restarting_a_run)
-+ [Data vizualisation](./4_Data_visualisation)
+## Tutorials
++ [Installation](https://github.com/BenMql/coral/wiki/1_Installation)
++ [First Run](https://github.com/BenMql/coral/wiki/2_First_run)
++ [Restarting a run](https://github.com/BenMql/coral/wiki/3_Restarting_a_run)
++ [Data vizualisation](https://github.com/BenMql/coral/wiki/4_Data_visualisation)
 
-### Reference
-+ [Input files](./5_Input_files)
-+ [Common issues](./6_Common_issues)
+## Reference
++ [Input files](https://github.com/BenMql/coral/wiki/5_Input_files)
++ [Common issues](https://github.com/BenMql/coral/wiki/6_Common_issues)
 
