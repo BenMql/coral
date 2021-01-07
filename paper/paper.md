@@ -19,7 +19,7 @@ bibliography: paper.bib
 
 # Summary
 
-`Coral` is a fast, flexible, and efficient time-stepper for solving a large class of partial differential equations, at the core of which are the Navier-Stokes equations that govern fluid motions. Written in Fortran and employing the MPI standard for parallelization, the scalability of `Coral` allows the code to leverage the resources of high-performance computing infrastructures, while running efficiently on laptops and workstations. Equations are entered by the user in the form of a mere text file following a simple and legible syntax. No coding proficiency in Fortran is required. This flexibility makes `Coral` suitable for both students and researchers with no coding experience.
+`Coral` is a fast, flexible, and efficient time-stepper for solving a large class of partial differential equations, at the core of which are the Navier-Stokes equations that govern fluid motions. Written in Fortran and employing the MPI standard for parallelization, the scalability of `Coral` allows the code to leverage the resources of high-performance computing infrastructures (up to hundreds of thousands of core, see @decomp2d), while running efficiently on laptops and workstations. Equations are entered by the user in the form of a mere text file following a simple and legible syntax. No coding proficiency in Fortran is required. This flexibility makes `Coral` suitable for both students and researchers with no coding experience.
 
 
 # Statement of need
