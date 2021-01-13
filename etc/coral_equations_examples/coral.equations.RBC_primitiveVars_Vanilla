@@ -91,7 +91,7 @@
 >>new_equation :: 2 <<
 >>add_d/dt_term  :: + Iz.Iz.vMean <<
 >>add_rhs_linear :: - iEkman.Prandtl.Iz.Iz.uMean <<
->>add_rhs_linear :: + Prandtl.uMean <<
+>>add_rhs_linear :: + Prandtl.vMean <<
 >>add_rhs_NL     :: - Iz.vw <<
 >>====================================<<
 >>add_set_of_coupled_zero_equations <<
