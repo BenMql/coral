@@ -7,20 +7,16 @@ def read_and_deAlias(path_to_vols, vol_name):
    ierror = 0
    possible_padding=[0,2]
 
-   NX = np.fromfile(path_to_vols+'../CheckPoints/TFP_MPI_config.sav', dtype=np.int32)[1]
-   NY = np.fromfile(path_to_vols+'../CheckPoints/TFP_MPI_config.sav', dtype=np.int32)[2]
-   NZ = np.fromfile(path_to_vols+'../CheckPoints/TFP_MPI_config.sav', dtype=np.int32)[3]
-   NXAA = 3*NX/2
-   NYAA = 3*NY/2
-   NZAA = 3*NZ/2
-   #print ('read NX,   NY,   NZ=   '+str(NX)+', '+str(NY)+', '+str(NZ))
-   #print ('read NXAA, NYAA, NZAA= '+str(NXAA)+', '+str(NYAA)+', '+str(NZAA))
-   #print ('inferred size NXAA*NYAA*NZAA= '+str(NXAA*NYAA*NZAA))
+   domain_decomp_infos = np.fromfile(path_to_vols+
+                        '../Geometry/domDecmp.core0000', dtype=np.int32)
+   NX   = domain_decomp_infos[0]
+   NY   = domain_decomp_infos[1]
+   NZ   = domain_decomp_infos[2]
+   NXAA = domain_decomp_infos[3]
+   NYAA = domain_decomp_infos[4]
+   NZAA = domain_decomp_infos[5]
    readVec = np.fromfile(path_to_vols + vol_name, dtype=np.float_)
-   #print ('length of read data: '+str(readVec.size))
-   for pad in possible_padding:
-      if (readVec.size == (NXAA+pad)*NYAA*NZAA):
-         curPhys = readVec.reshape(NYAA, NXAA+pad, NZAA)[:,:-pad,:]
+   curPhys = readVec.reshape(NYAA, NXAA, NZAA)
    volPhys = np.copy(curPhys)
    curPhys =  dct (curPhys, axis=2, type=2)
    curPhys[:,:,0]*=0.5
