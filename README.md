@@ -19,7 +19,7 @@ The current version is v1.0.1
 + [Input files](https://github.com/BenMql/coral/wiki/5_Input_files)
 + [Common issues](https://github.com/BenMql/coral/wiki/6_Common_issues)
 
-### Benchmarks
-+ [Rayleigh-Benard](./benchmark01_rayleigh_benard)
+## Benchmarks
++ [Rayleigh-Benard](https://github.com/BenMql/coral/wiki/benchmark01_rayleigh_benard)
 
 ![coral.jpg](http://www.normalesup.org/~benmiquel/misc/coral.jpg)
