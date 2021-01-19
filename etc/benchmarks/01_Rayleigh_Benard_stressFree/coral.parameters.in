@@ -15,5 +15,5 @@
 0           ! ......... QUICKSAVE RESTART ....... !
 .False.     ! 15 ! (BOO) quicksave restart   ! 15 !
 0           ! ............ TIMER ................ !
-7200.d0   ! 17 ! (DBL) Time limit (in sec.)! 17 !
+1200.d0   ! 17 ! (DBL) Time limit (in sec.)! 17 !
 
