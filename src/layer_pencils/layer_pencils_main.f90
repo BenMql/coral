@@ -162,7 +162,7 @@ Program layer_pencils_main
    !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !
    if (verbose) Then
-   4242 Format ('>>> Timestep:',I7,'; Wallclock:', I2,'T',I2,':',I2.2,':',I2.2,'.',I3.3,'; dt =',ES10.3,'; Peclet=',ES10.3)
+   4242 Format ('>>> Timestep:',I7,'; Wallclock:', I2,'T',I2,':',I2.2,':',I2.2,'.',I3.3,'; dt =',ES10.3,'; U(rms)=',ES10.3)
    write (*,4242) timings%i_timestep, Wclock%days, Wclock%hours, Wclock%minutes, Wclock%seconds, &
                                Wclock%msecs, timings%dt_current, &
                                main%geometry%Lx / main%geometry%NXAA /main%cargo%cfl_based_DT
