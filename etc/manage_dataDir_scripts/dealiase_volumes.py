@@ -17,6 +17,7 @@ def read_and_deAlias(path_to_vols, vol_name):
    NZAA = domain_decomp_infos[5]
    readVec = np.fromfile(path_to_vols + vol_name, dtype=np.float_)
    curPhys = readVec.reshape(NYAA, NXAA, NZAA)
+   del readVec
    volPhys = np.copy(curPhys)
    curPhys =  dct (curPhys, axis=2, type=2)
    curPhys[:,:,0]*=0.5

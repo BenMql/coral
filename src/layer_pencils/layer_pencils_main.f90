@@ -98,6 +98,7 @@ Program layer_pencils_main
    call main%init(misc_cargo%scheme_id)
 
    if (misc_cargo%qsave_restart) then
+      if (verbose) print *, ">> loading a quicksave"
       call main%import_quickSave()
       call timings%fromFile(main%io_bookkeeping%output_directory//'/Restart/dt.sav',&
                             main%io_bookkeeping%output_dir_length+15)

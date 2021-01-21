@@ -25,10 +25,12 @@ module LP_algebra_z_1D
                        dot_zOp_DIA_1d_1coupled_vec_oop
    procedure :: backsolve_zOp_DIA_1d_1coupled
    procedure :: backsolve_zOp_DIA_1d_1coupled_PTR
+   procedure :: backsolve_zOp_DIA_1d_1coupled_3drhs
    procedure :: backsolve_zOp_DIA_1d_1coupled_knownLdb
    procedure :: backsolve_zOp_DIA_1d_1coupled_unique
    generic   :: backsolve => backsolve_zOp_DIA_1d_1coupled,&
                              backsolve_zOp_DIA_1d_1coupled_PTR,&
+                             backsolve_zOp_DIA_1d_1coupled_3drhs,&
                              backsolve_zOp_DIA_1d_1coupled_unique,&
                              backsolve_zOp_DIA_1d_1coupled_knownLdb
    generic   :: constructor => build_zOp_DIA_1d_1coupled_from_csr, &
@@ -109,9 +111,34 @@ module LP_algebra_z_1D
                    x, beta, y)
  end subroutine
 
+ subroutine backsolve_zOp_DIA_1d_1coupled_3drhs(self, right_hand_sides_3d, nrhs, ldb)
+   class(zOperator_1d_1coupled_T), intent(inOut) :: self
+   complex(dp), allocatable, intent(inOut), target :: right_hand_sides_3d(:,:,:)
+   complex(dp), pointer :: right_hand_sides(:)
+   type(c_ptr) :: dummptr
+   integer, intent(in) :: nrhs
+   integer, intent(in) :: ldb
+   integer :: info
+   dummptr = c_loc(right_hand_sides_3d(1,1,1))
+   call c_f_pointer(dummPtr, right_hand_sides, [nrhs*ldb])
+   if (.not.self%has_lu) STOP 'LU factorization is missing'
+   call zgbtrs('N', self%dia%ncol,  &   
+                    self%dia%nl,    &   
+                    self%dia%nu,    &   
+                    nrhs,           &   
+                    self%lu%factors,&  
+                    2*self%dia%nl + self%dia%nu+1,&
+                    self%lu %pivots,&
+                    right_hand_sides, ldb, info)
+    
+   if (info.ne.0) print *, "Problem during LU routine zgbtrs"
+   if (info.ne.0) print *, "Error Diagnostic:", info
+   if (info.ne.0) stop
+ end subroutine
+
  subroutine backsolve_zOp_DIA_1d_1coupled_PTR(self, right_hand_sides, nrhs, ldb)
    class(zOperator_1d_1coupled_T), intent(inOut) :: self
-   complex(dp), POINTER :: right_hand_sides(:)
+   complex(dp), pointer :: right_hand_sides(:)
    integer, intent(in) :: nrhs
    integer, intent(in) :: ldb
    integer :: info

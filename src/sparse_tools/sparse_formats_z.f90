@@ -45,6 +45,7 @@
   contains 
     procedure :: write2disk => output_zcsr_matrix
     procedure :: truncate => zcsr_truncate
+    procedure :: truncate_rows => zcsr_truncate_rows
     procedure :: to_dia => z_csr2dia
     procedure :: dot_zcsr => wrap_zcsrmultcsr
     procedure :: Tdot_zcsr => wrap_zcsrmultcsr_T
@@ -545,59 +546,105 @@
 
  End Subroutine zcsr_sort
 
-
-
- Subroutine zcsr_truncate(self, other, imin, imax, jmin, jmax)
-   
+ subroutine zcsr_truncate_rows(self, other, iMin, iMax)
    class(zcsr_matrix), Intent(In)  :: self
-   Type(zcsr_matrix), Intent(Out) :: other
-   Type(zcsr_matrix) :: B, aux
-   Integer, Intent(In) ::  imin, imax, jmin, jmax
-   Integer :: ni, nj
-   Integer :: i
-   
-   ! create a 'flat' auxilliary matrix to extract the relevant lines 
-   ni = imax+1-imin
-   allocate( aux%dat(ni))
-   allocate( aux%col(ni))
-   allocate( aux%row(ni+1))
-   do i = 1,ni
-       aux%dat(i) = Cmplx(1._dp, 0._dp, kind=dp)
-       aux%col(i) = imin + i - 1
-       aux%row(i) = i
+   type (zcsr_matrix), Intent(Out) :: other
+   integer, intent(in) :: iMin, iMax
+   type(zcsr_matrix) :: aux
+   integer :: i, ni
+   !elementary checks:
+   if (iMin.lt.1) then
+     print *, 'error in zcsr_truncate_rows'
+     print *, 'iMin has to be greater than 0'
+     error stop
+   end if
+   if (iMax.gt.self%nRow) then
+     print *, 'error in zcsr_truncate_rows'
+     print *, 'iMax cannot be greater than self%nRow'
+     error stop
+   end if
+   ni = iMax+1-iMin
+   aux%nelems = ni
+   aux%ncol = self%nrow
+   aux%nrow = ni
+   allocate (aux%dat(ni))
+   allocate (aux%col(ni))
+   allocate (aux%row(ni+1))
+   do i = 1, ni
+      aux%dat(i) = cmplx(1._dp, 0._dp, kind=dp)
+      aux%col(i) = iMin + i - 1
+      aux%row(i) = i
    end do
    aux%row(ni+1) = ni+1
-   aux%nrow = ni
-   aux%ncol = self%nrow
-   aux%nelems = ni
    ! multiply matrix A on the left to extract the lines
-   Call wrap_zcsrmultcsr(aux, self, B)
-   ! now create a 'tall' auxilliary matrix
-   nj = jmax+0-jmin
-   deallocate(aux%dat, aux%col, aux%row)
-   aux%ncol = nj
-   aux%nrow = B%ncol
-   aux%nelems = nj
-   allocate( aux%dat(nj))
-   allocate( aux%col(nj))
-   allocate( aux%row(B%Ncol+1))
-   do i = 1,jmin
-       aux%row(i) = 1
-   end do
-   do i = 1,nj
-       aux%dat(i) = Cmplx(1._dp, 0._dp, kind=dp)
-       aux%col(i) = i
-       aux%row(jmin+i) = i+1
-   end do
-   do i= (jmax+2),(self%ncol+1)
-       aux%row(i) = nj+1
-   end do
-   ! multiply matrix B on the right to extract the columns
-   Call zcsr_sort(aux)
-   Call wrap_zcsrmultcsr(B,aux, other)
- End Subroutine zcsr_Truncate
+   call aux%sort()
+   call aux%dot(self, other)
+ end subroutine
+
+ subroutine zCsr_truncate(self, other, imin, imax, jmin, jmax)
+   
+   class(zcsr_matrix), Intent(In)  :: self
+   Type (zcsr_matrix), Intent(Out) :: other
+   Type (zcsr_matrix) :: B, aux
+   Integer, Intent(In) ::  imin, imax, jmin, jmax
+   Integer :: nj
+   Integer :: i
+
+   ! >>> elementary checks: ---------------------------------------
+   if (iMin.lt.1) then
+     print *, 'error in zcsr_truncate'
+     print *, 'iMin has to be greater than 0'
+     error stop
+   end if
+   if (iMax.gt.self%nRow) then
+     print *, 'error in zcsr_truncate'
+     print *, 'iMax cannot be greater than self%nRow'
+     error stop
+   end if
+   !elementary checks:
+   if (jMin.lt.1) then
+     print *, 'error in zcsr_truncate'
+     print *, 'jMin has to be greater than 0'
+     error stop
+   end if
+   if (jMax.gt.self%nCol) then
+     print *, 'error in zcsr_truncate'
+     print *, 'jMax cannot be greater than self%nCol'
+     error stop
+   end if
+   ! /// elementary checks: ---------------------------------------
+
+   if ((jMin.eq.1).and.(jMax.eq.self%nCol)) then
+      call self%truncate_rows(other, iMin, iMax)
+   else
+      call self%truncate_rows(B,     iMin, iMax)
+      ! now create a 'tall' auxilliary matrix
+      nj = jmax+1-jmin
+      aux%ncol = nj
+      aux%nrow = B%ncol
+      aux%nelems = nj
+      allocate( aux%dat(nj))
+      allocate( aux%col(nj))
+      allocate( aux%row(B%Ncol+1))
+      do i = 1,jmin
+          aux%row(i) = 1
+      end do
+      do i = 1,nj
+          aux%dat(i) = cmplx(1._dp, 0._dp, kind=dp)
+          aux%col(i) = i
+          aux%row(jmin+i) = i+1
+      end do
+      do i= (jmax+2),(self%ncol+1)
+          aux%row(i) = nj+1
+      end do
+      ! multiply matrix B on the right to extract the columns
+      call aux%sort()         
+      call B%dot(aux,other)
+   end if
+ End Subroutine zCsr_truncate
   
- !
+
+
 
  !
  !

@@ -284,63 +284,13 @@
  end subroutine
 
 
- subroutine export_checkpoints(self)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer :: iVar, iSys
-   character(len=58) :: fileName
-   call chdir(self%io_bookkeeping%output_directory)
-   406 format ('./CheckPoints/QuickSave.kxky.sys',(i3.3),'.var',(i3.3),'.rolling',(i1.1))
-   407 format ('./CheckPoints/QuickSave.zero.sys',(i3.3),'.var',(i3.3),'.rolling',(i1.1))
-   do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
-   do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
-   ! copy spectral coefficients into the first array we can think of
-   self%linear_variables(1)%spec = cmplx(0._dp, 0._dp, kind=dp)
-   self%linear_variables(1)%&
-     spec( 1:self%coupled_kxky_set(iSys)%shape%variable_size(iVar), :,: ) = &
-     self%coupled_kxky_set(iSys)%&
-     field(self%coupled_kxky_set(iSys)%shape%variable_firstIndex(iVar):&
-           self%coupled_kxky_set(iSys)%shape%variable_lastIndex (iVar), :, :) 
-   write (fileName,406) iSys, iVar, self%io_bookkeeping%rolling_integer
-   call self%linear_variables(1)%spec_to_phys()
-   call decomp_2d_write_one(3, self%linear_variables(1)%phys, fileName)              
-   call self%linear_variables(1)%phys_to_spec()
-     self%coupled_kxky_set(iSys)%&
-     field(self%coupled_kxky_set(iSys)%shape%variable_firstIndex(iVar):&
-           self%coupled_kxky_set(iSys)%shape%variable_lastIndex (iVar), :, :) =&
-   self%linear_variables(1)%&
-     spec( 1:self%coupled_kxky_set(iSys)%shape%variable_size(iVar), :,: ) 
-   end do
-   end do
-
-   if (self%geometry%this_core_has_zero_mode) then
-   do iSys = 1, self%recipe%numberOf_coupled_zero_systems
-   do iVar = 1, self%recipe%zero_recipes(iSys)%n_Coupled_vars
-      write (fileName,407) iSys, iVar, self%io_bookkeeping%rolling_integer
-      open (unit=9, file=fileName, status='replace', access='stream')
-      write(9) self%coupled_zero_set(iSys)%&
-               field(self%coupled_zero_set(iSys)%shape%variable_firstIndex(iVar):&
-                     self%coupled_zero_set(iSys)%shape%variable_lastIndex (iVar))
-      close(unit=9)
-
-   end do
-   end do
-   end if
-
-   if (self%io_bookkeeping%rolling_integer.eq.1) then
-       self%io_bookkeeping%rolling_integer = 2
-   else                                                
-       self%io_bookkeeping%rolling_integer = 1
-   end if
-        
-   
- end subroutine
-
  subroutine import_quicksave(self)
    class(full_problem_data_structure_T), intent(inOut) :: self
    integer :: iVar, iSys
    character(len=58) :: fileName
    integer :: rolInt
    logical :: file_exists
+   real(kind=dp), allocatable :: buff (:)
    if (my_rank.eq.0) print*, " ================================================================="
    if (my_rank.eq.0) print*, " >>> "
    if (my_rank.eq.0) print*, " >>> Reading a quicksave "
@@ -363,33 +313,122 @@
    506 format ('./Restart/QuickSave.kxky.sys',(i3.3),'.var',(i3.3),'.rolling',(i1.1))
    507 format ('./Restart/QuickSave.zero.sys',(i3.3),'.var',(i3.3),'.rolling',(i1.1))
    do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
+   self%coupled_kxky_set(isys)%field = cmplx(0._dp, 0._dp, kind=dp) ! it has been backed-up before
    do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
    ! copy spectral coefficients into the first array we can think of
    self%linear_variables(1)%spec = cmplx(0._dp, 0._dp, kind=dp)
    write (fileName,506) iSys, iVar, rolInt
    call decomp_2d_read_one(3, self%linear_variables(1)%phys, fileName)              
+   ! now tranform back to Galerkin coefficients, stored in 'field'
    call self%linear_variables(1)%phys_to_spec()
-   self%coupled_kxky_set(iSys)%&
-     field(self%coupled_kxky_set(iSys)%shape%variable_firstIndex(iVar):&
-           self%coupled_kxky_set(iSys)%shape%variable_lastIndex (iVar), :, :) = &
-           self%linear_variables(1)%&
-           spec( 1:self%coupled_kxky_set(iSys)%shape%variable_size(iVar), :,: ) 
+   ! backsolve for galerkin
+   call self%coupled_kxky_set(iSys)%square_stencil(iVar)%backsolve(&
+                  self%linear_variables(1)%spec, &
+                  self%geometry%spec%local_NY*self%geometry%spec%local_NX, &
+                  self%geometry%NZAA)
+   ! truncate, shuffle and insert at the right location
+   call self%coupled_kxky_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
+                  self%linear_variables(1)%spec, &
+                  self%coupled_kxky_set(isys)%field,&
+                  'cumul')
    end do
    end do
 
    if (self%geometry%this_core_has_zero_mode) then
+   allocate(buff( self%geometry%NZAA))
    do iSys = 1, self%recipe%numberOf_coupled_zero_systems
+   self%coupled_zero_set(isys)%field = 0._dp
    do iVar = 1, self%recipe%zero_recipes(iSys)%n_Coupled_vars
+      !call buff to phys()
       write (fileName,507) iSys, iVar, rolInt
       open (unit=9, file=fileName, status='old', access='stream')
-      read(9) self%coupled_zero_set(iSys)%&
-              field(self%coupled_zero_set(iSys)%shape%variable_firstIndex(iVar):&
-                    self%coupled_zero_set(iSys)%shape%variable_lastIndex (iVar))
+      read(9) buff
       close(unit=9)
+      call r2r_forward(buff)
+      ! backsolve for galerkin
+      call self%coupled_zero_set(iSys)%square_stencil(iVar)%backsolve(buff)
+      ! truncate, shuffle and insert at the right location
+      call self%coupled_zero_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
+                  buff, &                                 
+                  self%coupled_zero_set(isys)%field,&
+                  'cumul')
+      
    end do
    end do
+   if (allocated(buff)) deAllocate(buff)
    end if
 
+ end subroutine
+
+ subroutine export_checkpoints(self)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer :: iVar, iSys
+   character(len=58) :: fileName
+   real(kind=dp), allocatable :: buff (:)
+
+   ! back-up fields
+   call self%copy_fields_to_aux()
+
+   call chdir(self%io_bookkeeping%output_directory)
+   406 format ('./CheckPoints/QuickSave.kxky.sys',(i3.3),'.var',(i3.3),'.rolling',(i1.1))
+   407 format ('./CheckPoints/QuickSave.zero.sys',(i3.3),'.var',(i3.3),'.rolling',(i1.1))
+
+   do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
+   self%coupled_kxky_set(isys)%field = cmplx(0._dp, 0._dp, kind=dp) ! it has been backed-up before
+   do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
+   ! compute Chebyshev coefficients into self%linear_variables(1)%spec
+   self%linear_variables(1)%spec = cmplx(0._dp, 0._dp, kind=dp)
+   call self%coupled_kxky_set(iSys) &
+                      %padStencilExtractShuffle(iVar) &
+                      %dot(self%coupled_kxky_set(iSys)%aux,&
+                        self%linear_variables(1)%spec, 'overW')
+   write (fileName,406) iSys, iVar, self%io_bookkeeping%rolling_integer
+   call self%linear_variables(1)%spec_to_phys()
+   call decomp_2d_write_one(3, self%linear_variables(1)%phys, fileName)              
+   ! now tranform back to Galerkin coefficients, stored in 'field'
+   call self%linear_variables(1)%phys_to_spec()
+   ! backsolve for galerkin
+   call self%coupled_kxky_set(iSys)%square_stencil(iVar)%backsolve(&
+                  self%linear_variables(1)%spec, &
+                  self%geometry%spec%local_NY*self%geometry%spec%local_NX, &
+                  self%geometry%NZAA)
+   ! truncate, shuffle and insert at the right location
+   call self%coupled_kxky_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
+                  self%linear_variables(1)%spec, &
+                  self%coupled_kxky_set(isys)%field,&
+                  'cumul')
+   end do
+   end do
+
+   if (self%geometry%this_core_has_zero_mode) then
+   allocate(buff( self%geometry%NZAA))
+   do iSys = 1, self%recipe%numberOf_coupled_zero_systems
+   do iVar = 1, self%recipe%zero_recipes(iSys)%n_Coupled_vars
+      ! compute Chebyshev coefficients into self%linear_variables(1)%spec
+      buff = 0._dp
+      call self%coupled_zero_set(iSys) &
+                      %padStencilExtractShuffle(iVar) &
+                      %dot(self%coupled_zero_set(iSys)%aux,&
+                        buff, 'overW')
+      call r2r_backward(buff)
+      write (fileName,407) iSys, iVar, self%io_bookkeeping%rolling_integer
+      open (unit=9, file=fileName, status='replace', access='stream')
+      write(9) buff
+      close(unit=9)
+      call r2r_forward(buff)
+
+   end do
+   end do
+   deAllocate(buff)
+   end if
+
+   if (self%io_bookkeeping%rolling_integer.eq.1) then
+       self%io_bookkeeping%rolling_integer = 2
+   else                                                
+       self%io_bookkeeping%rolling_integer = 1
+   end if
+        
+   
  end subroutine
    
  subroutine export_allProfiles(self, iTime)

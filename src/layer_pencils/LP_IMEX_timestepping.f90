@@ -73,6 +73,7 @@ module LP_IMEX_timestepping
    type(intermediate_step_buffer_1d_T), allocatable :: step(:)
    type(building_tools_T) :: building_tools
    type(dcsr_matrix), allocatable :: stencil(:)
+   type(dOperator_1d_1coupled_T), allocatable :: square_stencil(:)
    type(system_shape_T) :: shape
    type(dcsr_matrix) :: shuffleP_polyDegree_to_var
    type(dcsr_matrix) :: shuffleQ_var_to_polyDegree
@@ -80,6 +81,7 @@ module LP_IMEX_timestepping
    type(dcsr_matrix) :: shuffleQ_var_to_polyDegree_T
    type(dcsr_matrix), allocatable :: padStencilExtractShuffle(:)
    type(dcsr_matrix), allocatable :: shuffleInsert(:)
+   type(dcsr_matrix), allocatable :: shuffleTextractTtruncate(:)
  contains
    procedure :: add_block => add_dsca_times_MIblock_to_zero_operator
  end type coupled_set_1d_ops_vars_T
@@ -95,12 +97,14 @@ module LP_IMEX_timestepping
    type(intermediate_step_buffer_3d_T), allocatable :: step(:)
    type(building_tools_T) :: building_tools
    type(dcsr_matrix), allocatable :: stencil(:)
+   type(zOperator_1d_1coupled_T), allocatable :: square_stencil(:)
    type(dcsr_matrix) :: shuffleP_polyDegree_to_var
    type(dcsr_matrix) :: shuffleQ_var_to_polyDegree
    type(dcsr_matrix) :: shuffleP_polyDegree_to_var_T
    type(dcsr_matrix) :: shuffleQ_var_to_polyDegree_T
    type(system_shape_T) :: shape
    type(zcsr_matrix), allocatable :: padStencilExtractShuffle(:)
+   type(zcsr_matrix), allocatable :: shuffleTextractTtruncate(:)
    type(zcsr_matrix), allocatable :: shuffleInsert(:)
  contains
    procedure :: add_block => add_zsca_times_MIblock_to_kxky_operators
@@ -485,10 +489,18 @@ module LP_IMEX_timestepping
    class(full_problem_data_structure_T) :: self
    integer :: iSys
    integer :: iVar
+   type(zcsr_matrix) :: zcsrMat
+   type(zcsr_matrix) :: zcsrMat1
+   type(dcsr_matrix) :: dcsrMat
+
    do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
       allocate( self%coupled_kxky_set(iSys)%stencil( &
                      self%recipe%kxky_recipes(iSys)%n_coupled_vars ) )
+      allocate( self%coupled_kxky_set(iSys)%square_stencil( &
+                     self%recipe%kxky_recipes(iSys)%n_coupled_vars ) )
       allocate( self%coupled_kxky_set(iSys)%padStencilExtractShuffle( &
+                     self%recipe%kxky_recipes(iSys)%n_coupled_vars ) )
+      allocate( self%coupled_kxky_set(iSys)%shuffleTextractTtruncate( &
                      self%recipe%kxky_recipes(iSys)%n_coupled_vars ) )
       allocate( self%coupled_kxky_set(iSys)%shuffleInsert( &
                      self%recipe%kxky_recipes(iSys)%n_coupled_vars ) )
@@ -497,6 +509,12 @@ module LP_IMEX_timestepping
                       self%recipe%kxky_recipes(iSys)%vars(iVar)%bc_code, &
                       self%coupled_kxky_set(iSys)%stencil(iVar) )
          call self%coupled_kxky_set(iSys)%stencil(iVar)%sort()
+         call dcsr_convert_zcsr( self%coupled_kxky_set(iSys)%stencil(iVar), zcsrMat1)
+         call zcsrMat1 % truncate_rows (&
+                       zcsrMat, &
+                       1, self%coupled_kxky_set(iSys)%stencil(iVar)%ncol)
+         call self%coupled_kxky_set(iSys)%square_stencil(iVar)%constructor(zcsrMat)
+         call self%coupled_kxky_set(iSys)%square_stencil(iVar)%factorize
       end do
    end do
 
@@ -504,15 +522,25 @@ module LP_IMEX_timestepping
    do iSys = 1, self%recipe%numberOf_coupled_zero_systems
       allocate( self%coupled_zero_set(iSys)%stencil( &
                      self%recipe%zero_recipes(iSys)%n_coupled_vars ) )
+      allocate( self%coupled_zero_set(iSys)%square_stencil( &
+                     self%recipe%zero_recipes(iSys)%n_coupled_vars ) )
       allocate( self%coupled_zero_set(iSys)%shuffleInsert( &
                      self%recipe%zero_recipes(iSys)%n_coupled_vars ) )
       allocate( self%coupled_zero_set(iSys)%padStencilExtractShuffle( &
+                     self%recipe%zero_recipes(iSys)%n_coupled_vars ) )
+      allocate( self%coupled_zero_set(iSys)%shuffleTextractTTruncate( &
                      self%recipe%zero_recipes(iSys)%n_coupled_vars ) )
       do iVar = 1, self%recipe%zero_recipes(iSys)%n_coupled_vars
          call chebyshev_galerkin_unique_stencil( self%geometry%NZ, &
                       self%recipe%zero_recipes(iSys)%vars(iVar)%bc_code, &
                       self%coupled_zero_set(iSys)%stencil(iVar) )
          call self%coupled_zero_set(iSys)%stencil(iVar)%sort()
+         call self%coupled_zero_set(iSys)%stencil(iVar) % truncate_rows(&
+                       dcsrMat, &                                                
+                       1, self%coupled_zero_set(iSys)%stencil(iVar)%ncol)
+         call self%coupled_zero_set(iSys)%square_stencil(iVar)%constructor(dcsrMat)
+         call self%coupled_zero_set(iSys)%square_stencil(iVar)%factorize()
+ 
       end do
    end do
    end if
@@ -886,6 +914,12 @@ module LP_IMEX_timestepping
    type(dcsr_matrix) ::    shuffleInsert         !< some redundant auxilliary matrices
    type(dcsr_matrix) ::    StencilExtractShuffle !< that help a lot improve the legibility
    type(dcsr_matrix) :: padStencilExtractShuffle !< and understanding of the code.         
+   type(dcsr_matrix) :: shuffleTextractTtruncate
+   type(dcsr_matrix) :: shuffleTextractT_csr
+   type(dcsr_matrix) :: extract_csr_T           
+   type(dcsr_matrix) :: truncate_csr          
+   type(dcoo_matrix) :: extract_coo_T           
+   type(dcoo_matrix) :: truncate_coo          
    type(dcoo_matrix) :: extract_coo     
    type(dcsr_matrix) :: extract_csr
    type(dcoo_matrix) :: insert_coo     
@@ -908,6 +942,25 @@ module LP_IMEX_timestepping
    call d_coo2csr(padding_coo, padding_csr)
    ! // build the "padding matrix"
    do iVar = 1, self%recipe%kxky_recipes(isys)%n_coupled_vars
+      ! => build the "truncation matrix"
+      truncate_coo%nelems = self%coupled_kxky_set(isys)%shape%variable_size(iVar)
+      truncate_coo%ncol   = self%geometry%NZAA                       
+      truncate_coo%nrow   = self%coupled_kxky_set(isys)%shape%variable_size(iVar)
+      if (allocated( truncate_coo%row)) then
+         deAllocate(truncate_coo%row)
+         deAllocate(truncate_coo%col)
+         deAllocate(truncate_coo%dat)
+      end if
+      allocate(truncate_coo%row (truncate_coo%nelems))
+      allocate(truncate_coo%col (truncate_coo%nelems))
+      allocate(truncate_coo%dat (truncate_coo%nelems))
+      do iElem = 1, self%coupled_kxky_set(isys)%shape%variable_size(iVar)
+         truncate_coo%row(iElem) = iElem
+         truncate_coo%col(iElem) = iElem 
+         truncate_coo%dat(iElem) = 1._dp
+      end do
+      call d_coo2csr(truncate_coo, truncate_csr)
+   ! // build the "truncation matrix"
       !===========================================================
       !=> build the "extraction matrix" for variables
       extract_coo%nelems  = self%coupled_kxky_set(isys)%shape%variable_size(iVar)
@@ -928,6 +981,8 @@ module LP_IMEX_timestepping
          extract_coo%dat(iElem) = 1._dp
       end do
       call d_coo2csr(extract_coo, extract_csr)
+      call extract_coo%transpose( extract_coo_T)
+      call d_coo2csr( extract_coo_T, extract_csr_T)
       !// build the "extraction matrix" for variables
       !===========================================================
       !=> build the "insertion matrix" for equations
@@ -953,6 +1008,18 @@ module LP_IMEX_timestepping
       !// build the "insertion matrix" for equations
       !===========================================================
 
+      call self%coupled_kxky_set(isys)%shuffleP_polyDegree_to_var_T%dot(&
+           extract_csr_T,&
+           shuffleTextractT_csr)
+      call shuffleTextractT_csr%dot(&
+           truncate_csr,&
+           shuffleTextractTtruncate)
+      call dcsr_convert_zcsr(           shuffleTextractTtruncate, &
+            self%coupled_kxky_set(isys)%shuffleTextractTtruncate(iVar))
+           
+           
+
+
       call extract_csr%dot(&
            self%coupled_kxky_set(isys)%shuffleP_polyDegree_to_var, &
            ExtractShuffle)
@@ -964,14 +1031,7 @@ module LP_IMEX_timestepping
            padStencilExtractShuffle)                      
       call dcsr_convert_zcsr( padStencilExtractShuffle, &
             self%coupled_kxky_set(isys)%padStencilExtractShuffle(iVar))
-      ! for the nonlinearity
-      !!!print *, 'extrac_csr%ncol', extract_csr%nCol
-      !!!print *, 'extrac_csr%nRow', extract_csr%nRow
-      !!!print *, 'insert_csr%ncol', insert_csr%nCol
-      !!!print *, 'insert_csr%nRow', insert_csr%nRow
-      !!!print *, 'self%coupled_kxky_set(isys)%shuffleQ_var_to_polyDegree%nCol, nRow',&
-                !!!self%coupled_kxky_set(isys)%shuffleQ_var_to_polyDegree%nCol, &
-                !!!self%coupled_kxky_set(isys)%shuffleQ_var_to_polyDegree%nRow
+
       call self%coupled_kxky_set(isys)%shuffleQ_var_to_polyDegree%dot( &
                 insert_csr, &
                 shuffleInsert)
@@ -994,6 +1054,11 @@ module LP_IMEX_timestepping
    type(dcsr_matrix) :: insert_csr
    type(dcoo_matrix) :: padding_coo
    type(dcsr_matrix) :: padding_csr
+   type(dcsr_matrix) :: shuffleTextractT_csr
+   type(dcsr_matrix) :: extract_csr_T           
+   type(dcsr_matrix) :: truncate_csr          
+   type(dcoo_matrix) :: extract_coo_T           
+   type(dcoo_matrix) :: truncate_coo          
    integer :: iVar, iElem
    ! => build the "padding matrix"   
    padding_coo%nelems = self%geometry%NZ                           
@@ -1010,6 +1075,24 @@ module LP_IMEX_timestepping
    call d_coo2csr(padding_coo, padding_csr)
    ! // build the "padding matrix"
    do iVar = 1, self%recipe%zero_recipes(isys)%n_coupled_vars
+      ! => build the "truncation matrix"
+      truncate_coo%nelems = self%coupled_zero_set(isys)%shape%variable_size(iVar)
+      truncate_coo%ncol   = self%geometry%NZAA                       
+      truncate_coo%nrow   = self%coupled_zero_set(isys)%shape%variable_size(iVar)
+      if (allocated( truncate_coo%row)) then
+         deAllocate(truncate_coo%row)
+         deAllocate(truncate_coo%col)
+         deAllocate(truncate_coo%dat)
+      end if
+      allocate(truncate_coo%row (truncate_coo%nelems))
+      allocate(truncate_coo%col (truncate_coo%nelems))
+      allocate(truncate_coo%dat (truncate_coo%nelems))
+      do iElem = 1, self%coupled_zero_set(isys)%shape%variable_size(iVar)
+         truncate_coo%row(iElem) = iElem
+         truncate_coo%col(iElem) = iElem 
+         truncate_coo%dat(iElem) = 1._dp
+      end do
+      call d_coo2csr(truncate_coo, truncate_csr)
       !===========================================================
       !=> build the "extraction matrix" for variables
       extract_coo%nelems = self%coupled_zero_set(isys)%shape%variable_size(iVar)
@@ -1029,6 +1112,8 @@ module LP_IMEX_timestepping
          extract_coo%dat(iElem) = 1._dp
       end do
       call d_coo2csr(extract_coo, extract_csr)
+      call extract_coo%transpose( extract_coo_T)
+      call d_coo2csr( extract_coo_T, extract_csr_T)
       ! // build the "extraction matrix"
       !===========================================================
       !=> build the "insertion matrix" for equations
@@ -1052,6 +1137,14 @@ module LP_IMEX_timestepping
       call d_coo2csr(insert_coo, insert_csr)
       !// build the "insertion matrix" for equations
       !===========================================================
+
+      call self%coupled_zero_set(isys)%shuffleP_polyDegree_to_var_T%dot(&
+           extract_csr_T,&
+           shuffleTextractT_csr)
+      call shuffleTextractT_csr%dot(&
+           truncate_csr,&
+            self%coupled_zero_set(isys)%shuffleTextractTtruncate(iVar))
+           
       call extract_csr%dot(&
            self%coupled_zero_set(isys)%shuffleP_polyDegree_to_var, &
            ExtractShuffle)
