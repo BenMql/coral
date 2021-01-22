@@ -59,6 +59,8 @@ temperature_fluctuations.tofile('./Restart/QuickSave.kxky.sys001.var005.rolling1
 #        Horizontally-averaged fields              #
 #                                                  #
 ####################################################
+# define zero:
+zeroMean = np.zeros((NZ), dtype=np.float_)
 
 ######## Define a new variable
 temperature_mean = grid_z - 0.5 - 4.* (grid_z-0.5)**3
@@ -67,7 +69,7 @@ horizontal_shear = 4.*np.cos(grid_z*np.pi)
 
 ######## Export to disk
 # variables that are initialised to zero need to be exported as well
-zeroField.tofile('./Restart/QuickSave.zero.sys001.var001.rolling1')
+zeroMean.tofile('./Restart/QuickSave.zero.sys001.var001.rolling1')
 # export temperature
 horizontal_shear.tofile('./Restart/QuickSave.zero.sys002.var001.rolling1')
 temperature_mean.tofile('./Restart/QuickSave.zero.sys003.var001.rolling1')
