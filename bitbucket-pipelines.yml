@@ -9,3 +9,4 @@ pipelines:
              - git checkout master
              - git pull
              - git push sync 
+             - git push sync --tags
