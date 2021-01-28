@@ -423,7 +423,9 @@
               !self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%eqn_index, &
               !self%recipe%kxky_recipes(iSys)%eqn_order( insert_in_equation )+1
       call self%coupled_kxky_set(iSys)%building_tools%cheb_IM ( &
-                        (self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%Iz_exponent+1), 1 ) &
+                          self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%Iz_exponent+1, &
+                          self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%z_multiply +1  &
+                                                              ) &
                         % truncate(  truncI, &
                          self%recipe%kxky_recipes(iSys)%eqn_order( insert_in_equation )+1, &
                          self%coupled_kxky_set(iSys)%building_tools%cheb_IM(1,1)%nrow, &
@@ -468,7 +470,9 @@
      !   kind of wasteful to do that here, but probably not a biggy
      insert_in_equation =  self%recipe%zero_recipes(iSys)%NL%term(iTerm)%eqn_index 
      call self%coupled_zero_set(iSys)%building_tools%cheb_IM ( &
-                       (self%recipe%zero_recipes(iSys)%NL%term(iTerm)%Iz_exponent+1), 1 ) &
+                       self%recipe%zero_recipes(iSys)%NL%term(iTerm)%Iz_exponent+1, &
+                       self%recipe%zero_recipes(iSys)%NL%term(iTerm)%z_multiply +1  &
+                                                             ) &
                        % truncate(  truncI, &
                         self%recipe%zero_recipes(iSys)%eqn_order( insert_in_equation )+1, &
                         self%coupled_zero_set(iSys)%building_tools%cheb_IM(1,1)%nrow, &

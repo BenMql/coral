@@ -402,6 +402,7 @@
 
    if (self%geometry%this_core_has_zero_mode) then
    allocate(buff( self%geometry%NZAA))
+   !self%coupled_zero_set(isys)%field = 0._dp ! it has been backed-up before
    do iSys = 1, self%recipe%numberOf_coupled_zero_systems
    do iVar = 1, self%recipe%zero_recipes(iSys)%n_Coupled_vars
       ! compute Chebyshev coefficients into self%linear_variables(1)%spec
@@ -415,7 +416,14 @@
       open (unit=9, file=fileName, status='replace', access='stream')
       write(9) buff
       close(unit=9)
-      call r2r_forward(buff)
+      !call r2r_forward(buff)
+      !! backsolve for galerkin
+      !call self%coupled_zero_set(iSys)%square_stencil(iVar)%backsolve(buff)
+      !! truncate, shuffle and insert at the right location
+      !call self%coupled_zero_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
+                  !buff, &                                 
+                  !self%coupled_zero_set(isys)%field,&
+                  !'cumul')
 
    end do
    end do

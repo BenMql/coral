@@ -101,7 +101,7 @@ module LP_transforms
                           meanField_physical, & 
                           meanField_spectral)
    meanfield_spectral(1) = meanField_spectral(1) *0.5_dp
-   arr                   = meanField_spectral / domain_decomp%NZAA * 4._dp
+   arr                   = meanField_spectral / domain_decomp%NZAA 
    
    call fftw_destroy_plan( dct_plan_forward_meanFields)
    call fftw_free(p1)

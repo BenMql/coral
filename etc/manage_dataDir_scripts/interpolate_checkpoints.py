@@ -1,6 +1,14 @@
 import numpy as np
-from sys import argv
-#from scipy.fftpack import fft2, ifft2, dct, idct
+from sys import argv, exit
+try:
+   from scipy.fft import dct, idct
+except ImportError:
+   import scipy as sp
+   print ('The fft module was not found in scipy.')
+   print ('This is possibly due to a scipy version older than 1.4.0')
+   print ('For info, your scipy version is: '+sp.version.full_version)
+   exit(1)
+   
 
 
 def read_and_resize_zeroModes(path_to_vols, vol_name, ntup, toDir='./'):
@@ -14,18 +22,18 @@ def read_and_resize_zeroModes(path_to_vols, vol_name, ntup, toDir='./'):
    ierror = 0
    domain_decomp_infos = np.fromfile(path_to_vols+
                         '../Geometry/domDecmp.core0000', dtype=np.int32)
-   #NZAA = domain_decomp_infos.NZAA
    readVec = np.fromfile(path_to_vols + vol_name, dtype=np.float_)
    Nold= readVec.shape[0]
    Nnew = ntup[2]
-   old_z = np.arange(Nold)
-   old_z = 0.5+0.5*np.cos((old_z*2+1.0)*np.pi/(2*Nold))
-   new_z = np.arange(ntup[2])
-   new_z = 0.5+0.5*np.cos((new_z*2+1.0)*np.pi/(2*ntup[2]))
+   
+   coscoefs = dct(readVec)
+   if (Nnew>Nold):
+      newcoefs = np.zeros((Nnew), dtype=np.float_)
+      newcoefs[:Nold] = coscoefs
+   else:
+      newcoefs = coscoefs[:Nnew]
 
-
-   aux2 = np.zeros((ntup[2]), dtype=np.float_)
-   aux2[::-1] = np.interp(new_z[::-1], old_z[::-1], readVec[::-1])
+   aux2 = idct(newcoefs)*Nnew/Nold
    aux2.tofile(toDir+'/Restart/'+vol_name)
    return ierror
 
@@ -50,14 +58,15 @@ def read_and_resize(path_to_vols, vol_name, ntup, toDir='./'):
    print ('----------- :: Resizing (' + str(NXAA)+','+str(NYAA)+','+str(NZAA)+') into'+
                         ' (' + str(NX  )+','+str(NY  )+','+str(NZ  )+').')
    curPhys = np.fromfile(path_to_vols + vol_name, dtype=np.float_).reshape(NXAA, NYAA, NZAA)
-   old_z = np.arange(NZAA)
-   old_z = 0.5+0.5*np.cos((old_z*2+1.0)*np.pi/(2*NZAA))
-   new_z = np.arange(ntup[2])
-   new_z = 0.5+0.5*np.cos((new_z*2+1.0)*np.pi/(2*ntup[2]))
-   aux2 = np.zeros((NXAA, NYAA, ntup[2]), dtype=np.float_)
-   for ix in range(NXAA):
-     for iy in range(NYAA):
-        aux2[ix,iy,::-1] = np.interp(new_z[::-1], old_z[::-1], curPhys[ix,iy,::-1])
+   coscoefs = dct(curPhys, axis=-1)
+   if (NZ>NZAA):
+      newcoefs = np.zeros((NXAA,NYAA,NZ), dtype=np.float_)
+      newcoefs[:,:,:NZAA] = coscoefs
+   else:
+      newcoefs = coscoefs[:,:,:NZ]
+
+   aux2 = idct(newcoefs,axis=-1)*NZ/NZAA
+
    ## now we need to interpolate in the xy-plane...
    xold = np.linspace(0,1,num=NXAA, endpoint=False)
    yold = np.linspace(0,1,num=NYAA, endpoint=False)
@@ -93,6 +102,7 @@ def resize_checkpoints(fromDir='./', toDir = './', newResolution=(64,64,64)):
          counter += 1
          print ('[ '+str(counter).zfill(3)+'/'+str(len(files_with_zero)).zfill(3) +' ] :: '+ root+my_file)
          dumm_integer = read_and_resize_zeroModes(root, my_file, newResolution, toDir = toDir)
+
 
 
 old_dir = argv[1]

@@ -52,9 +52,9 @@
 
       Class(domain_decomposition_T) :: self
       Integer, intent(in) :: n1, n2, n3
-      self%NXAA = n1
+      self%NXAA = n3
       self%NYAA = n2
-      self%NZAA = n3
+      self%NZAA = n1
       self%p_row = 0
       self%p_col = 0
       call decomp_2d_init(n1, n2, n3, self%p_row, self%p_col)
