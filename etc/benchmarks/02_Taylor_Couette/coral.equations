@@ -1,0 +1,108 @@
+>>Param :: iRe := 0.400d0 <<
+>>Param :: va := -239.8d0 <<
+>>Param :: vb := 3900.d0 <<
+>>Param :: two := 2.d0 <<
+>>Param :: three := 3.d0 <<
+>>====================================<<
+>>linear_variable_kxky :: u <<
+>>linear_variable_kxky :: v <<
+>>linear_variable_kxky :: w <<
+>>linear_variable_kxky :: p <<
+>>linear_variable_kxky :: chi <<
+>>linear_variable_mean :: vMean <<
+>>linear_variable_mean :: wMean <<
+>>====================================<<
+>>linear_variable_full       :: uFull <<
+>>linear_variable_full_build :: + u <<
+>>====================================<<
+>>linear_variable_full       :: vFull <<
+>>linear_variable_full_build :: + vMean <<
+>>linear_variable_full_build :: + v <<
+>>====================================<<
+>>linear_variable_full       :: wFull <<
+>>linear_variable_full_build :: + w <<
+>>linear_variable_full_build :: + wMean <<
+>>====================================<<
+>>quadratic_variable :: uu := uFull.uFull <<
+>>quadratic_variable :: uv := uFull.vFull <<
+>>quadratic_variable :: uw := uFull.wFull <<
+>>quadratic_variable :: vv := vFull.vFull <<
+>>quadratic_variable :: vw := vFull.wFull <<
+>>quadratic_variable :: ww := wFull.wFull <<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: u <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: v <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: w <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: p <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: chi <<
+>>add_BC_for_this_var :: 0 <<
+>>new_equation :: 1 <<
+>>add_d/dt_term  :: + Iz.mz.mz.u <<
+>>add_rhs_linear :: - mz.mz.p <<
+>>add_rhs_linear :: + two.Iz.mz.p <<
+>>add_rhs_linear :: + iRe.mz.chi - iRe.Iz.chi + iRe.Iz.mz.dy.dy.u <<
+>>add_rhs_linear :: - iRe.Iz.u - iRe.two.Iz.dy.v + iRe.Iz.mz.mz.dx.dx.u <<
+>>add_rhs_NL     :: - mz.mz.uu + Iz.mz.uu <<
+>>add_rhs_NL     :: - Iz.mz.dy.uv - Iz.mz.mz.dx.uw <<
+>>add_rhs_NL     :: + Iz.mz.vv <<
+>>add_rhs_linear :: - Iz.va.mz.mz.dy.u <<
+>>add_rhs_linear :: - Iz.vb.dy.u <<
+>>add_rhs_linear :: + two.Iz.va.mz.mz.v <<
+>>add_rhs_linear :: + two.Iz.vb.v <<
+>>new_equation :: 1 <<
+>>add_rhs_linear :: + Iz.chi <<
+>>add_rhs_linear :: + Iz.u - mz.u <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: + chi + u + dy.v + mz.dx.w <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.mz.mz.v <<
+>>add_rhs_linear :: - Iz.Iz.mz.dy.p <<
+>>add_rhs_linear :: + iRe.mz.mz.v - three.iRe.Iz.mz.v <<
+>>add_rhs_linear :: + iRe.Iz.Iz.dy.dy.v <<
+>>add_rhs_linear :: + iRe.Iz.Iz.mz.mz.dx.dx.v <<
+>>add_rhs_linear :: + two.iRe.Iz.Iz.dy.u <<
+>>add_rhs_NL     :: - Iz.mz.mz.uv  - Iz.Iz.mz.dy.vv <<
+>>add_rhs_NL     :: - Iz.Iz.mz.mz.dx.vw  << 
+>>add_rhs_linear :: - Iz.va.mz.mz.mz.u <<
+>>add_rhs_linear :: - Iz.vb.mz.u <<
+>>add_rhs_linear :: - Iz.Iz.two.va.mz.mz.dy.v <<
+>>add_rhs_linear :: - Iz.Iz.two.vb.dy.v <<
+>>add_rhs_linear :: - Iz.Iz.va.mz.mz.mz.dx.w <<
+>>add_rhs_linear :: - Iz.Iz.vb.mz.dx.w <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.mz.mz.w <<
+>>add_rhs_linear :: - Iz.Iz.mz.mz.dx.p <<
+>>add_rhs_linear :: + iRe.mz.mz.w - three.iRe.Iz.mz.w <<
+>>add_rhs_linear :: + iRe.Iz.Iz.dy.dy.w <<
+>>add_rhs_linear :: + iRe.Iz.Iz.w <<
+>>add_rhs_linear :: + iRe.Iz.Iz.mz.mz.dx.dx.w <<
+>>add_rhs_NL     :: - Iz.mz.mz.uw + Iz.Iz.mz.uw - Iz.Iz.mz.dy.vw <<
+>>add_rhs_NL     :: - Iz.Iz.mz.mz.dx.ww <<
+>>add_rhs_linear :: - Iz.Iz.va.mz.mz.dy.w <<
+>>add_rhs_linear :: - Iz.Iz.vb.dy.w <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: vMean <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.mz.mz.vMean <<
+>>add_rhs_linear :: + iRe.mz.mz.vMean - three.iRe.Iz.mz.vMean <<
+>>add_rhs_NL     :: - Iz.mz.mz.uv + Iz.Iz.mz.uv <<
+>>add_rhs_NL     :: - Iz.Iz.mz.uv << 
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: wMean <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.mz.mz.wMean <<
+>>add_rhs_linear :: + iRe.mz.mz.wMean - three.iRe.Iz.mz.wMean <<
+>>add_rhs_linear :: + iRe.Iz.Iz.wMean <<
+>>add_rhs_NL     :: - Iz.mz.mz.uw + Iz.Iz.mz.uw <<
+>>====================================<<
+>>EOF<<
+
