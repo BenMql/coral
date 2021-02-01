@@ -1,7 +1,7 @@
 import numpy as np
 from sys import argv, exit
 try:
-   from scipy.fft import dct, idct
+   from scipy.fft import dct, idct, rfft, irfft
 except ImportError:
    import scipy as sp
    print ('The fft module was not found in scipy.')
@@ -68,18 +68,42 @@ def read_and_resize(path_to_vols, vol_name, ntup, toDir='./'):
    aux2 = idct(newcoefs,axis=-1)*NZ/NZAA
 
    ## now we need to interpolate in the xy-plane...
-   xold = np.linspace(0,1,num=NXAA, endpoint=False)
-   yold = np.linspace(0,1,num=NYAA, endpoint=False)
-   xnew = np.linspace(0,1,num=ntup[0], endpoint=False)
-   ynew = np.linspace(0,1,num=ntup[1], endpoint=False)
    aux1 = np.zeros((NXAA, ntup[1],ntup[2]), dtype=np.float_)
-   for ix in range(NXAA):
-     for iz in range(ntup[2]):
-        aux1[ix,:,iz] = np.interp(ynew, yold, aux2[ix,:,iz], period=1.)
+   if (NYAA==ntup[1]):
+     aux1=np.copy(aux2)
+   elif (NYAA<ntup[1]):
+     spectral_buffer = rfft(aux2, axis=1)
+     padded_spectral_buffer = np.zeros((NXAA, ntup[1]//2+1, ntup[2]), dtype=np.complex_)
+     padded_spectral_buffer[:,:(NYAA//2+1),:] = spectral_buffer
+     aux1 = irfft(padded_spectral_buffer, axis=1)/NYAA*ntup[1]
+     del padded_spectral_buffer, spectral_buffer
+   else:
+     spectral_buffer = rfft(aux2, axis=1)
+     truncated_spectral_buffer = np.zeros((NXAA, ntup[1]//2+1, ntup[2]), dtype=np.complex_)
+     truncated_spectral_buffer[:,:(ntup[1]//3),:] = spectral_buffer[:,:(ntup[1]//3),:]
+     truncated_spectral_buffer.imag[:,-1,:]=0.
+     truncated_spectral_buffer.imag[:, 0,:]=0.
+     aux1 = irfft(truncated_spectral_buffer, axis=1)/NYAA*ntup[1]
+     del truncated_spectral_buffer, spectral_buffer
+   del aux2
    deaPhys = np.zeros((ntup[0], ntup[1],ntup[2]), dtype=np.float_)
-   for iy in range(ntup[1]):
-     for iz in range(ntup[2]):
-        deaPhys[:,iy,iz] = np.interp(xnew, xold, aux1[:,iy,iz], period=1.)
+   if (NXAA==ntup[0]):
+     deaPhys=np.copy(aux1)
+   elif (NXAA<ntup[0]):
+     spectral_buffer = rfft(aux1, axis=0)
+     padded_spectral_buffer = np.zeros((ntup[0]//2+1, ntup[1], ntup[2]), dtype=np.complex_)
+     padded_spectral_buffer[:(NXAA//2+1),:,:] = spectral_buffer
+     deaPhys = irfft(padded_spectral_buffer, axis=0)/NXAA*ntup[0]
+     del padded_spectral_buffer, spectral_buffer
+   else:
+     spectral_buffer = rfft(aux1, axis=0)
+     truncated_spectral_buffer = np.zeros((ntup[0]//2+1, ntup[1], ntup[2]), dtype=np.complex_)
+     truncated_spectral_buffer[:(ntup[0]//3),:,:] = spectral_buffer[:(ntup[0]//3),:,:]
+     truncated_spectral_buffer.imag[-1,:,:]=0.
+     truncated_spectral_buffer.imag[ 0,:,:]=0.
+     deaPhys = irfft(truncated_spectral_buffer, axis=0)/NXAA*ntup[0]
+     del truncated_spectral_buffer, spectral_buffer
+   del aux1
    deaPhys.tofile(toDir+'/Restart/'+vol_name)
    return ierror
 
