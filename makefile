@@ -5,19 +5,19 @@ MPICC = mpicc
 
 # Directories: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 DECOMP_SRC = $(HOME)/software/2decomp_fft/src/
-MODDIR     = $(CORAL_ROOT).mod/
-BUILD_DIR  = $(CORAL_ROOT)build/
-SPARSE_SRC = $(CORAL_ROOT)src/sparse_tools/
-TEXT_SRC   = $(CORAL_ROOT)src/text_parsing/
-CHEBY_SRC  = $(CORAL_ROOT)src/cheby_tools/
-TSTEP_SRC  = $(CORAL_ROOT)src/timesteppers/
-FFTW_SRC   = $(CORAL_ROOT)src/fftw_tools/
-MISC_SRC   = $(CORAL_ROOT)src/misc/
-OUT_SRC    = $(CORAL_ROOT)src/output_pack/
-PENCILS    = $(CORAL_ROOT)src/layer_pencils/
-MPI_SRC    = $(CORAL_ROOT)src/MPI_tools/
+MODDIR     = $(CORAL_ROOT)/.mod/
+BUILD_DIR  = $(CORAL_ROOT)/build/
+SPARSE_SRC = $(CORAL_ROOT)/src/sparse_tools/
+TEXT_SRC   = $(CORAL_ROOT)/src/text_parsing/
+CHEBY_SRC  = $(CORAL_ROOT)/src/cheby_tools/
+TSTEP_SRC  = $(CORAL_ROOT)/src/timesteppers/
+FFTW_SRC   = $(CORAL_ROOT)/src/fftw_tools/
+MISC_SRC   = $(CORAL_ROOT)/src/misc/
+OUT_SRC    = $(CORAL_ROOT)/src/output_pack/
+PENCILS    = $(CORAL_ROOT)/src/layer_pencils/
+MPI_SRC    = $(CORAL_ROOT)/src/MPI_tools/
 MKL_LIB    = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl -m64 -I${MKLROOT}/include
-FFTW_INC:=$(FFTW_ROOT)include/
+FFTW_INC:=$(FFTW_ROOT)/include/
 FFTW_LIB:=$(FFTW_ROOT)lib/
 JMODDIR = $(MOD_DIR_FLAG)$(MODDIR)
 
@@ -27,7 +27,7 @@ $(info $(shell mkdir -p $(MODDIR)))
 $(CHEBY_SRC)lapack_module.o: ${MKLROOT}/include/lapack.f90
 	$(MPIFC) $(MPIFLAGS) -c $^ -o $@ $(JMODDIR)
 
-$(FFTW_SRC)fftw3_wrap.o: $(FFTW_SRC)fftw3_wrap.f90
+$(FFTW_SRC)fftw3_wrap.o: $(FFTW_SRC)/fftw3_wrap.f90
 	$(MPIFC) $(MPIFLAGS) -c $^ -o $@ $(JMODDIR) -I$(FFTW_INC)
 
 GIT_VERSION:="$(shell git describe --abbrev=4 --dirty --always --tags)"
