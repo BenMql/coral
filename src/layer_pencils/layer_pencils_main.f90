@@ -141,20 +141,6 @@ Program layer_pencils_main
 
    call main%march_forward ( timings%dt_current )
 
-   !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   !!.                                                                .
-   !!.                       SOME OUTPUTS                             .
-   !!.                                                                .
-   !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-   !call output_bookkeeping%export_due_qties(buf4sol, timings%i_timestep, &
-                                  !output_directory, output_dir_length)
-   if (timings%checkpoint_counter .eq. timings%checkpoint_period) then
-      call main%export_checkpoints()
-      call timings%tofile(main%io_bookkeeping%output_directory//'/CheckPoints/dt.sav',&
-                          main%io_bookkeeping%output_dir_length+19)
-      timings%checkpoint_counter = 0
-   end if
 
    !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !!.                                                                .
@@ -176,6 +162,19 @@ Program layer_pencils_main
    !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    call timings%apply_cfl( main%cargo%cfl_based_DT ) 
    call timings%increment()
+
+   !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !!.                                                                .
+   !!.                       SOME OUTPUTS                             .
+   !!.                                                                .
+   !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   if (timings%checkpoint_counter .eq. timings%checkpoint_period) then
+      call main%export_checkpoints()
+      call timings%tofile(main%io_bookkeeping%output_directory//'/CheckPoints/dt.sav',&
+                          main%io_bookkeeping%output_dir_length+19)
+      timings%checkpoint_counter = 0
+   end if
 !
    !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !!.                                                                .

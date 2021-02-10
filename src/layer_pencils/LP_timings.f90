@@ -98,6 +98,7 @@ subroutine read_timings_from_file(self,fileStr, fileLen)
       open(unit=9, file=fileStr, status='old', access='stream')
       read(9) self%dt, self%absolute_time
       close(9)
+      self%dt = self%dt / 50.
    end if
    call MPI_Bcast(self%dt,            1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)
    call MPI_Bcast(self%absolute_time, 1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)
