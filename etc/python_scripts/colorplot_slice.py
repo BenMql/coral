@@ -2,7 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from get_coral_params import domDecomp, coralGeom
-from sys import argv
+from sys import argv, version_info
+
 
 
 dd = domDecomp  (0)
@@ -18,13 +19,17 @@ z = geom.center+ 0.5*geom.gap*np.cos ((
 x = np.linspace(0,geom.Lx, NXAA)
 y = np.linspace(0,geom.Ly, NYAA)
 
-time = 10000
-var = 4 # this is temperature
 
-kindOfVar = input('Linear (l) or Quadratic (q) variable? [l/q] >> ')
-varNum    = input('Var. number? [integer]                      >> ')
-posStr    = input('Slice position? [eg x00001, y00512, z00064] >> ')
-timeStr   = input('Time? [integer]                             >> ')
+if version_info[0]<3:
+  kindOfVar = raw_input('Linear (l) or Quadratic (q) variable? [l/q] >> ')
+  varNum    = raw_input('Var. number? [integer]                      >> ')
+  posStr    = raw_input('Slice position? [eg x00001, y00512, z00064] >> ')
+  timeStr   = raw_input('Time? [integer]                             >> ')
+else:
+  kindOfVar = input('Linear (l) or Quadratic (q) variable? [l/q] >> ')
+  varNum    = input('Var. number? [integer]                      >> ')
+  posStr    = input('Slice position? [eg x00001, y00512, z00064] >> ')
+  timeStr   = input('Time? [integer]                             >> ')
 
 varDict = {"l" : "linear", "q" : "quadratic",
            "L" : "linear", "Q" : "quadratic"}
