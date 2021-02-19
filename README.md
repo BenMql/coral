@@ -22,6 +22,6 @@ See current version and history [here](https://github.com/BenMql/coral/wiki/vers
 
 ## Benchmarks
 + [Rayleigh-Benard](https://github.com/BenMql/coral/wiki/benchmark01_rayleigh_benard)
-+ [Rotating Rayleigh-Benard](./benchmark02_RRBC_julien_JFM96)
++ [Rotating Rayleigh-Benard](https://github.com/BenMql/coral/wiki/benchmark02_RRBC_julien_JFM96)
 
 ![coral.jpg](http://www.normalesup.org/~benmiquel/misc/coral.jpg)
