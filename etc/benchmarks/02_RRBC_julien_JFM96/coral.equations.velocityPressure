@@ -1,0 +1,106 @@
+>>Param :: Prandtl := 1.d0 <<
+>>Param :: Rayleigh := 2.81d5 <<   
+>>Param :: iEkman := 707.1067811 <<     
+>>====================================<<
+>>linear_variable_kxky :: u <<
+>>linear_variable_kxky :: v <<
+>>linear_variable_kxky :: w <<
+>>linear_variable_kxky :: t <<
+>>linear_variable_kxky :: p <<
+>>linear_variable_kxky :: chi <<
+>>linear_variable_mean :: uMean <<
+>>linear_variable_mean :: vMean <<
+>>linear_variable_mean :: tMean <<
+>>====================================<<
+>>linear_variable_full       :: uFull <<
+>>linear_variable_full_build :: + uMean <<
+>>linear_variable_full_build :: + u <<
+>>====================================<<
+>>linear_variable_full       :: vFull <<
+>>linear_variable_full_build :: + vMean <<
+>>linear_variable_full_build :: + v <<
+>>====================================<<
+>>linear_variable_full       :: wFull <<
+>>linear_variable_full_build :: + w <<
+>>====================================<<
+>>linear_variable_full       :: tFull <<
+>>linear_variable_full_build :: + tMean <<
+>>linear_variable_full_build :: + t <<
+>>====================================<<
+>>quadratic_variable :: uu := uFull.uFull <<
+>>quadratic_variable :: uv := uFull.vFull <<
+>>quadratic_variable :: uw := uFull.wFull <<
+>>quadratic_variable :: vv := vFull.vFull <<
+>>quadratic_variable :: vw := vFull.wFull <<
+>>quadratic_variable :: ww := wFull.wFull <<
+>>quadratic_variable :: tu := tFull.uFull <<
+>>quadratic_variable :: tv := tFull.vFull <<
+>>quadratic_variable :: tw := tFull.wFull <<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: u <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: v <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: w <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: p <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: t <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: chi <<
+>>add_BC_for_this_var :: 0 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.u <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.dx.dx.u + Prandtl.Iz.Iz.dy.dy.u + Prandtl.u <<
+>>add_rhs_linear :: - Iz.Iz.dx.p <<
+>>add_rhs_linear :: + Prandtl.iEkman.Iz.Iz.v <<
+>>add_rhs_NL     :: - Iz.Iz.dx.uu - Iz.Iz.dy.uv - Iz.uw <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.v <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.dx.dx.v + Prandtl.Iz.Iz.dy.dy.v + Prandtl.v <<
+>>add_rhs_linear :: - Iz.Iz.dy.p <<
+>>add_rhs_linear :: - Prandtl.iEkman.Iz.Iz.u <<
+>>add_rhs_NL     :: - Iz.Iz.dx.uv - Iz.Iz.dy.vv - Iz.vw <<
+>>new_equation :: 1 <<
+>>add_d/dt_term  :: + Iz.w <<
+>>add_rhs_linear :: + Prandtl.Iz.dx.dx.w + Prandtl.Iz.dy.dy.w + Prandtl.chi <<
+>>add_rhs_linear :: - p <<
+>>add_rhs_linear :: + Rayleigh.Prandtl.Iz.t <<
+>>add_rhs_NL     :: - Iz.dx.uw - Iz.dy.vw - ww <<
+>>new_equation :: 1 <<
+>>add_rhs_linear :: + w - Iz.chi <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: + chi + dx.u + dy.v <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.t <<
+>>add_rhs_linear :: + Iz.Iz.dx.dx.t + Iz.Iz.dy.dy.t + t <<
+>>add_rhs_linear :: + Iz.Iz.w <<
+>>add_rhs_NL     :: - Iz.Iz.dx.tu - Iz.Iz.dy.tv - Iz.tw <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: uMean <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: vMean <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.uMean <<
+>>add_rhs_linear :: + Prandtl.uMean <<
+>>add_rhs_linear :: + Prandtl.iEkman.Iz.Iz.vMean <<
+>>add_rhs_NL     :: - Iz.uw <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.vMean <<
+>>add_rhs_linear :: + Prandtl.vMean <<
+>>add_rhs_linear :: - Prandtl.iEkman.Iz.Iz.uMean <<
+>>add_rhs_NL     :: - Iz.vw <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: tMean <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.tMean <<
+>>add_rhs_linear :: + tMean <<
+>>add_rhs_NL     :: - Iz.tw <<
+>>====================================<<
+>>EOF<<
+
