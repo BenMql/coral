@@ -107,8 +107,8 @@
    Integer :: N2, N3, sta3
    Character(len=1), Intent(In) :: transpose_A
    type(C_Ptr) :: dumptr
-   Complex(Kind=dp), Pointer :: ptr2B(:,:)
-   Complex(Kind=dp), Pointer :: ptr2C(:,:)
+   Real(Kind=dp), Pointer :: ptr2B(:,:)
+   Real(Kind=dp), Pointer :: ptr2C(:,:)
    Character :: matdescra(4)
    matdescra = ['G','X', 'N', 'F']
    sta3 = 1
@@ -169,12 +169,12 @@
    Type(dcsr_matrix), Intent(in) :: A
    Real(Kind=dp), Pointer :: B(:,:)                                        
    Real(Kind=dp), Pointer :: C(:,:)                                        
-   REal(Kind=dp), Intent(in) :: dalpha, dbeta
+   Real(Kind=dp), Intent(in) :: dalpha, dbeta
    Integer, Intent(In) :: N3
    Integer, Intent(In) :: sta3
    Character(len=1), Intent(In) :: transpose_A
    type(C_Ptr) :: dumptr
-   REal(Kind=dp), Pointer :: ptr2B(:,:)
+   Real(Kind=dp), Pointer :: ptr2B(:,:)
    Real(Kind=dp), Pointer :: ptr2C(:,:)
    Character :: matdescra(4)
    matdescra = ['G','X', 'N', 'F']
