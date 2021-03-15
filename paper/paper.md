@@ -32,7 +32,7 @@ Coral has been validated on a variety of test cases (gathered in `etc/benchmarks
 
 # State of the field
 
-Among the existing flexible spectral solvers for marching in time PDEs in cartesian geometries, alternatives to Coral include Dedalus [@dedalus], spectralDNS [@spectralDNS], FluidDyn [@fluiddyn] and FluidSim [@fluidsim]. For more complex geometries, options include `nek5000` [@nek5000], Nektar++ [@nektar++], Freefem++ [@freefem++], and Fenics [@fenics].
+Among the existing flexible spectral solvers for marching in time PDEs in cartesian geometries, alternatives to Coral include Dedalus [@dedalus], spectralDNS [@spectralDNS], FluidDyn [@fluiddyn] and FluidSim [@fluidsim]. For more complex geometries, options include `nek5000` [@nek5000], Nektar++ [@nektar], Freefem++ [@freefem], and Fenics [@fenics].
 
 # Acknowledgements
 
