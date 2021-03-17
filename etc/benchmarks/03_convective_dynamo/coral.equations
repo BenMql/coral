@@ -1,0 +1,259 @@
+>>Param :: Prandtl := 1.d0 <<
+>>Param :: PrOverPm := 1.d0 <<
+>>Param :: Rayleigh := 1.2d8 <<
+>>Param :: iEkman := 2.d5 <<
+>>====================================<<
+>>Param :: two := 2.d0 <<
+>>Param :: three := 3.d0 <<
+>>Param :: four := 4.d0 <<
+>>====================================<<
+>>linear_variable_kxky :: psi <<
+>>linear_variable_kxky :: phi <<
+>>linear_variable_kxky :: theta <<
+>>linear_variable_kxky :: Bpsi <<
+>>linear_variable_kxky :: Bphi <<
+>>linear_variable_mean :: uMean <<
+>>linear_variable_mean :: vMean <<
+>>linear_variable_mean :: BxMean <<
+>>linear_variable_mean :: ByMean <<
+>>linear_variable_mean :: tMean <<
+>>====================================<<
+>>linear_variable_full       :: uFull <<
+>>linear_variable_full_build :: + uMean <<
+>>linear_variable_full_build :: + dy.psi <<
+>>linear_variable_full_build :: + dx.dz.phi <<
+>>====================================<<
+>>linear_variable_full       :: vFull <<
+>>linear_variable_full_build :: + vMean <<
+>>linear_variable_full_build :: - dx.psi <<
+>>linear_variable_full_build :: + dz.dy.phi <<
+>>====================================<<
+>>linear_variable_full       :: wFull <<
+>>linear_variable_full_build :: - dx.dx.phi <<
+>>linear_variable_full_build :: - dy.dy.phi <<
+>>====================================<<
+>>linear_variable_full       :: BxFull <<
+>>linear_variable_full_build :: + BxMean <<
+>>linear_variable_full_build :: + dy.Bpsi <<
+>>linear_variable_full_build :: + dx.dz.Bphi <<
+>>====================================<<
+>>linear_variable_full       :: ByFull <<
+>>linear_variable_full_build :: + ByMean <<
+>>linear_variable_full_build :: - dx.Bpsi <<
+>>linear_variable_full_build :: + dz.dy.Bphi <<
+>>====================================<<
+>>linear_variable_full       :: BzFull <<
+>>linear_variable_full_build :: - dx.dx.Bphi <<
+>>linear_variable_full_build :: - dy.dy.Bphi <<
+>>====================================<<
+>>linear_variable_full       :: tFull <<
+>>linear_variable_full_build :: + tMean <<
+>>linear_variable_full_build :: + theta <<
+>>====================================<<
+>>quadratic_variable :: uu := uFull.uFull <<
+>>quadratic_variable :: uv := uFull.vFull <<
+>>quadratic_variable :: uw := uFull.wFull <<
+>>quadratic_variable :: vv := vFull.vFull <<
+>>quadratic_variable :: vw := vFull.wFull <<
+>>quadratic_variable :: ww := wFull.wFull <<
+>>quadratic_variable :: tu := tFull.uFull <<
+>>quadratic_variable :: tv := tFull.vFull <<
+>>quadratic_variable :: tw := tFull.wFull <<
+>>quadratic_variable :: uzbx := wFull.BxFull <<
+>>quadratic_variable :: uxbz := uFull.BzFull <<
+>>quadratic_variable :: uzby := wFull.ByFull <<
+>>quadratic_variable :: uybz := vFull.BzFull <<
+>>quadratic_variable :: uybx := vFull.BxFull <<
+>>quadratic_variable :: uxby := uFull.ByFull <<
+>>quadratic_variable :: uzby := wFull.ByFull <<
+>>quadratic_variable :: uybz := vFull.BzFull <<
+>>quadratic_variable :: bxbx := BxFull.BxFull <<
+>>quadratic_variable :: bxby := BxFull.ByFull <<
+>>quadratic_variable :: bxbz := BxFull.BzFull <<
+>>quadratic_variable :: byby := ByFull.ByFull <<
+>>quadratic_variable :: bybz := ByFull.BzFull <<
+>>quadratic_variable :: bzbz := BzFull.BzFull <<
+>>====================================<<
+>>====================================<<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: psi <<
+>>add_BC_for_this_var :: 21 <<
+>>linearly_coupled_var :: phi <<
+>>add_BC_for_this_var :: 41 <<
+>>linearly_coupled_var :: theta <<
+>>add_BC_for_this_var :: 20 <<
+>>====================================<<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: - Iz.Iz.dx.dx.psi <<
+>>add_d/dt_term  :: - Iz.Iz.dy.dy.psi <<
+>>add_rhs_linear :: - Prandtl.Iz.Iz.dy.dy.dy.dy.psi <<
+>>add_rhs_linear :: - Prandtl.Iz.Iz.dx.dx.dx.dx.psi <<
+>>add_rhs_linear :: - two.Prandtl.Iz.Iz.dx.dx.dy.dy.psi <<
+>>add_rhs_linear :: - Prandtl.dy.dy.psi <<
+>>add_rhs_linear :: - Prandtl.dx.dx.psi <<
+>>add_rhs_linear :: - iEkman.Prandtl.Iz.dx.dx.phi <<
+>>add_rhs_linear :: - iEkman.Prandtl.Iz.dy.dy.phi <<
+>>add_rhs_NL     :: - Iz.Iz.dx.dx.uv <<
+>>add_rhs_NL     :: - Iz.Iz.dx.dy.vv <<
+>>add_rhs_NL     :: + Iz.Iz.dx.dy.uu <<
+>>add_rhs_NL     :: + Iz.Iz.dy.dy.uv <<
+>>add_rhs_NL     :: - Iz.dx.vw <<
+>>add_rhs_NL     :: + Iz.dy.uw <<
+>>add_rhs_NL     :: + Iz.Iz.dx.dx.bxby <<
+>>add_rhs_NL     :: + Iz.Iz.dx.dy.byby <<
+>>add_rhs_NL     :: - Iz.Iz.dx.dy.bxbx <<
+>>add_rhs_NL     :: - Iz.Iz.dy.dy.bxby <<
+>>add_rhs_NL     :: + Iz.dx.bybz <<
+>>add_rhs_NL     :: - Iz.dy.bxbz <<
+>>new_equation :: 4 <<
+>>add_d/dt_term  :: + Iz.Iz.Iz.Iz.dx.dx.dx.dx.phi <<
+>>add_d/dt_term  :: + Iz.Iz.Iz.Iz.dy.dy.dy.dy.phi <<
+>>add_d/dt_term  :: + two.Iz.Iz.Iz.Iz.dy.dy.dx.dx.phi <<
+>>add_d/dt_term  :: + Iz.Iz.dx.dx.phi <<
+>>add_d/dt_term  :: + Iz.Iz.dy.dy.phi <<
+>>add_rhs_linear :: + Prandtl.dx.dx.phi <<
+>>add_rhs_linear :: + Prandtl.dy.dy.phi <<
+>>add_rhs_linear :: + two.Prandtl.Iz.Iz.dy.dy.dy.dy.phi <<
+>>add_rhs_linear :: + two.Prandtl.Iz.Iz.dx.dx.dx.dx.phi <<
+>>add_rhs_linear :: + four.Prandtl.Iz.Iz.dx.dx.dy.dy.phi <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.Iz.Iz.dx.dx.dx.dx.dx.dx.phi <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.Iz.Iz.dy.dy.dy.dy.dy.dy.phi <<
+>>add_rhs_linear :: + three.Prandtl.Iz.Iz.Iz.Iz.dx.dx.dy.dy.dy.dy.phi <<
+>>add_rhs_linear :: + three.Prandtl.Iz.Iz.Iz.Iz.dx.dx.dx.dx.dy.dy.phi <<
+>>add_rhs_linear :: - Rayleigh.Prandtl.Iz.Iz.Iz.Iz.dx.dx.theta <<
+>>add_rhs_linear :: - Rayleigh.Prandtl.Iz.Iz.Iz.Iz.dy.dy.theta <<
+>>add_rhs_linear :: - iEkman.Prandtl.Iz.Iz.Iz.dx.dx.psi <<
+>>add_rhs_linear :: - iEkman.Prandtl.Iz.Iz.Iz.dy.dy.psi <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dx.dx.dx.uw <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dx.dy.dy.uw <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dy.dx.dx.vw <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dy.dy.dy.vw <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.dy.dy.ww <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.dx.dx.ww <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.dx.dx.uu <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.dy.dy.vv <<
+>>add_rhs_NL     :: - two.Iz.Iz.Iz.dx.dy.uv <<
+>>add_rhs_NL     :: - Iz.Iz.dx.uw <<
+>>add_rhs_NL     :: - Iz.Iz.dy.vw <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.Iz.dx.dx.dx.bxbz <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.Iz.dx.dy.dy.bxbz <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.Iz.dy.dx.dx.bybz <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.Iz.dy.dy.dy.bybz <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.dy.dy.bzbz <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.dx.dx.bzbz <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.dx.dx.bxbx <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.dy.dy.byby <<
+>>add_rhs_NL     :: + two.Iz.Iz.Iz.dx.dy.bxby <<
+>>add_rhs_NL     :: + Iz.Iz.dx.bxbz <<
+>>add_rhs_NL     :: + Iz.Iz.dy.bybz <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.theta <<
+>>add_rhs_linear :: + Iz.Iz.dx.dx.theta + Iz.Iz.dy.dy.theta + theta <<
+>>add_rhs_linear :: - Iz.Iz.dx.dx.phi - Iz.Iz.dy.dy.phi <<
+>>add_rhs_NL     :: - Iz.Iz.dx.tu - Iz.Iz.dy.tv - Iz.tw <<
+>>====================================<<
+>>====================================<<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: Bpsi <<
+>>add_BC_for_this_var :: 21 <<
+>>====================================<<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: - Iz.Iz.dx.dx.Bpsi <<
+>>add_d/dt_term  :: - Iz.Iz.dy.dy.Bpsi <<
+>>add_rhs_linear :: - PrOverPm.Iz.Iz.dy.dy.dy.dy.Bpsi <<
+>>add_rhs_linear :: - PrOverPm.Iz.Iz.dx.dx.dx.dx.Bpsi <<
+>>add_rhs_linear :: - two.PrOverPm.Iz.Iz.dx.dx.dy.dy.Bpsi <<
+>>add_rhs_linear :: - PrOverPm.dy.dy.Bpsi <<
+>>add_rhs_linear :: - PrOverPm.dx.dx.Bpsi <<
+>>add_rhs_NL     :: + Iz.Iz.dx.dx.uybx <<
+>>add_rhs_NL     :: + Iz.Iz.dy.dy.uybx <<
+>>add_rhs_NL     :: - Iz.Iz.dx.dx.uxby <<
+>>add_rhs_NL     :: - Iz.Iz.dy.dy.uxby <<
+>>add_rhs_NL     :: - Iz.dx.uzby <<
+>>add_rhs_NL     :: + Iz.dx.uybz <<
+>>add_rhs_NL     :: - Iz.dy.uxbz <<
+>>add_rhs_NL     :: + Iz.dy.uzbx <<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: Bphi <<
+>>add_BC_for_this_var :: 41 <<
+>>====================================<<
+>>new_equation :: 4 <<
+>>add_d/dt_term  :: + Iz.Iz.Iz.Iz.dx.dx.dx.dx.Bphi <<
+>>add_d/dt_term  :: + Iz.Iz.Iz.Iz.dy.dy.dy.dy.Bphi <<
+>>add_d/dt_term  :: + two.Iz.Iz.Iz.Iz.dy.dy.dx.dx.Bphi <<
+>>add_d/dt_term  :: + Iz.Iz.dx.dx.Bphi <<
+>>add_d/dt_term  :: + Iz.Iz.dy.dy.Bphi <<
+>>add_rhs_linear :: + PrOverPm.dx.dx.Bphi <<
+>>add_rhs_linear :: + PrOverPm.dy.dy.Bphi <<
+>>add_rhs_linear :: + two.PrOverPm.Iz.Iz.dy.dy.dy.dy.Bphi <<
+>>add_rhs_linear :: + two.PrOverPm.Iz.Iz.dx.dx.dx.dx.Bphi <<
+>>add_rhs_linear :: + four.PrOverPm.Iz.Iz.dx.dx.dy.dy.Bphi <<
+>>add_rhs_linear :: + PrOverPm.Iz.Iz.Iz.Iz.dx.dx.dx.dx.dx.dx.Bphi <<
+>>add_rhs_linear :: + PrOverPm.Iz.Iz.Iz.Iz.dy.dy.dy.dy.dy.dy.Bphi <<
+>>add_rhs_linear :: + three.PrOverPm.Iz.Iz.Iz.Iz.dx.dx.dy.dy.dy.dy.Bphi <<
+>>add_rhs_linear :: + three.PrOverPm.Iz.Iz.Iz.Iz.dx.dx.dx.dx.dy.dy.Bphi <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dx.dx.dx.uxbz <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dy.dy.dx.uxbz <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.Iz.dx.dx.dx.uzbx <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.Iz.dy.dy.dx.uzbx <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dx.dx.dy.uybz <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dy.dy.dy.uybz <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.Iz.dx.dx.dy.uzby <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.Iz.dy.dy.dy.uzby <<
+>>add_rhs_NL     :: - Iz.Iz.dx.uzbx <<
+>>add_rhs_NL     :: + Iz.Iz.dx.uxbz <<
+>>add_rhs_NL     :: - Iz.Iz.dy.uzby <<
+>>add_rhs_NL     :: + Iz.Iz.dy.uybz <<
+>>====================================<<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: uMean <<
+>>add_BC_for_this_var :: 21 <<
+>>linearly_coupled_var :: vMean <<
+>>add_BC_for_this_var :: 21 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.uMean <<
+>>add_rhs_linear :: + Prandtl.uMean <<
+>>add_rhs_linear :: + Prandtl.iEkman.Iz.Iz.vMean <<
+>>add_rhs_NL     :: - Iz.uw <<
+>>add_rhs_NL     :: + Iz.bxbz <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.vMean <<
+>>add_rhs_linear :: + Prandtl.vMean <<
+>>add_rhs_linear :: - Prandtl.iEkman.Iz.Iz.uMean <<
+>>add_rhs_NL     :: - Iz.vw <<
+>>add_rhs_NL     :: + Iz.bybz <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: tMean <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.tMean <<
+>>add_rhs_linear :: + tMean <<
+>>add_rhs_NL     :: - Iz.tw <<
+>>====================================<<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: BxMean <<
+>>add_BC_for_this_var :: 21 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.BxMean <<
+>>add_rhs_linear :: + PrOverPm.BxMean <<
+>>add_rhs_NL     :: - Iz.uzbx <<
+>>add_rhs_NL     :: + Iz.uxbz <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: ByMean <<
+>>add_BC_for_this_var :: 21 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.ByMean <<
+>>add_rhs_linear :: + PrOverPm.ByMean <<
+>>add_rhs_NL     :: - Iz.uzby <<
+>>add_rhs_NL     :: + Iz.uybz <<
+>>EOF<<
+
+
+

@@ -1,0 +1,33 @@
+>>Volume :: uFull ;; Period= 10000 <<
+>>Volume :: vFull ;; Period= 10000 <<
+>>Volume :: wFull ;; Period= 10000 <<
+>>Volume :: tFull ;; Period= 10000 <<
+>>ZSlice :: tFull ;; Period= 1000 ;; Position= 96 <<
+>>ZSlice :: uFull ;; Period= 1000 ;; Position= 96 <<
+>>ZSlice :: vFull ;; Period= 1000 ;; Position= 96 <<
+>>ZSlice :: wFull ;; Period= 1000 ;; Position= 96 <<
+>>ZSlice :: BxFull ;; Period= 1000 ;; Position= 96 <<
+>>ZSlice :: ByFull ;; Period= 1000 ;; Position= 96 <<
+>>ZSlice :: BzFull ;; Period= 1000 ;; Position= 96 <<
+>>ZSlice :: tFull ;; Period= 1000 ;; Position= 32 <<
+>>ZSlice :: uFull ;; Period= 1000 ;; Position= 32 <<
+>>ZSlice :: vFull ;; Period= 1000 ;; Position= 32 <<
+>>ZSlice :: wFull ;; Period= 1000 ;; Position= 32 <<
+>>ZSlice :: BxFull ;; Period= 1000 ;; Position= 32 <<
+>>ZSlice :: ByFull ;; Period= 1000 ;; Position= 32 <<
+>>ZSlice :: BzFull ;; Period= 1000 ;; Position= 32 <<
+>>XSlice :: tFull ;; Period= 1000 ;; Position= 1 <<
+>>XSlice :: uFull ;; Period= 1000 ;; Position= 1 <<
+>>XSlice :: vFull ;; Period= 1000 ;; Position= 1 <<
+>>XSlice :: wFull ;; Period= 1000 ;; Position= 1 <<
+>>XSlice :: BxFull ;; Period= 1000 ;; Position= 1 <<
+>>XSlice :: ByFull ;; Period= 1000 ;; Position= 1 <<
+>>XSlice :: BzFull ;; Period= 1000 ;; Position= 1 <<
+>>YSlice :: tFull ;; Period= 1000 ;; Position= 1 <<
+>>YSlice :: uFull ;; Period= 1000 ;; Position= 1 <<
+>>YSlice :: vFull ;; Period= 1000 ;; Position= 1 <<
+>>YSlice :: wFull ;; Period= 1000 ;; Position= 1 <<
+>>YSlice :: BxFull ;; Period= 1000 ;; Position= 1 <<
+>>YSlice :: ByFull ;; Period= 1000 ;; Position= 1 <<
+>>YSlice :: BzFull ;; Period= 1000 ;; Position= 1 <<
+>>EOF<<
