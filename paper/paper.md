@@ -28,7 +28,7 @@ Natural and industrial flows exist in numerous different flavours, including hom
 
 # Validation and examples
 
-Coral has been validated on a variety of test cases (gathered in `etc/benchmarks`) found in the literature: Rayleigh-B\'enard convection [@chandra], rotating convection [@julienJFM96], and convective dynamos [@cooperPRF20]. Those accuracy benchmarks, bound to grow in number, also constitute a library of examples for defining PDEs in Coral.
+Coral has been validated on a variety of test cases (gathered in `etc/benchmarks`) found in the literature: Rayleigh-B\'enard convection [@chandra], rotating convection [@julienJFM96], and convective dynamos [@stellmachPRE04; @cooperPRF20]. Those accuracy benchmarks, bound to grow in number, also constitute a library of examples for defining PDEs in Coral.
 
 # State of the field
 
