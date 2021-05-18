@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 from sys import argv
 from scipy.fftpack import fft2, ifft2, dct, idct
@@ -25,9 +26,9 @@ def read_and_deAlias(path_to_vols, vol_name):
    curSpec.real = curPhys
    curSpec =  fft2(curSpec, axes=(0,1))
    aux1 = np.copy  (curSpec[:,:,:NZ])
-   aux2 = np.delete(aux1, np.arange(NXAA/3+1,2*NXAA/3+1) , axis = 1)
+   aux2 = np.delete(aux1, np.arange(NXAA//3+1,2*NXAA//3+1) , axis = 1)
    del aux1
-   aux1 = np.delete(aux2, np.arange(NYAA/3+1,(2*NYAA/3+1)) , axis = 0)
+   aux1 = np.delete(aux2, np.arange(NYAA//3+1,(2*NYAA//3+1)) , axis = 0)
    deaSpec =  np.copy(aux1)
    del aux2, aux1
    deaSpec = ifft2(deaSpec, axes=(0,1))
