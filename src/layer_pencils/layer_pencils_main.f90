@@ -11,12 +11,18 @@ Program layer_pencils_main
  use LP_transforms
  use decomp_2d_io
  use fftw3_wrap
+ use read_command_line_args
  use, intrinsic :: iso_c_binding
  Implicit None
 
  type(full_problem_data_structure_T) :: main
 
  Logical :: verbose
+
+ integer :: i1, i2, i3
+ real(kind=dp) :: first_moment
+ real(kind=dp) :: second_moment
+ real(kind=dp) :: third_moment
 
 
  call MPI_init(ierr)
@@ -108,6 +114,49 @@ Program layer_pencils_main
 
    call main%Factorize_operators (timings%dt, .True.)
 
+ if (is_string_in_the_list('--checks',8)) then
+   ! perform checks
+   if (verbose) print*, '=========================='
+   if (verbose) print*, '... Now performing some checks'
+   if (verbose) print*, '=========================='
+   if (verbose) print*, '... First checking the transforms'
+   if (verbose) print*, '... Method: initialise physical fields. Transform to spectral and back'
+   if (verbose) print*, '... Compute relative error between moments (first, second, and third) of'
+   if (verbose) print*, '... physical array before and after the back-and-forth transforms.'      
+   if (verbose) print*, '... Array below: Process rank, 1st, 2nd, and 3rd order moment errors'    
+   if (verbose) print*, '=========================='
+   
+   do i3 = lbound(main%linear_variables(1)%phys, dim=3),&
+           ubound(main%linear_variables(1)%phys, dim=3)
+   do i2 = lbound(main%linear_variables(1)%phys, dim=2),&
+           ubound(main%linear_variables(1)%phys, dim=2)
+   do i1 = lbound(main%linear_variables(1)%phys, dim=1),&
+           ubound(main%linear_variables(1)%phys, dim=1)
+   main%linear_variables(1)%phys(i1,i2,i3) = cos(my_rank+cos(real(i1))+sin(real(i2))+cos(cos(real(i3))))
+   end do
+   end do
+   end do
+   !print *, main%linear_variables(1)%phys
+   first_moment = sum(main%linear_variables(1)%phys)
+   second_moment = sum((main%linear_variables(1)%phys)**2)
+   third_moment = sum((main%linear_variables(1)%phys)**3)
+   call main%linear_variables(1)%phys_to_spec()
+   call main%linear_variables(1)%spec_to_phys()
+   !print*, my_rank, first_moment, &
+   !                 sum(main%linear_variables(1)%phys),&
+   !                 abs(first_moment- sum(main%linear_variables(1)%phys)),&
+   !                 second_moment,&
+   !                 sum((main%linear_variables(1)%phys)**2),&
+   !                 abs(second_moment- sum((main%linear_variables(1)%phys)**2)),&
+   !                 third_moment,&
+   !                 sum((main%linear_variables(1)%phys)**3),&
+   !                 abs(third_moment- sum((main%linear_variables(1)%phys)**2))
+
+   print*, my_rank,& 
+                    abs((first_moment- sum(main%linear_variables(1)%phys))/first_moment),&
+                    abs((second_moment- sum((main%linear_variables(1)%phys)**2))/second_moment),&
+                    abs((third_moment- sum((main%linear_variables(1)%phys)**3))/third_moment)
+ else
    !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !.                                                                .
    !.            ~~~~  TIME-STEPPING STARTS HERE  ~~~~               .
@@ -187,6 +236,8 @@ Program layer_pencils_main
 
 
  end do
+ 
+ end if
 
    !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !!.                                                                .

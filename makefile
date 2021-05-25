@@ -65,6 +65,7 @@ clean_mod:
 
 Layer_pencil_Objects := $(MISC_SRC)chdir_mod.o    
 Layer_pencil_Objects += $(MISC_SRC)fortran_kinds.o
+Layer_pencil_Objects += $(MISC_SRC)read_command_line_args.o
 Layer_pencil_Objects += $(FFTW_SRC)fftw3_wrap.o
 Layer_pencil_Objects += $(TEXT_SRC)cwraps.o
 Layer_pencil_Objects += $(TEXT_SRC)cfun_parse_text.o
