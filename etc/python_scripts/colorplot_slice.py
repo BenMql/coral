@@ -45,9 +45,9 @@ a = np.fromfile('Slices/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_'+posStr+'
 
 plt.figure()
 try:
-  plt.pcolormesh(grid1[posStr[0]], grid2[posStr[0]],a.T, cmap=argv[1])
+  plt.pcolormesh(grid1[posStr[0]], grid2[posStr[0]],a.T, cmap=argv[1], shading='auto')
 except IndexError:
-  plt.pcolormesh(grid1[posStr[0]], grid2[posStr[0]],a.T)
+  plt.pcolormesh(grid1[posStr[0]], grid2[posStr[0]],a.T, shading='auto')
 plt.colorbar()
 #plt.title('temperature fluctuations, x-z slice at first Y-gridpoint')
 plt.show()

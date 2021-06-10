@@ -68,7 +68,7 @@ class plane_layer_volume:
               return 0
            else: 
               myFig=plt.figure()
-              plt.pcolormesh(self.xgrid, self.ygrid, self.dat[varInt][:,:,z].T)
+              plt.pcolormesh(self.xgrid, self.ygrid, self.dat[varInt][:,:,z].T, shading='auto')
               plt.title(self.lut[varInt]+', index z='+str(z))
               return myFig
        # check that the call has the proper form:
