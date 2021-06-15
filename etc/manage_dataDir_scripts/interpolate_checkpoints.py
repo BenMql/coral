@@ -132,6 +132,9 @@ def resize_checkpoints(fromDir='./', toDir = './', newResolution=(64,64,64)):
 old_dir = argv[1]
 new_dir = argv[2]
 
+# first, copy the dt.sav file
+np.fromfile(old_dir+'/CheckPoints/dt.sav', dtype=np.float_, count=2).tofile(new_dir+'/Restart/dt.sav')
+# then resize the checkpoint files
 resize_checkpoints(fromDir = old_dir, toDir = new_dir, 
                    newResolution=(int(argv[3]), int(argv[4]), int(argv[5])))
 
