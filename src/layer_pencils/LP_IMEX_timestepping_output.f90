@@ -137,6 +137,8 @@
           end select
    end do
    end do
+   ! initialise the KE
+   self%cargo%KE_display = 0._dp
    do iVar = 1, self%recipe%numberOf_quadratic_variables
    do iObj = 1, self%recipe%timeseries%numberOf_quadraObjects( iVar )
       select case (self%recipe%timeseries%quadra(iVar)%object(iObj)%kind)
@@ -162,6 +164,7 @@
                               varAvg,&
                               self%io_bookkeeping%first_or_not,&
                               self%io_bookkeeping%dPosition)
+                if (iObj.le.3) self%cargo%KE_display = self%cargo%KE_display + varAvg
           case ('zSlice')
                if ((self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
                                .ge. domain_decomp%phys_iStart(1)) &

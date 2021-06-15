@@ -508,10 +508,12 @@
    integer :: ix, iy
    integer :: system_of_interest, position_of_interest
    complex (kind=dp), allocatable :: datBuffer (:,:,:)
+   real    (kind=dp), allocatable :: datBufferZero (:)
 
    allocate( datBuffer (self%geometry%NZAA, &
                         self%geometry%spec%local_NY, &
                         self%geometry%spec%local_NX) )
+   allocate( datBufferZero (self%geometry%NZAA) )
    ! ==================================================
    ! >>> spectral space computations
    do iVar = 1, self%recipe%numberOf_linear_variables_full
@@ -563,10 +565,18 @@
                self%recipe%linear_vars_zero( &
                self%recipe%linear_vars_full( iVar )%term(iTerm)%var_index&
                                                   )%at_position
+          ! =======
+          !call self%coupled_zero_set(system_of_interest &
+                           !)%padStencilExtractShuffle(position_of_interest&
+                           !)%dot(self%coupled_zero_set(system_of_interest)%aux,&
+                                 !self%linear_variables(iVar)%spec, 'cumul')
           call self%coupled_zero_set(system_of_interest &
                            )%padStencilExtractShuffle(position_of_interest&
                            )%dot(self%coupled_zero_set(system_of_interest)%aux,&
-                                 self%linear_variables(iVar)%spec, 'cumul')
+                        datBufferZero, 'overW')
+          self%linear_variables(iVar)%spec(:,1,1) =  self%linear_variables(iVar)%spec(:,1,1) &
+                      + datBufferZero* self%recipe%linear_vars_full(iVar)%Term(iTerm)%dsca
+          
           end if
      end select
    end do
@@ -574,9 +584,8 @@
    ! ==================================================
 
    ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!     
-   ! todo => take into account the recipe if necessary
-   ! In particular, we have assumed that the prefactor is 1., and that 
-   ! no derivatives are present.
+   ! todo => For the zero mode, we have assumed
+   ! that no vertical derivatives are present.
    ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!     
 
    ! ==================================================

@@ -76,7 +76,6 @@ Layer_pencil_Objects += $(PENCILS)LP_timings.o
 Layer_pencil_Objects += $(MISC_SRC)time_mpi.o
 Layer_pencil_Objects += $(TSTEP_SRC)IMEX_schemes.o
 Layer_pencil_Objects += $(MPI_SRC)MPI_vars.o
-Layer_pencil_Objects += $(OUT_SRC)output_misc.o
 Layer_pencil_Objects += $(MISC_SRC)time_mpi.o
 Layer_pencil_Objects += $(MISC_SRC)read_command_line_args.o
 Layer_pencil_Objects += $(MISC_SRC)include_git_version.o
