@@ -328,8 +328,8 @@ module LP_IMEX_timestepping
    integer :: nMode
    complex(kind=dp) :: zPhase
    real(kind=dp) :: random_dScalar
-   real(kind=dp) :: amp = 1.d-6
-   real(kind=dp) :: amp0 = 1.d-6
+   real(kind=dp) :: amp = 1.d-14
+   real(kind=dp) :: amp0 = 1.d-14
    ! => linearly coupled systems, kxky modes 
    do iSys = 1, self%recipe%numberOf_coupled_kxky_systems 
      do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
