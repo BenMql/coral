@@ -128,6 +128,9 @@ module LP_IMEX_timestepping
  type :: cargo_T
    real(kind=dp) :: KE_display
    real(kind=dp) :: cfl_based_DT
+   real(kind=dp) :: cflFactor_along_z
+   real(kind=dp) :: initialCondition_amp_kxky
+   real(kind=dp) :: initialCondition_amp_zero
  end type
 
  type :: sources_arrays_zero_T
@@ -328,8 +331,10 @@ module LP_IMEX_timestepping
    integer :: nMode
    complex(kind=dp) :: zPhase
    real(kind=dp) :: random_dScalar
-   real(kind=dp) :: amp = 1.d-14
-   real(kind=dp) :: amp0 = 1.d-14
+   real(kind=dp) :: amp
+   real(kind=dp) :: amp0
+   amp = self%cargo%initialCondition_amp_kxky
+   amp0= self%cargo%initialCondition_amp_zero
    ! => linearly coupled systems, kxky modes 
    do iSys = 1, self%recipe%numberOf_coupled_kxky_systems 
      do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
@@ -405,12 +410,36 @@ module LP_IMEX_timestepping
  subroutine initialise_the_data_structure(self, scheme_id)
    class(full_problem_data_structure_T), intent(inOut) :: self
    character(len=7), intent(in) :: scheme_id
+   integer :: ix, num_args
+   character(len=32), dimension(:), allocatable :: args
    call self%shandle%init(scheme_id, (my_rank.eq.0))
    call self%allocate_all_buffers()
    call self%prepare_building_tools()
    call self%prepare_stencils()
    call self%build_operators()
    call self%prepare_chebyshev_integration()
+   ! now handle the command line arguments
+   self%cargo%initialCondition_amp_kxky = 1.d-16
+   self%cargo%initialCondition_amp_zero = 1.d-16
+   self%cargo%cflFactor_along_z = 1.d0             
+   num_args = command_argument_count()
+   allocate(args(num_args))
+   do ix = 1, num_args
+      call get_command_argument(ix,args(ix))
+   end do
+   do ix = 1, num_args
+      select case (args(ix)) 
+             case ('--noises-amplitude')
+                  read (args(ix+1),*) self%cargo%initialCondition_amp_kxky 
+                  read (args(ix+1),*) self%cargo%initialCondition_amp_zero 
+             case ('--noise-amplitude-k')
+                  read (args(ix+1),*) self%cargo%initialCondition_amp_kxky 
+             case ('--noise-amplitude-0')
+                  read (args(ix+1),*) self%cargo%initialCondition_amp_zero 
+             case ('--cflFactor-along-z')
+                  read (args(ix+1),*) self%cargo%cflFactor_along_z
+      end select
+   end do
  end subroutine
 
  subroutine allocate_all_buffers(self)

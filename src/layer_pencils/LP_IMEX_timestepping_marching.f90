@@ -334,7 +334,8 @@
    do iy = 1, self%geometry%phys%local_NY
    w_over_dz_max = dMax1(w_over_dz_max,&
                          maxVal( self%linear_variables(3)%phys(:,iy,ix) / &
-                                 local_cheby_weight) )
+                                 local_cheby_weight * & 
+                                 self%cargo%cflFactor_along_z   ) )
    end do
    end do
    
