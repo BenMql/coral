@@ -1096,6 +1096,7 @@ Module LP_equations
          if (atom_linear_ops(iAtom)%unsorted(i_str)%str==self%list_parameters(ivar)%str) then 
            self%zero_recipes(this_recipe)%NL%term(n_old+iAtom)%dsca = self%list_parameters(ivar)%val&
           *self%zero_recipes(this_recipe)%NL%term(n_old+iAtom)%dsca
+          this_string_is_identified = .True.
          end if
        end do
           if (.not.this_string_is_identified) then
