@@ -216,10 +216,12 @@ module LP_IMEX_timestepping
    type(C_Ptr) :: dummyPtr
    integer :: ix,iy,iz
    integer, intent(in) :: dOrder
-   if (dOrder.ne.1) then
-     print *, 'subroutine differentiate exists only for dOrder = 1'
+   integer :: iOrder
+   if (dOrder.lt.1) then
+     print *, 'subroutine differentiate exists only for dOrder > 0'
      error stop
    else 
+   do iOrder = 1, dOrder
    allocate (deriv( self%geometry%NZAA, &
                     self%geometry%spec%local_NY, &
                     self%geometry%spec%local_NX))
@@ -241,6 +243,7 @@ module LP_IMEX_timestepping
                                       self%geometry%NZAA)
               
    call move_alloc(from=deriv, to=field)
+   end do
    do ix = 1, self%geometry%spec%local_NX 
    do iy = 1, self%geometry%spec%local_NY
    field(self%geometry%NZ : self%geometry%NZAA,iy,ix) = cmplx(0._dp, 0._dp, kind=dp)
