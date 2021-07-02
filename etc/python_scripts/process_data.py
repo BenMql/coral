@@ -109,16 +109,16 @@ class plane_layer_volume:
 
 
 
-   def xdiff_FD(self, pos_in_list):
+   def ydiff_FD(self, pos_in_list):
       my_var = np.copy(self.dat[pos_in_list])
-      self.dat.append  (np.diff(my_var,axis=1)/self.lx*self.NX)
-      self.lut.append('[d/dx]'+self.lut[pos_in_list])
+      self.dat.append  (np.diff(my_var,axis=1)/self.ly*self.NY)
+      self.lut.append('[d/dy]'+self.lut[pos_in_list])
 
    def xdiff(self, pos_in_list):
       field = np.copy(self.dat[pos_in_list])
       for iy in range(self.NY):
          for iz in range(self.NZ):
-            field[iy,:,iz] = fft.diff(self.dat[pos_in_list][iy,:,iz], period=self.lx)
+            field[:,iy,iz] = fft.diff(self.dat[pos_in_list][:,iy,iz], period=self.lx)
       self.dat.append  (field)
       self.lut.append('[d/dx]'+self.lut[pos_in_list])
 
@@ -126,14 +126,14 @@ class plane_layer_volume:
       field = np.copy(self.dat[pos_in_list])
       for ix in range(self.NX):
          for iz in range(self.NZ):
-            field[:,ix,iz] = fft.diff(self.dat[pos_in_list][:,ix,iz], period=self.ly)
+            field[ix,:,iz] = fft.diff(self.dat[pos_in_list][ix,:,iz], period=self.ly)
       self.dat.append  (field)
       self.lut.append('[d/dy]'+self.lut[pos_in_list])
 
-   def ydiff_FD(self, pos_in_list):
+   def xdiff_FD(self, pos_in_list):
       my_var = np.copy(self.dat[pos_in_list])
-      self.dat.append  (np.diff(my_var,axis=0)/self.ly*self.NY)
-      self.lut.append('[d/dy]'+self.lut[pos_in_list])
+      self.dat.append  (np.diff(my_var,axis=0)/self.lx*self.NX)
+      self.lut.append('[d/dx]'+self.lut[pos_in_list])
 
 
    def zdiff(self, pos_in_list):
