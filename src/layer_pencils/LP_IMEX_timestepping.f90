@@ -200,7 +200,10 @@ module LP_IMEX_timestepping
    procedure :: stif_aux_to_K_std  => LPIMEX_stif_aux_to_K_std
    procedure :: zero_matrices_manyGalkn_to_uniqueCheby
    procedure :: allocate_sources
-   procedure :: add_source
+   procedure :: add_source_array
+   procedure :: add_source_dscalar
+   generic   :: add_source => add_source_dscalar, &
+                              add_source_array
    procedure :: transform_sources
    procedure :: sourceParams
    procedure :: init_all_sources

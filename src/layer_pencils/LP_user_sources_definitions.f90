@@ -14,7 +14,7 @@
    ! Heating localised at the bottom 
    ! -----------------------------------------
    sourceDef = self%sourceParams('HovEll') * exp(-z * self%sourceParams('HovEll') ) / &
-                 (1._dp - exp(-self%sourceParams('HovEll') ) ) - 1._dp
+                (1._dp - exp(-self%sourceParams('HovEll') ) ) - 1._dp
    call self%add_source( definition = sourceDef,&
                          sourceIndex = 1)   ! this corresponds to source01
    ! -----------------------------------------

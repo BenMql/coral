@@ -339,9 +339,6 @@
    end do
    end do
    
-   !if (my_rank.eq.0) print *,  u_over_dx_max,& !delme
-    !                                        v_over_dy_max,& !delme
-     !                                       w_over_dz_max !delme
 
    self%cargo%cfl_based_DT = 1._dp/ dMax1 ( u_over_dx_max,&
                                             v_over_dy_max,&
@@ -486,7 +483,8 @@
    ! add sources!                              
    !====================================
    do iSource = 1, self%recipe%sources%n_sources
-     nl_buffer_zero(:) = self%sources( self%recipe%sources%term(iSource)%source_index) %spectral
+     nl_buffer_zero(:) = self%sources( self%recipe%sources%term(iSource)%source_index)%spectral &
+                       * self%recipe%sources%term(iSource)%dsca
      insert_in_equation =  self%recipe%sources%term(iSource)%eqn_index
      insert_in_system   =  self%recipe%sources%term(iSource)%sys_index
      call self%coupled_zero_set(insert_in_system)%building_tools%cheb_IM&
@@ -689,7 +687,20 @@
    allocate( self%sources (self%numberOf_sources) )
  end subroutine
 
- subroutine add_source(self, sourceIndex, definition)
+ subroutine add_source_dscalar(self, sourceIndex, definition)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer, intent(in) :: sourceIndex
+   real(dp), intent(in) :: definition
+   if (sourceIndex .gt. self%numberOf_sources) then
+      print *, 'In LP_user_sources_definitions.f90, the position of the'
+      print *, 'source is greater than the total number of sources!'
+      error stop
+   end if
+   allocate( self%sources(sourceIndex)%physical ( self%geometry%NZAA) )
+   self%sources(sourceIndex)%physical = definition
+ end subroutine
+
+ subroutine add_source_array(self, sourceIndex, definition)
    class(full_problem_data_structure_T), intent(inOut) :: self
    integer, intent(in) :: sourceIndex
    real(dp), allocatable, intent(in) :: definition(:)

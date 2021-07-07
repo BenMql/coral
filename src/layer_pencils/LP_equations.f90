@@ -385,7 +385,7 @@ Module LP_equations
 
    building_step = 1
    do iLine = 1, numOfLines
-     if (my_rank.eq.0) print *, text_list(iLine)(1:80)
+     if (my_rank.eq.0) print *, text_list(iLine)(1:78)
      ! if the line starts with '>>=', ignore and proceed to next line
      if (text_list(iLine)(1:3).eq.'>>=') then
         cycle
@@ -468,7 +468,7 @@ Module LP_equations
                                                    pieces_of_definition, 'Iz')
            call self%build_zero_sources( pieces_of_definition)
        case default
-           if (my_rank.eq.0) print *, text_list(iLine)(1:80)
+           if (my_rank.eq.0) print *, text_list(iLine)(1:78)
            stop 'the line above could not be read'
      end select
 
@@ -628,6 +628,7 @@ Module LP_equations
     character(len=:), allocatable, intent(in) :: linvarName
     integer :: this_recipe, this_var
     integer :: ivar
+    logical :: foundIt
    
     this_recipe = self%numberOf_coupled_zero_systems 
     self%zero_recipes(this_recipe)%n_coupled_vars = self%zero_recipes(this_recipe)%n_coupled_vars + 1
@@ -639,6 +640,7 @@ Module LP_equations
     self%zero_recipes(this_recipe)%vars(this_var)%name = linvarname
     self%zero_recipes(this_recipe)%vars(this_var)%bc_code = 0
     !we need to keep track of which set of equation this variable belongs to
+    foundIt = .False.
     do ivar = 1, self%numberOf_linear_variables_0
         if (linvarname==self%linear_vars_zero(ivar)%str) then
            if (self%linear_vars_zero(ivar)%belongs_to_set.ne.0) then
@@ -651,9 +653,18 @@ Module LP_equations
            end if
            self%linear_vars_zero(ivar)%belongs_to_set = this_recipe
            self%linear_vars_zero(ivar)%at_position    = this_var
+           foundIt = .True.
            exit
         end if
      end do
+     if (.not.foundIt) then
+        print *, 'Below the >>add_set_of_coupled_zero_equations << tag,'
+        print *, 'the following variable was entered:'
+        print *, linvarname
+        print *, 'This name does not correspond to any variable declared' 
+        print *, 'in the >>linear_variable mean section, as it should.'
+        stop     'Please fix coral.equations'
+     end if
  end subroutine
 
  subroutine add_equation_to_zero_coupled_set(self, eqn_order)
