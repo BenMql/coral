@@ -32,7 +32,7 @@
       Procedure :: init => domain_decomp_init
    End Type domain_decomposition_T            
 
-   Type(domain_decomposition_T) :: domain_decomp
+   Type(domain_decomposition_T), save :: domain_decomp
 
    !type(decomp_info) :: decomplib_setup
 

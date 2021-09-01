@@ -325,17 +325,18 @@
    local_cheby_weight = self%gauss_cheby%weight1d (domain_decomp%phys_iStart(1) : &
                                                    domain_decomp%phys_iStart(1) + &
                                                    self%geometry%phys%local_NZ  -1)
-   u_over_dx_max = maxVal(self%linear_variables(1)%phys)
+   ! beware: potential stack problem by computing the max of the abs of an array?
+   u_over_dx_max = maxVal(dAbs(self%linear_variables(1)%phys)) 
    u_over_dx_max = u_over_dx_max * self%geometry%NXAA / self%geometry%Lx
-   v_over_dy_max = maxVal(self%linear_variables(2)%phys)
+   v_over_dy_max = maxVal(dAbs(self%linear_variables(2)%phys))
    v_over_dy_max = v_over_dy_max * self%geometry%NYAA / self%geometry%Ly
    w_over_dz_max = v_over_dy_max
    do ix = 1, self%geometry%phys%local_NX
    do iy = 1, self%geometry%phys%local_NY
    w_over_dz_max = dMax1(w_over_dz_max,&
-                         maxVal( self%linear_variables(3)%phys(:,iy,ix) / &
-                                 local_cheby_weight * & 
-                                 self%cargo%cflFactor_along_z   ) )
+                         maxVal( dAbs( self%linear_variables(3)%phys(:,iy,ix) / &
+                                       local_cheby_weight ) * &
+                                       self%cargo%cflFactor_along_z   ) )
    end do
    end do
    

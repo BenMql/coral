@@ -48,7 +48,7 @@ implicit none
    procedure :: tofile   => write_timings_to_file            
  end type timings_T
 
- type(timings_T) :: timings
+ type(timings_T), save :: timings
 
 contains
 
@@ -84,8 +84,7 @@ subroutine compare_dt_against_CFL(self, dx_over_velocity_min)
   !if (my_rank.eq.0) print *, dx_over_velocity_min,  self%CFL_C delme
   !if (my_rank.eq.0) print *, self%dt, self%dt_min  delme
   if (self%dt.lt.self%dt_min) then
-   call MPI_finalize(ierr)
-   STOP 'minimal timestep reached'
+   stop 'minimal timestep reached'
   end if
 end subroutine compare_dt_against_CFL
 
