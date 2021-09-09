@@ -345,6 +345,19 @@
                                             v_over_dy_max,&
                                             w_over_dz_max)
 
+   if (self%recipe%smagorinsky_flag) then
+      self%cargo%cfl_based_DT = dMin1( self%cargo%cfl_based_DT, &
+                                0.95/ ( (2*3.141592)**2*&
+            maxVal(self%linear_variables(&
+                     self%recipe%numberof_linear_variables_full&
+                                          )%phys)  &
+                                      *( &
+                           (self%geometry%NXAA/self%geometry%Lx)**2&
+                         + (self%geometry%NYAA/self%geometry%Ly)**2&
+                                       ) &
+                                      )  & 
+                                     )  
+   end if 
  end subroutine
 
 
@@ -503,7 +516,7 @@
 
  subroutine compute_full_variables_in_physical_space(self)
    class(full_problem_data_structure_T), intent(inOut) :: self
-   integer :: iVar
+   integer :: iVar, jVar
    integer :: iTerm
    integer :: ix, iy
    integer :: system_of_interest, position_of_interest
@@ -589,13 +602,73 @@
    ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!     
 
    ! ==================================================
-   ! >>> spectral to physical tranforms      
-   call self%linear_variables(iVar)%spec_to_phys()
+   ! >>> spectral to physical tranforms  
+   ! *except* for nuSmago
+   if ( self%recipe%linear_vars_full(iVar)%str .eq. 'nuSmago' ) then
+       ! fixSmago fixSmago: below is not the exact expression!
+       ! for the time being, we define nuSmago as the horizontal average of the 
+       ! horizontal kinetic energy. We assume that uFull and vFull, the horizontal
+       ! velocities are defined as the first and second 'full variable' in the 
+       ! coral.equations file
+       do jVar = 1,self%recipe%numberOf_linear_variables_full
+        if (self%recipe%linear_vars_full(jVar)%str .eq. 'dxUfull') then
+        self%linear_variables(iVar)%phys = self%linear_variables(iVar)%phys &
+                                         + self%linear_variables(jVar)%phys**2
+        else if (self%recipe%linear_vars_full(jVar)%str .eq. 'dyUfull') then
+        self%linear_variables(iVar)%phys = self%linear_variables(iVar)%phys &
+                                         + self%linear_variables(jVar)%phys**2
+        else if (self%recipe%linear_vars_full(jVar)%str .eq. 'dxVfull') then
+        self%linear_variables(iVar)%phys = self%linear_variables(iVar)%phys &
+                                         + self%linear_variables(jVar)%phys**2
+        else if (self%recipe%linear_vars_full(jVar)%str .eq. 'dyVfull') then
+        self%linear_variables(iVar)%phys = self%linear_variables(iVar)%phys &
+                                         + self%linear_variables(jVar)%phys**2
+        end if
+       end do
+        
+       ! self%linear_variables(iVar)%phys = 0._dp
+       ! average it horizontally
+       call self%horizontal_average_of_physical_quantity_inPlace( iVar )
+       self%linear_variables(iVar)%phys = sqrt( self%linear_variables(iVar)%phys )
+       !print *, self%linear_variables(iVar)%phys 
+   else 
+       call self%linear_variables(iVar)%spec_to_phys()
+   end if
    ! /// done: transforms                     
    ! ==================================================
    end do
    deAllocate( datBuffer )
  end subroutine
+
+
+ subroutine horizontal_average_of_physical_quantity_inPlace(self, iVar)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer, intent(in) :: iVar
+   real(dp), allocatable :: local_a1 (:)
+   real(dp), allocatable :: global_a1(:)
+   integer :: ix, iy
+   ! stores the horizontal average of self%linear_variables(iVar)%phys in 
+   ! the allocatable a1(:), and broadcast it back to the rank-3 array
+   allocate (local_a1  (self%geometry%phys%local_NZ) )
+   allocate (global_a1 (self%geometry%phys%local_NZ) )
+   local_a1 = sum(sum(self%linear_variables(iVar)%phys, 3), 2) 
+   local_a1 = local_a1 / self%geometry%NXAA 
+   local_a1 = local_a1 / self%geometry%NYAA 
+   ! averaged of distributed y
+   call MPI_allReduce(local_a1,  & !send buffer
+                      global_a1, & !recv buffer
+                      self%geometry%phys%local_NZ, & !count
+                      MPI_double, &     !dtype
+                      MPI_sum, &
+                      self%geometry%mpi_Zphys%comm, ierr)
+   do ix = 1, self%geometry%phys%local_NX
+   do iy = 1, self%geometry%phys%local_NY
+      self%linear_variables(iVar)%phys(:, iy, ix) = global_a1
+   end do
+   end do
+   !print *, global_a1
+ end subroutine
+
 
  subroutine output_slices_volumes_and_profiles(self)
    class(full_problem_data_structure_T), intent(inOut) :: self

@@ -207,6 +207,7 @@ module LP_IMEX_timestepping
    procedure :: transform_sources
    procedure :: sourceParams
    procedure :: init_all_sources
+   procedure :: horizontal_average_of_physical_quantity_inplace
  end type full_problem_data_structure_T
 
  contains

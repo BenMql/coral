@@ -82,6 +82,7 @@ Program layer_pencils_main
 
 !
    call read_equations_text_file()
+   main%recipe%smagorinsky_flag = is_string_in_the_list('--withHorizontalSmagorinsky',  27)
    call main%recipe%build (arr_of_lines_eqn)
    call read_usrOutput_text_file()
    call main%recipe%add_outputs (arr_of_lines_out)

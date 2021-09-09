@@ -8,7 +8,7 @@
 1.d0        ! 07 ! (DBL) gap (should=1.0_dp) ! 07 !
 0.5d0       ! 08 ! (DBL) center              ! 08 !
 0           ! .......... TIMESTEPPING ........... !
-0.1d0       ! 10 ! (DBL) maximum timestep    ! 10 !
+0.001d0     ! 10 ! (DBL) maximum timestep    ! 10 !
 0.3d0       ! 11 ! (DBL) timestep tolerance  ! 11 !
 0.2d0       ! 12 ! (DBL) CFL Factor          ! 12 !
 'ARS_222'   ! 13 ! scheme                    ! 13 !
