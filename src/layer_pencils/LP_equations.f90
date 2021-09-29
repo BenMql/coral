@@ -312,13 +312,17 @@ Module LP_equations
              case ('>>ZSlice ::')
                   call get_outputVarName_period_position( restOfMyLine, varNameStr, periodint, positionInt)
                   kindStr = 'zSlice'
+             case ('>>Zsummed::')
+                  call get_outputVarName_period( restOfMyLine, varNameStr, periodint)
+                  kindStr = 'zAvged'
              case ('>>Profile::')
                   call get_outputVarName_period( restOfMyLine, varNameStr, periodInt)
                   kindStr = 'profil'
              case default
                   print *, 'Error in coral.usrOuput'
                   print *, 'First eleven characters of each line should be:'
-                  print *, '>>Volume ::, >>XSlice ::, >>YSlice ::, ZSlice ::, >>Profile::'
+                  print *, '>>Volume ::, >>XSlice ::, >>YSlice ::, ZSlice ::,'
+                  print *, '>>Profile::, >>Zsummed::'
                   print *, '(Common mistake: no space between Profile and ::'               
                   error stop
       end select

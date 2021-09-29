@@ -132,7 +132,7 @@
                  end if 
                end if
           case default
-               print *,'bad (L) object kind', self%recipe%timeseries%linear(iVar)%object(iObj)%kind, iVar, iObj
+               write(*,*) 'bad (L) object kind', self%recipe%timeseries%linear(iVar)%object(iObj)%kind, iVar, iObj
                error stop
           end select
    end do
@@ -545,3 +545,139 @@
 
  end subroutine
    
+
+ subroutine export_verticallyAvgedSlice(self, ivar, iTime, linear_or_quadra)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer, intent(in) :: iVar
+   integer, intent(in) :: iTime
+   character(len=6), intent(in) :: linear_or_quadra
+   character(len=41) :: fileName
+   real(kind=dp), allocatable :: local_tile (:,:)
+   real(kind=dp), allocatable :: global_tile(:,:)
+   real(kind=dp), allocatable, target :: trposd_tile(:,:)
+   !----------------------
+   !  Internal variables  
+   !----------------------
+   Integer(kind=MPI_Offset_Kind) :: displacement
+                     !< Convert \p cumul_nElems to bytes
+   Integer :: size_of_dble
+                     !< size of a double precision number in bytes
+   Integer :: file_id
+                     !< mpiIO keeps tracks of what it's doing
+   Integer, Dimension(:), Allocatable :: array_of_nelems
+   Integer :: my_cumul
+   Integer :: icore
+   integer :: my_nElems
+   real(kind=dp), pointer :: fptr(:)        
+   type(C_ptr) :: cptr
+   real(kind=dp), allocatable :: local_cheby_weight(:)
+   integer :: ix, iy, iz
+   
+
+
+   call gauss_chebyshev_weight_1d( self%gauss_cheby%weight1d, &
+                                   self%geometry%NZAA,&
+                                   self%geometry%gap)
+   allocate( local_cheby_weight ( self%geometry%phys%local_NZ ))
+   local_cheby_weight = self%gauss_cheby%weight1d (domain_decomp%phys_iStart(1) : &
+                                                   domain_decomp%phys_iStart(1) + &
+                                                   self%geometry%phys%local_NZ  -1)
+
+
+
+   allocate( local_tile  (self%geometry%phys%local_NY, self%geometry%phys%local_NX) )
+   allocate( global_tile (self%geometry%phys%local_NY, self%geometry%phys%local_NX) )
+   allocate( trposd_tile (self%geometry%phys%local_NX, self%geometry%phys%local_NY) )
+
+   241 format ('linear_var',(i2.2),'_zAvged_time',(i8.8),'_full.dat')
+   242 format ('linear_var',(i2.2),'_zAvged_time',(i8.8),'_full.dat')
+   select case (linear_or_quadra)
+          case ('linear')
+          write (fileName,241) iVar, iTime
+          local_tile = 0._dp
+          do ix = 1, self%geometry%phys%local_NX
+          do iy = 1, self%geometry%phys%local_NY
+          do iz = 1, self%geometry%phys%local_NZ
+             local_tile (iy, ix) = local_tile(iy, ix) &
+                                 + self%linear_variables(iVar)%phys(iz, iy, ix) &
+                                 * local_cheby_weight(iz)
+          end do 
+          end do 
+          end do 
+
+          case ('quadra')
+          write (fileName,242) iVar, iTime
+          local_tile = 0._dp
+          do ix = 1, self%geometry%phys%local_NX
+          do iy = 1, self%geometry%phys%local_NY
+          do iz = 1, self%geometry%phys%local_NZ
+             local_tile (iy, ix) = local_tile(iy, ix) &
+                                 + self%quadratic_variables(iVar)%phys(iz, iy, ix) &
+                                 * local_cheby_weight(iz)
+          end do 
+          end do 
+          end do 
+   end select
+   my_nElems    = self%geometry%phys%local_NY * self%geometry%phys%local_NX
+
+   call mpi_reduce( local_tile, &  !send buffer
+                    global_tile,&  !recv buffer
+                    my_nElems,  &
+                    mpi_double, &
+                    mpi_sum,    &
+                    0,          &
+                    self%geometry%mpi_Yphys%comm, ierr )
+
+   trposd_tile = transpose(global_tile)
+
+   cptr = c_loc(trposd_tile)
+   call C_F_pointer(cptr, fptr, [self%geometry%phys%local_NY * self%geometry%phys%local_NX])
+
+   call chdir(self%io_bookkeeping%output_directory)
+   call chdir('./Slices')
+  
+   ! ~~~~~~~~~~~~~~~~~~~~
+   ! compute cumul_nElems is missing, we compute it
+   ! ~~~~~~~~~~~~~~~~~~~~
+   Allocate(array_of_nElems(0:self%geometry%mpi_Zphys%size-1))
+   call MPI_allGather(self%geometry%phys%local_NY * self%geometry%phys%local_NX, &
+                     1, MPI_Integer,&
+          array_of_nElems, 1, MPI_integer,  self%geometry%mpi_Zphys%Comm, ierr)
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ! compute the number of elements owned by predecessors
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   my_cumul = 0
+   Do icore = 0, self%geometry%mpi_ZPhys%rank-1
+     my_cumul = my_cumul + array_of_nelems(icore)
+   End Do
+   DeAllocate(array_of_nElems)
+
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ! compute the displacement
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   call MPI_Type_Size(MPI_Double, size_of_dble, ierr)
+   displacement = my_cumul*size_of_dble
+
+
+   ! /// delme junk code
+   !print *, my_rank, self%geometry%mpi_Yphys%rank, self%geometry%mpi_Zphys%rank, &
+   !         self%geometry%phys%local_NY, self%geometry%phys%local_NX, my_cumul, displacement
+   ! delme junk code ///
+ 
+   if (self%geometry%mpi_Yphys%rank .eq. 0 ) then
+      Call MPI_File_Open(self%geometry%mpi_zphys%comm, filename,&
+                         MPI_Mode_WROnly + MPI_Mode_Create,&
+                         MPI_Info_Null, file_id, ierr)
+      Call MPI_File_set_view(file_id, displacement, MPI_Double, &
+                             MPI_Double, 'native', &
+                             MPI_Info_Null, ierr)
+      Call MPI_File_Write(file_id, fptr, my_nElems, MPI_Double, &
+                             MPI_Status_Ignore, Ierr)
+      Call MPI_File_Close(file_id, ierr)
+   end if
+
+   
+   ! STOPPED HERE
+   ! needed : normalisation
+
+ end subroutine

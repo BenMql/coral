@@ -695,6 +695,9 @@
                  call self%export_slice (iVar, self%io_bookkeeping%time_integer, &
                                         3, self%recipe%output%linear(iVar)%object(iObj)%slice_index, &
                                         'linear')
+                 case ('zAvged')
+                 call self%export_verticallyAvgedslice (iVar, self%io_bookkeeping%time_integer,&
+                                        'linear')
                  case ('profil')
                  call self%export_profile (ivar, self%io_bookkeeping%time_integer, 'linear')
                  case default

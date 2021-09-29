@@ -65,7 +65,11 @@
       call decomp_2d_fft_get_size(self%spec_iStart, &
                                   self%spec_iEnd,   &
                                   self%spec_iSize   )
-      
+      ! /// delme junk code 
+      ! print *, my_rank, zstart
+      ! print *, my_rank, zend
+      ! print *, my_rank, zsize
+      ! delme junk code ///
 
    End Subroutine domain_decomp_init
 
