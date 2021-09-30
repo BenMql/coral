@@ -22,9 +22,11 @@ Module LP_text_parsing
    ! (Target attribute forbidden in a type definition) 
    ! temporary alloc to please the compiler
    allocate(character(1) :: arr_of_lines_eqn(1))
+   allocate( length  (1) )
    ierr = parse_text(num, 1, C_loc(length), C_loc(arr_of_lines_eqn(1) ))
-   Allocate(length(1:num))
+   deAllocate ( length )
    deAllocate(arr_of_lines_eqn)
+   Allocate(length(1:num))
    Allocate(character(1024) :: arr_of_lines_eqn(num))
    Do iline = 1,num
    Do icar = 1,1024
@@ -44,9 +46,11 @@ Module LP_text_parsing
    ! (Target attribute forbidden in a type definition) 
    ! temporary alloc to please the compiler
    allocate(character(1) :: arr_of_lines_out(1))
+   allocate( length  (1) )
    ierr = parse_output(num, 1, C_loc(length), C_loc(arr_of_lines_out(1) ))
-   Allocate(length(1:num))
+   deAllocate ( length )
    deAllocate(arr_of_lines_out)
+   Allocate(length(1:num))
    Allocate(character(1024) :: arr_of_lines_out(num))
    Do iline = 1,num
    Do icar = 1,1024
@@ -66,9 +70,11 @@ Module LP_text_parsing
    ! (Target attribute forbidden in a type definition) 
    ! temporary alloc to please the compiler
    allocate(character(1) :: arr_of_lines_tms(1))
+   allocate( length  (1) )
    ierr = parse_timeseries(num, 1, C_loc(length), C_loc(arr_of_lines_tms(1) ))
-   Allocate(length(1:num))
+   deAllocate ( length )
    deAllocate(arr_of_lines_tms)
+   Allocate(length(1:num))
    Allocate(character(1024) :: arr_of_lines_tms(num))
    Do iline = 1,num
    Do icar = 1,1024
