@@ -117,7 +117,6 @@ subroutine read_timings_from_file(self,fileStr, fileLen)
                  self%dt = self%dt / 50.
               end if
               time_file_str = fileStr(1:fileLen-6)//'../Timeseries/time.dat'
-              write(*,*) "looking for file ", time_file_str
               inquire( file=time_file_str, exist=time_file_exists)
               if (.not.(time_file_exists)) self%i_timestep = 1
               call MPI_Bcast(self%dt,            1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)

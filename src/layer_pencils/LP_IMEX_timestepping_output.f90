@@ -450,10 +450,12 @@
    deAllocate(buff)
    end if
 
+   if (misc_cargo%rolling_qsaves) then
    if (self%io_bookkeeping%rolling_integer.eq.1) then
        self%io_bookkeeping%rolling_integer = 2
    else                                                
        self%io_bookkeeping%rolling_integer = 1
+   end if
    end if
         
    

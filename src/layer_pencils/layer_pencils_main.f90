@@ -115,6 +115,7 @@ Program layer_pencils_main
 
    call main%Factorize_operators (timings%dt, .True.)
 
+ if (is_string_in_the_list('--rolling-qsaves', 16)) misc_cargo%rolling_qsaves = .True.
  if (is_string_in_the_list('--checks',8)) then
 
    include "LP_checks.f90"

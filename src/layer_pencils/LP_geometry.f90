@@ -59,6 +59,7 @@ module LP_geometry
  type :: miscellaneous_cargo_T
    character(len=7) :: scheme_id
    logical :: qsave_restart
+   logical :: rolling_qsaves=.False.
    real(kind=dp) :: time_limit
    real(kind=dp) :: dt_max
    real(kind=dp) :: tolerance_factor
