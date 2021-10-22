@@ -670,6 +670,25 @@
  end subroutine
 
 
+ subroutine initialise_bookkeeping_counters (self, time_index)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer :: iVar, iObj
+   integer, intent(in) :: time_index
+   self%io_bookkeeping%time_integer = time_index 
+   do iVar = 1, self%recipe%numberOf_linear_variables_full
+   do iObj = 1, self%recipe%output%numberOf_linearObjects( iVar )
+   self%recipe%output%linear(iVar)%object(iObj)%counter = &
+          modulo(time_index, self%recipe%output%linear(iVar)%object(iObj)%period)
+   end do
+   end do
+   do iVar = 1, self%recipe%numberOf_quadratic_variables
+   do iObj = 1, self%recipe%output%numberOf_quadraObjects( iVar )
+   self%recipe%output%quadra(iVar)%object(iObj)%counter = &
+          modulo(time_index, self%recipe%output%quadra(iVar)%object(iObj)%period)
+   end do
+   end do
+ end subroutine
+
  subroutine output_slices_volumes_and_profiles(self)
    class(full_problem_data_structure_T), intent(inOut) :: self
    integer :: iVar, iObj

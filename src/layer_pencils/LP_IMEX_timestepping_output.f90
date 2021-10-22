@@ -51,6 +51,8 @@
    class(full_problem_data_structure_T), intent(inOut) :: self
    real(kind=dp) :: varAvg, aux_dsca
    integer :: position_backup
+   integer :: current_position
+   logical :: first_or_not
    integer :: iVar, iObj
    integer :: ix, iy, iz
    character(len=17) :: fileExtension
@@ -64,13 +66,16 @@
    position_backup = self%io_bookkeeping%dPosition
    !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    self%io_bookkeeping%dPosition = position_backup
+   current_position = (timings%i_timestep-1)*8+1
+   first_or_not = .False.
+   if (current_position.eq.1) first_or_not = .True.
    call output_dsca_in_unique_timeserie(&
                  self%io_bookkeeping%output_directory,&
                  self%io_bookkeeping%output_dir_length,&
                  'time.dat', 8,& 
                  self%io_bookkeeping%absolute_time,&
-                 self%io_bookkeeping%first_or_not,&
-                 self%io_bookkeeping%dPosition)
+                 first_or_not, &                      
+                 current_position)
       
    do iVar = 1, self%recipe%numberOf_linear_variables_full
    do iObj = 1, self%recipe%timeseries%numberOf_linearObjects( iVar )
@@ -89,14 +94,17 @@
                 varAvg = varAvg / real(self%geometry%NYAA, kind=dp)
                 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 self%io_bookkeeping%dPosition = position_backup
+                current_position = (timings%i_timestep-1)*8+1
+   first_or_not = .False.
+   if (current_position.eq.1) first_or_not = .True.
                 call output_cumul_d_in_timeserie(&
                               self%io_bookkeeping%output_directory,&
                               self%io_bookkeeping%output_dir_length,&
                               self%recipe%linear_vars_full(iVar)%str,&
                               len(self%recipe%linear_vars_full(iVar)%str),&
                               varAvg,&
-                              self%io_bookkeeping%first_or_not,&
-                              self%io_bookkeeping%dPosition)
+                              first_or_not, &                      
+                              current_position)            
           case ('zSlice')
                if ((self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index &
                                .ge. domain_decomp%phys_iStart(1)) &
@@ -121,14 +129,17 @@
                    self%geometry%mpi_Zphys%comm, ierr)
                  if (self%geometry%mpi_Zphys%rank.eq.0) then
                  write (fileExtension, 305) self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index 
+                 current_position = (timings%i_timestep-1)*8+1
+   first_or_not = .False.
+   if (current_position.eq.1) first_or_not = .True.
                  call output_dsca_in_unique_timeserie(&
                     self%io_bookkeeping%output_directory,&
                     self%io_bookkeeping%output_dir_length,&
                     self%recipe%linear_vars_full(iVar)%str//fileExtension,&
                     len(self%recipe%linear_vars_full(iVar)%str)+17,&
                     aux_dsca, &                                 
-                    self%io_bookkeeping%first_or_not,&
-                    self%io_bookkeeping%dPosition)
+                    first_or_not, &                      
+                    current_position)            
                  end if 
                end if
           case default
@@ -156,14 +167,17 @@
                 varAvg = varAvg / real(self%geometry%NYAA, kind=dp)
                 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 self%io_bookkeeping%dPosition = position_backup
+                current_position = (timings%i_timestep-1)*8+1
+   first_or_not = .False.
+   if (current_position.eq.1) first_or_not = .True.
                 call output_cumul_d_in_timeserie(&
                               self%io_bookkeeping%output_directory,&
                               self%io_bookkeeping%output_dir_length,&
                               self%recipe%nl_vars(iVar)%str,&
                               len(self%recipe%nl_vars(iVar)%str),&
                               varAvg,&
-                              self%io_bookkeeping%first_or_not,&
-                              self%io_bookkeeping%dPosition)
+                              first_or_not, &                      
+                              current_position)            
                 if (iObj.le.3) self%cargo%KE_display = self%cargo%KE_display + varAvg
           case ('zSlice')
                if ((self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
@@ -189,14 +203,17 @@
                    self%geometry%mpi_Zphys%comm, ierr)
                  if (self%geometry%mpi_Zphys%rank.eq.0) then
                  write (fileExtension, 305) self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index 
+                 current_position = (timings%i_timestep-1)*8+1
+   first_or_not = .False.
+   if (current_position.eq.1) first_or_not = .True.
                  call output_dsca_in_unique_timeserie(&
                     self%io_bookkeeping%output_directory,&
                     self%io_bookkeeping%output_dir_length,&
                     self%recipe%nl_vars(iVar)%str//fileExtension,&
                     len(self%recipe%nl_vars(iVar)%str)+17,&
                     aux_dsca, &                                 
-                    self%io_bookkeeping%first_or_not,&
-                    self%io_bookkeeping%dPosition)
+                    first_or_not, &                      
+                    current_position)            
                  end if 
                end if
           case default

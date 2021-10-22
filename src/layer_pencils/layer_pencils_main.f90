@@ -131,6 +131,7 @@ Program layer_pencils_main
 
  wClock%limit = misc_cargo%time_limit
  call main%init_all_sources()
+ call main%initialise_bookkeeping_counters(timings%i_timestep)
 
  do while (.not.wClock%Time_is_elapsed)
    !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -195,6 +196,7 @@ Program layer_pencils_main
    !!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    Call wclock%check(.False.) !< boolean argument: verbosity 
                               !!< (.False. is quiet)               
+
 
 
 

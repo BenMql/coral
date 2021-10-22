@@ -29,6 +29,7 @@ module LP_IMEX_timestepping
  use chebyshev_galerkin_2
  use LP_transforms
  use decomp_2d_io
+ use LP_timings, only: timings
  implicit none
 
  type :: intermediate_step_buffer_3d_T !< intermediate 3D fields (cf ARS97)
@@ -182,6 +183,7 @@ module LP_IMEX_timestepping
    procedure :: kxky_matrices_manyGalkn_to_uniqueCheby
    procedure :: import_quickSave
    procedure :: init => initialise_the_data_structure
+   procedure :: initialise_bookkeeping_counters
    procedure :: march_forward => one_step_beyond
    procedure :: mass_field_to_rhs  => LPIMEX_mass_field_to_rhs
    procedure :: noisy_initial_conditions

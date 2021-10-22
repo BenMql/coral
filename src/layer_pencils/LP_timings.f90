@@ -93,14 +93,38 @@ subroutine read_timings_from_file(self,fileStr, fileLen)
    class(timings_T) :: self
    integer, intent(In) :: fileLen
    character(len=fileLen), intent(In) :: fileStr
-   if (my_rank.eq.0) then
-      open(unit=9, file=fileStr, status='old', access='stream')
-      read(9) self%dt, self%absolute_time
-      close(9)
-      self%dt = self%dt / 50.
-   end if
-   call MPI_Bcast(self%dt,            1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)
-   call MPI_Bcast(self%absolute_time, 1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)
+   character(len=fileLen+16) :: time_file_str
+   logical :: time_file_exists
+   integer :: file_size
+
+   ! first assess what is in the file:
+   inquire (file=fileStr, size=file_size)
+   select case (file_size)
+          case (16)
+              if (my_rank.eq.0) then
+                 open(unit=9, file=fileStr, status='old', access='stream')
+                 read(9) self%dt, self%absolute_time
+                 close(9)
+                 self%dt = self%dt / 50.
+              end if
+              call MPI_Bcast(self%dt,            1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)
+              call MPI_Bcast(self%absolute_time, 1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)
+          case (20)
+              if (my_rank.eq.0) then
+                 open(unit=9, file=fileStr, status='old', access='stream')
+                 read(9) self%dt, self%absolute_time, self%i_timestep
+                 close(9)
+                 self%dt = self%dt / 50.
+              end if
+              time_file_str = fileStr(1:fileLen-6)//'../Timeseries/time.dat'
+              write(*,*) "looking for file ", time_file_str
+              inquire( file=time_file_str, exist=time_file_exists)
+              if (.not.(time_file_exists)) self%i_timestep = 1
+              call MPI_Bcast(self%dt,            1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)
+              call MPI_Bcast(self%absolute_time, 1, MPI_DOUBLE, 0, MPI_Comm_world, ierr)
+              call MPI_Bcast(self%i_timestep,    1, MPI_INT,    0, MPI_Comm_world, ierr)
+   end select
+              
 
    if (self%dt.le.self%dt_max) then
       self%dt_current = self%dt
@@ -118,7 +142,7 @@ subroutine write_timings_to_file(self,fileStr, fileLen)
    ! process 0 takes care of the writing for everybody.
    if (my_rank.eq.0) then
    open(unit=9, file=fileStr, status='replace', access='stream')
-   write(9,POS=1) self%dt_current, self%absolute_time
+   write(9,POS=1) self%dt_current, self%absolute_time, self%i_timestep
    close(9)
    end if
 end subroutine
