@@ -5,6 +5,7 @@ module LP_transforms
  use MPI_vars
  use LP_domain_decomp
  use fftw3_wrap
+ use read_command_line_args
 
  implicit none
 
@@ -25,6 +26,9 @@ module LP_transforms
 
  type(C_ptr), private, save :: dct_plan_forward
  type(C_ptr), private, save :: dct_plan_backward
+
+ logical :: dct_includes_endpoints = .False.
+ integer :: logical_NZ 
 
  contains
 
@@ -153,7 +157,7 @@ module LP_transforms
    call fftw_execute_r2r ( dct_plan_forward,  recast_spec_real, recast_spec_real )
    normalization_factor = 1._dp / (domain_decomp%NXAA * &
                                    domain_decomp%NYAA * &
-                                   domain_decomp%NZAA )
+                                   logical_NZ )
 
    self%spec(1,:,:) = self%spec(1,:,:) * 0.5_dp
    self%spec = self%spec *normalization_factor
@@ -171,6 +175,13 @@ module LP_transforms
    integer(kind=C_intPtr_T) :: sz
    type(c_ptr) :: a1_p
    real(kind=dp), pointer :: a1(:,:,:)
+   if (is_string_in_the_list('--grid-with-endpoints', 21)  &
+       .or.                                                &
+       is_string_in_the_list('--gauss-lobatto-grid',  20)) then
+       
+       dct_includes_endpoints = .True.
+         
+   end if
    sz = domain_decomp%spec_iSize(1) *&
         domain_decomp%spec_iSize(2) *&
         domain_decomp%spec_iSize(3)
@@ -178,17 +189,35 @@ module LP_transforms
    call c_f_pointer(a1_p,a1,[2*domain_decomp%spec_iSize(1), &
                                domain_decomp%spec_iSize(2), &
                                domain_decomp%spec_iSize(3)])
-
-   dct_plan_forward =  fftw_plan_many_r2r(1, [domain_decomp%spec_iSize(1)], &
+   if (dct_includes_endpoints) then
+     ! adjust the logical size of the transforms
+     logical_NZ = domain_decomp%NZAA - 1
+     ! plan the transforms
+     dct_plan_forward =  fftw_plan_many_r2r(1, [domain_decomp%spec_iSize(1)], &
+         domain_decomp%spec_iSize(2)*domain_decomp%spec_iSize(3), &
+         a1, [2*domain_decomp%spec_iSize(1)], 2, 2*domain_decomp%spec_iSize(1), &
+         a1, [2*domain_decomp%spec_iSize(1)], 2, 2*domain_decomp%spec_iSize(1), &
+         [FFTW_REDFT00], FFTW_MEASURE)
+     dct_plan_backward=  fftw_plan_many_r2r(1, [domain_decomp%spec_iSize(1)], &
+         domain_decomp%spec_iSize(2)*domain_decomp%spec_iSize(3), &
+         a1, [2*domain_decomp%spec_iSize(1)], 2, 2*domain_decomp%spec_iSize(1), &
+         a1, [2*domain_decomp%spec_iSize(1)], 2, 2*domain_decomp%spec_iSize(1), &
+         [FFTW_REDFT00], FFTW_MEASURE)
+   else
+     ! adjust the logical size of the transforms
+     logical_NZ = domain_decomp%NZAA
+     ! plan the transforms
+     dct_plan_forward =  fftw_plan_many_r2r(1, [domain_decomp%spec_iSize(1)], &
          domain_decomp%spec_iSize(2)*domain_decomp%spec_iSize(3), &
          a1, [2*domain_decomp%spec_iSize(1)], 2, 2*domain_decomp%spec_iSize(1), &
          a1, [2*domain_decomp%spec_iSize(1)], 2, 2*domain_decomp%spec_iSize(1), &
          [FFTW_REDFT10], FFTW_MEASURE)
-   dct_plan_backward=  fftw_plan_many_r2r(1, [domain_decomp%spec_iSize(1)], &
+     dct_plan_backward=  fftw_plan_many_r2r(1, [domain_decomp%spec_iSize(1)], &
          domain_decomp%spec_iSize(2)*domain_decomp%spec_iSize(3), &
          a1, [2*domain_decomp%spec_iSize(1)], 2, 2*domain_decomp%spec_iSize(1), &
          a1, [2*domain_decomp%spec_iSize(1)], 2, 2*domain_decomp%spec_iSize(1), &
          [FFTW_REDFT01], FFTW_MEASURE)
+   end if
 
    
    call fftw_free(a1_p)   
