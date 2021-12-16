@@ -98,6 +98,13 @@ Module LP_equations
 
 
  type :: fullVars_recipe_T
+   !< contains the recipe for building fields that will be computed
+   !! in physical space. 
+   !! For instance, to compute advection in flows, we need the horizontal velocity
+   !! that can be expressed in terms of toroidal/poloidal potentials:
+   !!    U = [d/dy] psi + [d/dx][d/dz] phi + u0
+   !! In the example above, self%N_terms = 3 and each of these 3 terms is stored in
+   !! self % term (1:3)
    character(len=:), allocatable :: str
    integer :: N_terms
    type(a_linear_contribution_T), dimension(:), allocatable :: term

@@ -27,9 +27,11 @@ module LP_algebra_d_1D
    procedure :: backsolve_dOp_DIA_1d_1coupled
    procedure :: backsolve_dOp_DIA_1d_1coupled_knownLdb
    procedure :: backsolve_dOp_DIA_1d_1coupled_unique
+   procedure :: backsolve_dOp_DIA_1d_1coupled_PTR
    generic   :: backsolve => backsolve_dOp_DIA_1d_1coupled,&
                              backsolve_dOp_DIA_1d_1coupled_unique,&
-                             backsolve_dOp_DIA_1d_1coupled_knownLdb
+                             backsolve_dOp_DIA_1d_1coupled_knownLdb, &
+                             backsolve_dOp_DIA_1d_1coupled_PTR
    generic   :: constructor => build_dOp_DIA_1d_1coupled_from_csr, &
                                build_dOp_DIA_1d_1coupled_from_coo
  end type dOperator_1d_1coupled_T
@@ -156,6 +158,30 @@ module LP_algebra_d_1D
    if (info.ne.0) print *, "Error Diagnostic:", info
    if (info.ne.0) stop
  end subroutine
+
+ subroutine backsolve_dOp_DIA_1d_1coupled_PTR(self, right_hand_sides, nrhs, ldb)
+   class(dOperator_1d_1coupled_T), intent(inOut) :: self
+   real(dp), pointer :: right_hand_sides(:)
+   integer, intent(in) :: nrhs
+   integer, intent(in) :: ldb
+   integer :: info
+   if (.not.self%has_lu) STOP 'LU factorization is missing'
+   call dgbtrs('N', self%dia%ncol,  &   
+                    self%dia%nl,    &   
+                    self%dia%nu,    &   
+                    nrhs,           &   
+                    self%lu%factors,&  
+                    2*self%dia%nl + self%dia%nu+1,&
+                    self%lu %pivots,&
+                    right_hand_sides, ldb, info)
+    
+   if (info.ne.0) print *, "Problem during LU routine dgbtrs"
+   if (info.ne.0) print *, "in backsolve_zOp_DIA_1d_1coupled_PTR"
+   if (info.ne.0) print *, "Error Diagnostic:", info
+   if (info.ne.0) stop
+ end subroutine
+
+
 
  subroutine backsolve_dOp_DIA_1d_1coupled_unique(self, right_hand_sides)
    class(dOperator_1d_1coupled_T), intent(inOut) :: self

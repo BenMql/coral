@@ -587,6 +587,10 @@
                            )%padStencilExtractShuffle(position_of_interest&
                            )%dot(self%coupled_zero_set(system_of_interest)%aux,&
                         datBufferZero, 'overW')
+          if (self%recipe%linear_vars_full(iVar)%Term(iTerm)%dz_exponent.ne.0) then
+          call self%differentiate( datBufferZero, &
+                                   self%recipe%linear_vars_full(iVar)%Term(iTerm)%dz_exponent)
+          end if
           self%linear_variables(iVar)%spec(:,1,1) =  self%linear_variables(iVar)%spec(:,1,1) &
                       + datBufferZero* self%recipe%linear_vars_full(iVar)%Term(iTerm)%dsca
           

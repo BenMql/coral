@@ -152,7 +152,8 @@ module LP_IMEX_timestepping
    type(cargo_T) :: cargo
    type(sources_arrays_zero_T), allocatable :: sources(:)
    integer :: numberOf_sources
-   type(zOperator_1d_1coupled_T) :: Chebyshev_Integration
+   type(zOperator_1d_1coupled_T) :: Chebyshev_Integration_z
+   type(dOperator_1d_1coupled_T) :: Chebyshev_Integration_d
   contains 
    procedure :: add_K_std_to_rhs   => LPIMEX_add_K_std_to_rhs
    procedure :: add_K_hat_to_rhs   => LPIMEX_add_K_hat_to_rhs
@@ -171,7 +172,8 @@ module LP_IMEX_timestepping
    procedure :: compute_cfl_based_timestep
    procedure :: copy_fields_to_aux => LPIMEX_copy_fields_to_aux
    procedure :: copy_aux_to_fields => LPIMEX_copy_aux_to_fields
-   procedure :: differentiate
+   procedure :: differentiate_kxky, differentiate_zero
+   generic   :: differentiate => differentiate_kxky, differentiate_zero
    procedure :: export_allPhys
    procedure :: export_allProfiles
    procedure :: export_slice
@@ -215,7 +217,7 @@ module LP_IMEX_timestepping
 
  contains
 
- subroutine differentiate ( self, field, dOrder)
+ subroutine differentiate_kxky ( self, field, dOrder)
    class(full_problem_data_structure_T), intent(inOut) :: self
    complex(kind=dp), allocatable, intent(inOut) :: field(:,:,:)
    complex(kind=dp), allocatable, target :: deriv(:,:,:)
@@ -244,7 +246,7 @@ module LP_IMEX_timestepping
    call C_F_pointer(dummyPtr, fDummyPtr, [self%geometry%NZAA*&
                                           self%geometry%spec%local_NX*&
                                           self%geometry%spec%local_NY])
-   call self%Chebyshev_integration%backsolve( fDummyPtr,&
+   call self%Chebyshev_integration_z%backsolve( fDummyPtr,&
                                       self%geometry%spec%local_NX*&
                                       self%geometry%spec%local_NY,&
                                       self%geometry%NZAA)
@@ -259,6 +261,35 @@ module LP_IMEX_timestepping
    end if
  end subroutine
    
+ subroutine differentiate_zero ( self, field, dOrder)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   real(kind=dp), allocatable, intent(inOut) :: field(:)
+   real(kind=dp), allocatable, target :: deriv(:)
+   real(kind=dp), pointer :: fDummyPtr(:)
+   type(C_Ptr) :: dummyPtr
+   integer :: ix,iy,iz
+   integer, intent(in) :: dOrder
+   integer :: iOrder
+   if (dOrder.lt.1) then
+     print *, 'subroutine differentiate exists only for dOrder > 0'
+     error stop
+   else 
+   do iOrder = 1, dOrder
+   allocate (deriv( self%geometry%NZAA ))
+   deriv = 0._dp                             
+   do iz = 1, self%geometry%NZ - 1
+   deriv(iz) = field(iz+1)
+   end do
+   dummyPtr = C_loc(deriv(1))
+   call C_F_pointer(dummyPtr, fDummyPtr, [self%geometry%NZAA])
+   call self%Chebyshev_integration_d%backsolve( fDummyPtr,&
+                                      1, self%geometry%NZAA)
+              
+   call move_alloc(from=deriv, to=field)
+   end do
+   field(self%geometry%NZ : self%geometry%NZAA) = 0._dp
+   end if
+ end subroutine
 
  subroutine factorize_operators( self, dt_size, first_factor_bool )
    class(full_problem_data_structure_T), intent(inOut) :: self
@@ -411,8 +442,10 @@ module LP_IMEX_timestepping
                        auxCSR, &
                        2, self%geometry%NZ, 1, self%geometry%NZ-1)
    call dcsr_convert_zcsr( auxCSR, auxZcsr)                        
-   call self%chebyshev_integration%build_zOp_DIA_1d_1coupled_from_csr(auxZcsr)
-   call self%chebyshev_integration%factorize()
+   call self%chebyshev_integration_z%build_zOp_DIA_1d_1coupled_from_csr(auxZcsr)
+   call self%chebyshev_integration_z%factorize()
+   call self%chebyshev_integration_d%build_dOp_DIA_1d_1coupled_from_csr(auxCSR)
+   call self%chebyshev_integration_d%factorize()
  end subroutine
    
    
