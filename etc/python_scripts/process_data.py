@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.fftpack as fft
 import get_coral_params as gcp
 import matplotlib.pyplot as plt
 
@@ -68,7 +67,7 @@ class plane_layer_volume:
               return 0
            else: 
               myFig=plt.figure()
-              plt.pcolormesh(self.xgrid, self.ygrid, self.dat[varInt][:,:,z].T, shading='auto')
+              plt.pcolormesh(self.xgrid, self.ygrid, self.dat[varInt][:,:,z].T)
               plt.title(self.lut[varInt]+', index z='+str(z))
               return myFig
        # check that the call has the proper form:
@@ -100,7 +99,7 @@ class plane_layer_volume:
       a rank 3 array that contains the square modulus of the DFT-DFT-DChebyT of the input.
       todo: for a proper fourier-fourier-cosine transform, an interpolation on an
       equispaced grid is needed.'''
-      from scipy.fftpack import fft2, ifft2, dct, idct
+      from scipy.fftpack import fft2, dct
       field_phys = self.dat[pos_in_list] # *points* to data
       field_aux  = dct(field_phys, axis=2, type=2)
       field_aux [:,:,0] *= 0.5 # normalize the first Chebyshev properly
@@ -109,39 +108,66 @@ class plane_layer_volume:
 
 
 
-   def ydiff_FD(self, pos_in_list):
-      my_var = np.copy(self.dat[pos_in_list])
-      self.dat.append  (np.diff(my_var,axis=1)/self.ly*self.NY)
-      self.lut.append('[d/dy]'+self.lut[pos_in_list])
+   def xdiff(self, pos_in_list, order=1):
+      if (order==0):
+         # ... but frankly why would you do that??
+         self.dat.append(np.copy(self.dat[pos_in_list]))
+         self.lut.append(self.lut[pos_in_list])
+      else:
+         from numpy.fft import rfft, irfft, fftfreq
+         fft_coefs = rfft(self.dat[pos_in_list], axis=0)
+         kx = fftfreq (self.NX, d=self.lx)
+         fft_coefs[0, :, :] *= 0.
+         for ix in range(self.NX//2):
+            fft_coefs[ix, :, :] *= pow (1j * kx[ix+1], order)
+         self.dat.append  ( irfft( fft_coefs , axis=0))
+         if (order==1):
+             self.lut.append('[d/dx]'+self.lut[pos_in_list])
+         else:
+             self.lut.append('[d/dx]**'+str(order)+' '+self.lut[pos_in_list])
+   
+   def ydiff(self, pos_in_list, order=1):
+      if (order==0):
+         # ... but frankly why would you do that??
+         self.dat.append(np.copy(self.dat[pos_in_list]))
+         self.lut.append(self.lut[pos_in_list])
+      else:
+         from numpy.fft import rfft, irfft, fftfreq
+         fft_coefs = rfft(self.dat[pos_in_list], axis=1)
+         ky = fftfreq (self.NY, d=self.ly)
+         fft_coefs[:, 0, :] *= 0.
+         for iy in range(self.NY//2):
+            fft_coefs[:, iy, :] *= pow (1j * ky[iy+1], order)
+         self.dat.append  ( irfft( fft_coefs, axis=1))
+         if (order==1):
+             self.lut.append('[d/dy]'+self.lut[pos_in_list])
+         else:
+             self.lut.append('[d/dy]**'+str(order)+' '+self.lut[pos_in_list])
+   
 
-   def xdiff(self, pos_in_list):
-      field = np.copy(self.dat[pos_in_list])
-      for iy in range(self.NY):
-         for iz in range(self.NZ):
-            field[:,iy,iz] = fft.diff(self.dat[pos_in_list][:,iy,iz], period=self.lx)
-      self.dat.append  (field)
-      self.lut.append('[d/dx]'+self.lut[pos_in_list])
-
-   def ydiff(self, pos_in_list):
-      field = np.copy(self.dat[pos_in_list])
-      for ix in range(self.NX):
-         for iz in range(self.NZ):
-            field[ix,:,iz] = fft.diff(self.dat[pos_in_list][ix,:,iz], period=self.ly)
-      self.dat.append  (field)
-      self.lut.append('[d/dy]'+self.lut[pos_in_list])
-
-   def xdiff_FD(self, pos_in_list):
-      my_var = np.copy(self.dat[pos_in_list])
-      self.dat.append  (np.diff(my_var,axis=0)/self.lx*self.NX)
-      self.lut.append('[d/dx]'+self.lut[pos_in_list])
+   def inverseHorizontalLaplacian(self, pos_in_list):
+      from numpy.fft import rfft, irfft, fftfreq, fft, ifft
+      xfft_coefs = rfft(self.dat[pos_in_list], axis=0)
+      xyfft_coefs = fft(xfft_coefs, axis = 1)          
+      kx = fftfreq (self.NX, d=self.lx)
+      ky = fftfreq (self.NY, d=self.ly)
+      xyfft_coefs[0, 0, :] *= 0.
+      for  ix in range(self.NX//2+1):
+       for iy in range(self.NY):
+         xyfft_coefs[ix, iy, :] *= pow (-kx[ix]**2-ky[iy]**2, -1)
+      xyfft_coefs[0,0,:] = 0.
+      xfft_coefs = ifft(xyfft_coefs, axis=1)
+      self.dat.append  ( irfft( xfft_coefs , axis=0))
+      self.lut.append('Inv.Perp.Lap'+self.lut[pos_in_list])
 
 
    def zdiff(self, pos_in_list):
       from cheby_tools import chebyshev_elementary_integration
       from scipy.sparse.linalg import factorized
       import scipy.sparse as sp
+      from scipy.fftpack import dct, idct
       cheb_I = chebyshev_elementary_integration(N=self.NZ, center = 0.5, gap=self.lz)
-      field_spec = 2*fft.dct(self.dat[pos_in_list], axis=2, type=2)
+      field_spec = 2*dct(self.dat[pos_in_list], axis=2, type=2)
       #field_spec[:,:,0]/=2.
       deriv_spec = np.zeros(field_spec.shape, dtype=np.float_)
       solve = factorized(cheb_I.todense()[1:,:-1])
@@ -149,16 +175,17 @@ class plane_layer_volume:
          for ix in range(self.NX):
             deriv_spec[iy,ix,:-1] = 0.5*solve(field_spec[iy,ix,1:])
       deriv_spec[:,:,0]*=2.
-      deriv_phys = fft.idct(deriv_spec, axis=2)/self.NZ
+      deriv_phys = idct(deriv_spec, axis=2)/self.NZ
       self.dat.append(deriv_phys)
       self.lut.append('[d/dz]'+self.lut[pos_in_list])
 
    def zint_Vol(self, pos_in_list):
+      from scipy.fftpack import dct, idct
       from cheby_tools import chebyshev_elementary_integration
       from scipy.sparse.linalg import factorized
       import scipy.sparse as sp
       cheb_I = chebyshev_elementary_integration(N=self.NZ, center = 0.5, gap=self.lz)
-      field_spec = 2*fft.dct(self.dat[pos_in_list], axis=2, type=2)
+      field_spec = 2*dct(self.dat[pos_in_list], axis=2, type=2)
       field_spec[:,:,0]/=2.
       integral_spec = np.zeros(field_spec.shape, dtype=np.float_)
       CEIdense = cheb_I.todense()
@@ -175,17 +202,18 @@ class plane_layer_volume:
       #normalization
       integral_spec[:,:,0]*=2.
       #integral_spec[:,:,0]/=np.sqrt(self.NZ)
-      integral_phys = fft.idct(integral_spec, axis=2)/self.NZ
+      integral_phys = idct(integral_spec, axis=2)/self.NZ
       self.dat.append(integral_phys)
       self.lut.append('[Int dz]'+self.lut[pos_in_list])
       return full_int/self.NZ/4.
 
    def zint(self, pos_in_list):
+      from scipy.fftpack import dct, idct
       gap = self.lz
       center = self.lz/2.
       from cheby_tools import chebyshev_elementary_integration
       CEI = chebyshev_elementary_integration(gap = gap, center = center, N = self.NZ)
-      field_spec = 2*fft.dct(self.profiles[pos_in_list], type=2)
+      field_spec = 2*dct(self.profiles[pos_in_list], type=2)
       field_spec[0]/=2.
       integral_spec = np.zeros(field_spec.shape, dtype=np.float_)
       CEIdense = CEI.todense()
@@ -202,7 +230,7 @@ class plane_layer_volume:
       self.verticalSums.append(np.sum(integral_spec)/4./self.NZ)
       self.lut_verticalSums.append('Int dz '+self.lut_profiles[pos_in_list])
       integral_spec[0]*=2.
-      integral_phys = fft.idct(integral_spec)/self.NZ/8.
+      integral_phys = idct(integral_spec)/self.NZ/8.
       self.profiles.append(integral_phys)
       self.lut_profiles.append('Int dz '+self.lut_profiles[pos_in_list])
 
@@ -231,4 +259,16 @@ class plane_layer_volume:
    def horizontally_average(self, pos_in_list):
       self.profiles.append(np.sum(self.dat[pos_in_list], axis=(0,1))/self.NY/self.NX)
       self.lut_profiles.append('<'+self.lut[pos_in_list]+ '>_{x,y}')
+
+   def _xdiff_FD(self, pos_in_list):
+      my_var = np.copy(self.dat[pos_in_list])
+      self.dat.append  (np.diff(my_var,axis=0)/self.lx*self.NX)
+      del my_var
+      self.lut.append('[d/dx]'+self.lut[pos_in_list])
+
+   def _ydiff_FD(self, pos_in_list):
+      my_var = np.copy(self.dat[pos_in_list])
+      self.dat.append  (np.diff(my_var,axis=1)/self.ly*self.NY)
+      del my_var
+      self.lut.append('[d/dy]'+self.lut[pos_in_list])
 
