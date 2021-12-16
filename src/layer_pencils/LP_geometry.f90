@@ -18,6 +18,7 @@ module LP_geometry
  use fortran_kinds
  use LP_domain_decomp
  use MPI_vars
+ use read_command_line_args
         
  implicit None
  
@@ -95,6 +96,15 @@ module LP_geometry
    self%NXAA = (3 * self%NX) / 2
    self%NYAA = (3 * self%NY) / 2
    self%NZAA = (3 * self%NZ) / 2
+
+   ! if we include endpoints, we need an additional point to ensure that
+   ! the logical size of the transforms has a simple prime factors decomposition
+   if (is_string_in_the_list('--grid-with-endpoints', 21)  &
+       .or.                                                &
+       is_string_in_the_list('--gauss-lobatto-grid',  20)) then
+       
+      self%NZAA = (3*self%NZ) / 2 + 1 
+   end if
 
    if (my_rank.eq.0) print*, '================================================================='
    if (my_rank.eq.0) print*, ' ...'
