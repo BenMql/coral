@@ -15,6 +15,7 @@ FFTW_SRC   = $(CORAL_ROOT)/src/fftw_tools/
 MISC_SRC   = $(CORAL_ROOT)/src/misc/
 OUT_SRC    = $(CORAL_ROOT)/src/output_pack/
 PENCILS    = $(CORAL_ROOT)/src/layer_pencils/
+TRIPLY     = $(CORAL_ROOT)/src/triply_periodic/
 SLABS      = $(CORAL_ROOT)/src/slab_layer/
 MPI_SRC    = $(CORAL_ROOT)/src/MPI_tools/
 MKL_LIB    = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl -m64 -I${MKLROOT}/include
@@ -112,6 +113,25 @@ Layer_pencil_Objects += $(PENCILS)layer_pencils_main.o
 pencils: $(Layer_pencil_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral_LP.exe $^ -lfftw3 -l2decomp_fft -L$(FFTW_LIB) -L$(DECOMP2D_ROOT)/lib $(MKL_LIB) -I$(MODDIR) -I$(DECOMP2D_ROOT)/include -I$(MKLROOT)/include  
+	$(MAKE) clean
+
+
+                        #####################
+                        #####################
+# ~~~~~~~~~~~~~~~~~~~   #  TRIPLY PERIODIC  #~~~~~~~~~~~~~~~~~~
+                        #####################
+                        #####################
+
+
+Triply_periodic_Objects := $(MISC_SRC)fortran_kinds.o
+Triply_periodic_Objects += $(CHEBY_SRC)lapack_module.o
+Triply_periodic_Objects += $(TRIPLY)P3_lapack_wrappers.o
+Triply_periodic_Objects += $(TRIPLY)P3_algebra.o
+Triply_periodic_Objects += $(TRIPLY)algebra_driver.o
+
+algebra: $(Triply_periodic_Objects)
+	mkdir -p $(BUILD_DIR)
+	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)algebra_driver.exe $^ $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
 	$(MAKE) clean
 
 
