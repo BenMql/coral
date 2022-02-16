@@ -309,6 +309,7 @@ Module LP_equations
       select case (text_list(iLine)(1:11))
              case ('>>Volume ::')
                   call get_outputVarName_period( restOfMyLine, varNameStr, periodint)
+                  positionInt=0
                   kindStr = 'volume'
              case ('>>XSlice ::')
                   call get_outputVarName_period_position( restOfMyLine, varNameStr, periodint, positionInt)
@@ -322,9 +323,11 @@ Module LP_equations
              case ('>>Zsummed::')
                   call get_outputVarName_period( restOfMyLine, varNameStr, periodint)
                   kindStr = 'zAvged'
+                  positionInt=0
              case ('>>Profile::')
                   call get_outputVarName_period( restOfMyLine, varNameStr, periodInt)
                   kindStr = 'profil'
+                  positionInt=0
              case default
                   print *, 'Error in coral.usrOuput'
                   print *, 'First eleven characters of each line should be:'
