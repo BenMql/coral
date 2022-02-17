@@ -1,0 +1,66 @@
+>>Param :: Prandtl := 1.d0 <<
+>>Param :: iEkman := 1.d3 <<
+>>Param :: RayleighPr := 1.d5 <<     
+>>====================================<<
+>>linear_variable_kxky :: u <<
+>>linear_variable_kxky :: v <<
+>>linear_variable_kxky :: w <<
+>>linear_variable_kxky :: t <<
+>>linear_variable_kxky :: p <<
+>>====================================<<
+>>linear_variable_full       :: uFull <<
+>>linear_variable_full_build :: + u <<
+>>====================================<<
+>>linear_variable_full       :: vFull <<
+>>linear_variable_full_build :: + v <<
+>>====================================<<
+>>linear_variable_full       :: wFull <<
+>>linear_variable_full_build :: + w <<
+>>====================================<<
+>>linear_variable_full       :: tFull <<
+>>linear_variable_full_build :: + t <<
+>>====================================<<
+>>quadratic_variable :: uu := uFull.uFull <<
+>>quadratic_variable :: uv := uFull.vFull <<
+>>quadratic_variable :: uw := uFull.wFull <<
+>>quadratic_variable :: vv := vFull.vFull <<
+>>quadratic_variable :: vw := vFull.wFull <<
+>>quadratic_variable :: ww := wFull.wFull <<
+>>quadratic_variable :: tu := tFull.uFull <<
+>>quadratic_variable :: tv := tFull.vFull <<
+>>quadratic_variable :: tw := tFull.wFull <<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: u <<
+>>linearly_coupled_var :: v <<
+>>linearly_coupled_var :: w <<
+>>linearly_coupled_var :: p <<
+>>linearly_coupled_var :: t <<
+>>new_equation << 
+>>add_d/dt_term  :: + u <<
+>>add_rhs_linear :: + iEkman.v <<
+>>add_rhs_linear :: + Prandtl.dx.dx.u + Prandtl.dy.dy.u + Prandtl.dz.dz.u <<
+>>add_rhs_linear :: - dx.p <<
+>>add_rhs_NL     :: - dx.uu - dy.uv - dz.uw <<
+>>new_equation <<
+>>add_d/dt_term  :: + v <<
+>>add_rhs_linear :: - iEkman.u <<
+>>add_rhs_linear :: + Prandtl.dx.dx.v + Prandtl.dy.dy.v + Prandtl.dz.dz.v <<
+>>add_rhs_linear :: - dy.p <<
+>>add_rhs_NL     :: - dx.uv - dy.vv - dz.vw <<
+>>new_equation <<
+>>add_d/dt_term  :: + w <<
+>>add_rhs_linear :: + Prandtl.dx.dx.w + Prandtl.dy.dy.w + Prandtl.dz.dz.w <<
+>>add_rhs_linear :: - dz.p <<
+>>add_rhs_linear :: + RayleighPr.t <<
+>>add_rhs_NL     :: - dx.uw - dy.vw - dz.ww <<
+>>new_equation <<
+>>add_rhs_linear :: + dz.w + dx.u + dy.v <<
+>>new_equation <<
+>>add_d/dt_term  :: + t <<
+>>add_rhs_linear :: + dx.dx.t + dy.dy.t + dz.dz.t <<
+>>add_rhs_linear :: + w <<
+>>add_rhs_NL     :: - dx.tu - dy.tv - dz.tw <<
+>>====================================<<
+>>EOF<<
+
