@@ -1,4 +1,4 @@
-Module LP_text_parsing
+Module ftext_parsing
  
  use cwraps
  implicit none
@@ -84,6 +84,6 @@ Module LP_text_parsing
    ierr = parse_timeseries(num, 2, C_Loc(Length), C_loc(arr_of_lines_tms(1)))   
  end subroutine 
 
-End module LP_text_parsing
+End module ftext_parsing
 
 

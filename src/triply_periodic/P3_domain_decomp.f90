@@ -2,7 +2,7 @@
  !                            C O R A L
  !=============================================================================
  !
- ! MODULE: LP_data_structure                              
+ ! MODULE: P3_domain_decomp
  ! 
  !> @author
  !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@tutanota.com
@@ -12,7 +12,7 @@
  !>  
  !
  !=============================================================================
- Module LP_domain_decomp
+ Module P3_domain_decomp
 
    use fortran_kinds
    use decomp_2d
@@ -61,7 +61,7 @@
       self%phys_istart = zstart !< copy 2decomp's internal var.
       self%phys_iEnd   = zend   !< copy 2decomp's internal var.
       self%phys_iSize  = zsize  !< copy 2decomp's internal var. 
-      call decomp_2d_fft_init(IN_CORE_CHEBYSHEV)
+      call decomp_2d_fft_init(PHYSICAL_IN_Z)
       call decomp_2d_fft_get_size(self%spec_iStart, &
                                   self%spec_iEnd,   &
                                   self%spec_iSize   )
@@ -69,4 +69,4 @@
    End Subroutine domain_decomp_init
 
 
- End Module LP_domain_decomp
+ End Module P3_domain_decomp

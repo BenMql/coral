@@ -1,7 +1,7 @@
- Module Output_misc
+ Module output_misc
 
- use chdir_mod
  use MPI_vars
+ use chdir_mod
  use fortran_kinds, Only: dp
  Implicit None
  Private :: dp
@@ -22,7 +22,7 @@
 
    Allocate(array_of_dsca(world_size))
 
-   my_file = file_str//"_full.dat"
+   my_file = file_str//"_volAvg.dat"
    Call MPI_Gather(dsca, 1, MPI_DOUBLE, array_of_dsca, 1, MPI_DOUBLE, 0, MPI_Comm_World, ierr)
 
    sum_of_dsca = sum(array_of_dsca)
@@ -91,20 +91,4 @@
    Close(Unit=9)
  End Subroutine Output_dsca_in_unique_timeserie
 
- Subroutine Output_3d_resolution_MPI(path2file, path2file_len, NZAA, NYAA, NXL, rank_process)
-   Integer, Intent(in) :: path2file_len
-   Character(len=path2file_len), intent(in) :: path2file
-   Integer, Intent(In) :: NZAA, NYAA, NXL 
-   Integer, Intent(In) :: rank_process        
-   Character(len=2) :: process_str
-   Integer :: ierror
-   Write(process_str, "(i2.2)") rank_process
-   Call chdir(trim(path2file))
-   201 Format(I4,',',I4,',',I4)
-   Open( Unit=8, File='resolution_NZAA_NYAA_NXL_'//process_str//'.dat', Status='replace', iostat=ierror)
-   write(8,201) NZAA, NYAA, NXL
-   Close( Unit=8 )
- End Subroutine Output_3d_resolution_MPI
-
-
- End Module Output_misc
+ End Module output_misc

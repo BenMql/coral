@@ -2,7 +2,7 @@
  !                            C O R A L
  !=============================================================================
  !
- ! MODULE: P3_timings
+ ! MODULE: timeKeeping
  ! 
  !> @author
  !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@tutanota.com
@@ -12,7 +12,7 @@
  !! wall-clock time. 
  !
  !=============================================================================
-module LP_timings
+module timeKeeping
  use fortran_kinds
  use MPI_vars
 
@@ -182,4 +182,4 @@ subroutine update_dt_if_needed(self)
   End If
 end subroutine update_dt_if_needed
 
-end module LP_timings
+end module timeKeeping

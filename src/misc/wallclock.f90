@@ -2,7 +2,7 @@
  !                            C O R A L
  !=============================================================================
  !
- ! MODULE: LP_wallclock  
+ ! MODULE: wallclock  
  ! 
  !> @author
  !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@tutanota.com
@@ -11,7 +11,7 @@
  !> Contains wallclock-time related variables, and manipulations thereof.    
  !
  !=============================================================================
- module LP_wallclock
+ module wallclock
   use Fortran_kinds
   use MPI_vars
  Implicit None
@@ -81,4 +81,4 @@
  end subroutine convert_to_human_format
 
 
- end module LP_wallclock
+ end module wallclock

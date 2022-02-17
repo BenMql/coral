@@ -5,12 +5,11 @@ Program layer_pencils_main
  use ftext_parsing
  use timeKeeping
  use wallclock
- use LP_equations
- use LP_algebra
- use LP_IMEX_timestepping
- use LP_transforms
+ use P3_equations
+ use P3_algebra
+ use P3_IMEX_timestepping
+ use P3_transforms
  use decomp_2d_io
- use fftw3_wrap
  use read_command_line_args
  use, intrinsic :: iso_c_binding
  Implicit None
@@ -82,7 +81,6 @@ Program layer_pencils_main
 
 !
    call read_equations_text_file()
-   main%recipe%smagorinsky_flag = is_string_in_the_list('--withHorizontalSmagorinsky',  27)
    call main%recipe%build (arr_of_lines_eqn)
    call read_usrOutput_text_file()
    call main%recipe%add_outputs (arr_of_lines_out)
@@ -100,8 +98,6 @@ Program layer_pencils_main
    main%io_bookkeeping%output_directory = misc_cargo%output_directory
    main%io_bookkeeping%output_dir_length= misc_cargo%output_dir_length
 
-   call dct_planner()             
-
    call main%init(misc_cargo%scheme_id)
 
    if (misc_cargo%qsave_restart) then
@@ -113,12 +109,12 @@ Program layer_pencils_main
       call main%noisy_initial_conditions()
    end if
 
-   call main%Factorize_operators (timings%dt, .True.)
+   call main%invert_operators (timings%dt, .True.)
 
  if (is_string_in_the_list('--rolling-qsaves', 16)) misc_cargo%rolling_qsaves = .True.
  if (is_string_in_the_list('--checks',8)) then
 
-   include "LP_checks.f90"
+   include "P3_checks.f90"
 
  else
    !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,7 +127,6 @@ Program layer_pencils_main
    !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
  wClock%limit = misc_cargo%time_limit
- call main%init_all_sources()
  call main%initialise_bookkeeping_counters(timings%i_timestep)
 
  do while (.not.wClock%Time_is_elapsed)
@@ -143,7 +138,7 @@ Program layer_pencils_main
    call timings%check_for_update()
    main%io_bookkeeping%absolute_time = timings%absolute_time
    if (timings%refactorization_is_due) then 
-      call main%factorize_operators(timings%dt)
+      call main%invert_operators(timings%dt)
       timings%refactorization_is_due = .False.
    End If
 

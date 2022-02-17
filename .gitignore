@@ -20,4 +20,4 @@ src/misc/include_git_version.f90
 *.fdat
 *.pyc
 *.tar
-
+*driver.f90

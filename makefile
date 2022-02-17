@@ -77,16 +77,15 @@ Layer_pencil_Objects += $(MISC_SRC)read_command_line_args.o
 Layer_pencil_Objects += $(FFTW_SRC)fftw3_wrap.o
 Layer_pencil_Objects += $(TEXT_SRC)cwraps.o
 Layer_pencil_Objects += $(TEXT_SRC)cfun_parse_text.o
-Layer_pencil_Objects += $(PENCILS)LP_text_parsing.o
+Layer_pencil_Objects += $(TEXT_SRC)ftext_parsing.o
 Layer_pencil_Objects += $(MPI_SRC)MPI_vars.o
-Layer_pencil_Objects += $(PENCILS)LP_output.o          
-Layer_pencil_Objects += $(PENCILS)LP_timings.o
+Layer_pencil_Objects += $(OUT_SRC)output_misc.o          
+Layer_pencil_Objects += $(MISC_SRC)timeKeeping.o
 Layer_pencil_Objects += $(MISC_SRC)time_mpi.o
 Layer_pencil_Objects += $(TSTEP_SRC)IMEX_schemes.o
-Layer_pencil_Objects += $(MISC_SRC)time_mpi.o
 Layer_pencil_Objects += $(MISC_SRC)read_command_line_args.o
 Layer_pencil_Objects += $(MISC_SRC)include_git_version.o
-Layer_pencil_Objects += $(PENCILS)LP_wallclock.o
+Layer_pencil_Objects += $(MISC_SRC)wallclock.o
 Layer_pencil_Objects += $(PENCILS)LP_domain_decomp.o
 Layer_pencil_Objects += $(PENCILS)LP_geometry.o
 Layer_pencil_Objects += $(PENCILS)LP_cheby_misc.o
@@ -123,15 +122,36 @@ pencils: $(Layer_pencil_Objects)
                         #####################
 
 
-Triply_periodic_Objects := $(MISC_SRC)fortran_kinds.o
+Triply_periodic_Objects := $(MISC_SRC)chdir_mod.o    
+Triply_periodic_Objects += $(MISC_SRC)fortran_kinds.o
+Triply_periodic_Objects += $(MISC_SRC)read_command_line_args.o
+Triply_periodic_Objects += $(TEXT_SRC)cwraps.o
+Triply_periodic_Objects += $(TEXT_SRC)cfun_parse_text.o
+Triply_periodic_Objects += $(TEXT_SRC)ftext_parsing.o
+Triply_periodic_Objects += $(MPI_SRC)MPI_vars.o
+Triply_periodic_Objects += $(OUT_SRC)output_misc.o          
+Triply_periodic_Objects += $(MISC_SRC)timeKeeping.o
+Triply_periodic_Objects += $(TSTEP_SRC)IMEX_schemes.o
+Triply_periodic_Objects += $(MISC_SRC)time_mpi.o
+Triply_periodic_Objects += $(MISC_SRC)read_command_line_args.o
+Triply_periodic_Objects += $(MISC_SRC)include_git_version.o
+Triply_periodic_Objects += $(MISC_SRC)wallclock.o
+Triply_periodic_Objects += $(TRIPLY)P3_domain_decomp.o
+Triply_periodic_Objects += $(TRIPLY)P3_geometry.o
+Triply_periodic_Objects += $(MISC_SRC)include_git_version.o
 Triply_periodic_Objects += $(CHEBY_SRC)lapack_module.o
 Triply_periodic_Objects += $(TRIPLY)P3_lapack_wrappers.o
 Triply_periodic_Objects += $(TRIPLY)P3_algebra.o
-Triply_periodic_Objects += $(TRIPLY)algebra_driver.o
+Triply_periodic_Objects += $(TRIPLY)P3_string_to_data.o
+Triply_periodic_Objects += $(TRIPLY)P3_equations.o             
+Triply_periodic_Objects += $(TRIPLY)P3_transforms.o
+Triply_periodic_Objects += $(TRIPLY)P3_IMEX_timestepping.o
+Triply_periodic_Objects += $(TRIPLY)triply_periodic_main.o
 
-algebra: $(Triply_periodic_Objects)
+
+triply: $(Triply_periodic_Objects)
 	mkdir -p $(BUILD_DIR)
-	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)algebra_driver.exe $^ $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
+	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral_P3.exe $^ -l2decomp_fft -L$(DECOMP2D_ROOT)/lib $(MKL_LIB) -I$(MODDIR) -I$(DECOMP2D_ROOT)/include -I$(MKLROOT)/include  
 	$(MAKE) clean
 
 

@@ -19,7 +19,7 @@
 
  Implicit None
 
- Type :: operator_3d
+ Type :: operator_3d_T
     Complex(kind=dp), dimension(:,:,:,:,:), Allocatable :: mat
     Complex(kind=dp), dimension(:,:,:,:,:), Allocatable :: inv
     Complex(kind=dp), dimension(:,:,:), Allocatable :: det
@@ -31,16 +31,20 @@
     Procedure :: action_zOp5_upon_zOp5_TypeArrayArray_outOfPlace
     Procedure :: action_zOp5_upon_zVec4_outOfPlace
     Procedure :: action_zOp5_upon_zVec4_inPlace
+    Procedure :: action_inv_zOp5_upon_zVec4_outOfPlace
+    Procedure :: action_inv_zOp5_upon_zVec4_inPlace
     Procedure :: check  => check_inverse_zOp5
     Procedure :: zOp5_sum_zOp5_zarrays
     Procedure :: zOp5_sum_zOp5_dtypes
-    generic   :: linear_combination => zOp5_sum_zOp5_dtypes, zOp5_sum_zOp5_zarrays
+    generic   :: equals_sum_of => zOp5_sum_zOp5_dtypes, zOp5_sum_zOp5_zarrays
     Procedure :: fill_in => fill_zOp5
     generic   :: dot  => action_zOp5_upon_zOp5_derivedTypesOnly_outOfPlace,&
                          action_zOp5_upon_zOp5_typeArrayArray_outOfPlace, &
                          action_zOp5_upon_zVec4_outOfPlace, &
                          action_zOp5_upon_zVec4_inPlace
- End type operator_3d
+    generic   :: backsolve => action_inv_zOp5_upon_zVec4_outOfPlace, &
+                              action_inv_zOp5_upon_zVec4_inPlace
+ End type operator_3d_T
 
 
  Contains
@@ -49,7 +53,7 @@
  !! creates an empty operator
  subroutine initialise_zOp5(self, nnvar, nn1, nn2, nn3)
 
-   class(operator_3d) :: self
+   class(operator_3d_T) :: self
    integer, intent(in) :: nnvar !< number of coupled variables
    integer, intent(in) :: nn1   !< fast index 
    integer, intent(in) :: nn2   !< intermediate index
@@ -71,7 +75,7 @@
  !! for all k1, k2, k3, we compute self%inv(k1,k2,k3,:,:)
  !! so that matmul( self%inv(k1,k2,k3,:,:), self%mat(k1,k2,k3,:,:) ) = identity 
  subroutine invert_zOp5_lapack (self)
-   class(operator_3d) :: self
+   class(operator_3d_T) :: self
    complex(kind=dp), dimension(:,:), allocatable :: buf2d !< a temporary buffer
                                          !! for storing each matrix contiguously
 
@@ -106,7 +110,7 @@
  end subroutine invert_zOp5_lapack
 
  subroutine action_zOp5_upon_zOp5_typeArrayArray_outOfPlace (self, other, self_dot_other)
-   class(operator_3d) :: self
+   class(operator_3d_T) :: self
    complex(kind=dp), dimension(:,:,:,:,:), allocatable, intent(in)  :: other
    complex(kind=dp), dimension(:,:,:,:,:), allocatable, intent(out) :: self_dot_other
    integer :: ivar, kvar, jvar
@@ -125,9 +129,9 @@
  end subroutine action_zOp5_upon_zOp5_typeArrayArray_outOfPlace
 
  subroutine action_zOp5_upon_zOp5_derivedTypesOnly_outOfPlace(self, other, self_dot_other)
-   class(operator_3d) :: self
-   type(operator_3d), intent(in) :: other
-   type(operator_3d), intent(out) :: self_dot_other
+   class(operator_3d_T) :: self
+   type(operator_3d_T), intent(in) :: other
+   type(operator_3d_T), intent(out) :: self_dot_other
    Integer :: ivar, kvar, jvar
    integer :: nref
 
@@ -135,7 +139,7 @@
    if (other%nVar .ne. nref) print *, 'inconsistent sizes, matmul Op5 x Op5'
    if (other%nVar .ne. nref) stop
    
-   call self_dot_other%initialise( self%n1, self%n2, self%n3, self%nVar)
+   call self_dot_other%initialise( self%nVar, self%n1, self%n2, self%n3)
 
    do ivar = 1,self%Nvar
    do jvar = 1,self%Nvar
@@ -148,7 +152,7 @@
  end subroutine action_zOp5_upon_zOp5_derivedTypesOnly_outOfPlace
 
  subroutine action_zOp5_upon_zVec4_outOfPlace (self, other, self_dot_other)
-   class(operator_3d) :: self
+   class(operator_3d_T) :: self
    complex(kind=dp), dimension(:,:,:,:), allocatable, intent(in)  :: other
    complex(kind=dp), dimension(:,:,:,:), allocatable, intent(out) :: self_dot_other
    integer :: ivar, kvar
@@ -165,7 +169,7 @@
  end subroutine action_zOp5_upon_zVec4_outOfPlace
 
  subroutine action_zOp5_upon_zVec4_inPlace (self, other)
-   class(operator_3d) :: self
+   class(operator_3d_T) :: self
    complex(kind=dp), dimension(:,:,:,:), allocatable, intent(inOut)  :: other
    complex(kind=dp), dimension(:,:,:,:), allocatable :: self_dot_other
    integer :: ivar, kvar
@@ -183,17 +187,53 @@
    deAllocate (self_dot_other)
  end subroutine action_zOp5_upon_zVec4_inPlace
 
+ subroutine action_inv_zOp5_upon_zVec4_outOfPlace (self, other, self_dot_other)
+   class(operator_3d_T) :: self
+   complex(kind=dp), dimension(:,:,:,:), allocatable, intent(in)  :: other
+   complex(kind=dp), dimension(:,:,:,:), allocatable, intent(out) :: self_dot_other
+   integer :: ivar, kvar
+
+   allocate(self_dot_other(self%N1,self%N2,self%N3,self%nVar))
+   self_dot_other = Cmplx(0._dp, 0._dp, Kind=dp)
+
+   do ivar = 1,self%nVar
+   do kvar = 1,self%nVar
+   self_dot_other(:,:,:,ivar) = self_dot_other(:,:,:,ivar) +&
+                           self%inv(:,:,:,ivar,kvar) * other(:,:,:,kvar)
+   end do
+   end do
+ end subroutine action_inv_zOp5_upon_zVec4_outOfPlace
+
+ subroutine action_inv_zOp5_upon_zVec4_inPlace (self, other)
+   class(operator_3d_T) :: self
+   complex(kind=dp), dimension(:,:,:,:), allocatable, intent(inOut)  :: other
+   complex(kind=dp), dimension(:,:,:,:), allocatable :: self_dot_other
+   integer :: ivar, kvar
+
+   allocate(self_dot_other(self%N1,self%N2,self%N3,self%nVar))
+   self_dot_other = cmplx(0._dp, 0._dp, Kind=dp)
+
+   do ivar = 1,self%nVar
+   do kvar = 1,self%nVar
+   self_dot_other(:,:,:,ivar) = self_dot_other(:,:,:,ivar) +&
+                           self%inv(:,:,:,ivar,kvar) * other(:,:,:,kvar)
+   end do
+   end do
+   other = self_dot_other
+   deAllocate (self_dot_other)
+ end subroutine action_inv_zOp5_upon_zVec4_inPlace
+
  Subroutine zOp5_sum_zOp5_zArrays(self, Amat, Bmat, zSca)
-   class(operator_3d) :: self
+   class(operator_3d_T) :: self
    complex(kind=dp), dimension(:,:,:,:,:), allocatable, intent(in) :: Amat
    complex(kind=dp), dimension(:,:,:,:,:), allocatable, intent(in) :: Bmat
    complex(kind=dp), intent(in) :: zSca
    
    if (allocated(self%mat)) DeAllocate (self%mat) 
-   call self%initialise( size(Amat,1), &
+   call self%initialise( size(Amat,4), &
+                         size(Amat,1), &
                          size(Amat,2), &
-                         size(Amat,3), &
-                         size(Amat,4)  ) 
+                         size(Amat,3)  ) 
 
    if (self%nVar.ne. size(Amat,5)) print *, "Error in adding operators: dim 4 must equal dim 5"
    if (self%nVar.ne. size(Amat,5)) stop
@@ -203,13 +243,14 @@
  End Subroutine zOp5_sum_zOp5_zArrays
 
  Subroutine zOp5_sum_zOp5_dtypes(self, typeA, typeB, zSca)
-   class(operator_3d) :: self
-   class(operator_3d), intent(in) :: typeA
-   class(operator_3d), intent(in) :: typeB
+   class(operator_3d_T) :: self
+   class(operator_3d_T), intent(in) :: typeA
+   class(operator_3d_T), intent(in) :: typeB
    complex(kind=dp), intent(in) :: zSca
    
    if (Allocated(self%mat)) DeAllocate (self%mat) 
-   call self%initialise( typeA%n1, typeA%n2, typeA%n3, typeA%nVar)
+   if (Allocated(self%inv)) DeAllocate (self%inv)
+   call self%initialise( typeA%nVar, typeA%n1, typeA%n2, typeA%n3)
 
    if ((self%n1  .ne. typeB%n1  )  .or. &
        (self%n2  .ne. typeB%n2  )  .or. &
@@ -224,7 +265,7 @@
  End Subroutine zOp5_sum_zOp5_dtypes
 
  Subroutine check_inverse_zOp5(self)
-   Class(operator_3d) :: self
+   Class(operator_3d_T) :: self
    Complex(kind=dp), Dimension(:,:,:,:,:), Allocatable :: auxMat 
    Integer :: i1, i2, i3, ivar
    Allocate(auxMat(self%N1,self%N2,self%N3,self%Nvar,self%Nvar))
@@ -249,7 +290,7 @@
  !! In the coupling matrix self, add a coupling term for variable ivar 
  !! equation ieq.
  Subroutine fill_zOp5(self, arr_3d, ivar, ieq)
-   Class(operator_3d) :: self
+   Class(operator_3d_T) :: self
    Complex(kind=dp), Dimension(:,:,:), Allocatable, Intent(In) :: arr_3d
    Integer, intent(in) :: ivar, ieq
    integer :: i1,i2,i3
@@ -271,7 +312,7 @@
  !!@brief 
  !!< a naive (disastrously inefficient?) implementation
  !Subroutine invert_zOp5 (self)
-   !Class(operator_3d) :: self
+   !Class(operator_3d_T) :: self
    !Complex(kind=dp), Dimension(:,:,:,:,:), Allocatable :: Comat
    !Integer :: n1, n2, n3
    !Integer :: i1, i2, i3, ivar, jvar
@@ -305,7 +346,7 @@
  !End Subroutine invert_zOp5
 
  !Subroutine Compute_the_comatrix_zOp5(self, Comat)
-   !Class(operator_3d) :: self
+   !Class(operator_3d_T) :: self
    !Complex(kind=dp), Dimension(:,:,:,:,:), Allocatable, Intent(out) :: Comat
    !Complex(kind=dp), Dimension(:,:), Allocatable:: My_slice
    !Complex(kind=dp), Dimension(:,:), Allocatable:: this_wn 
@@ -347,7 +388,7 @@
 !
 !
  !Subroutine Compute_the_determinant_zOp5(self)
-   !Class(operator_3d) :: self
+   !Class(operator_3d_T) :: self
    !Complex(kind=dp), Dimension(:,:), Allocatable:: My_slice
    !integer :: i1, i2, i3
    !if (allocated(self%det)) DeAllocate(self%det)

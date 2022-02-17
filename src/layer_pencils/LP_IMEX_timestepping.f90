@@ -22,14 +22,14 @@ module LP_IMEX_timestepping
  use LP_cheby_misc
  use LP_equations
  use LP_geometry
- use LP_output
+ use output_misc
  use IMEX_schemes
  use sparse_manipulations
  use chebyshev_elementary
  use chebyshev_galerkin_2
  use LP_transforms
  use decomp_2d_io
- use LP_timings, only: timings
+ use timeKeeping, only: timings
  implicit none
 
  type :: intermediate_step_buffer_3d_T !< intermediate 3D fields (cf ARS97)
