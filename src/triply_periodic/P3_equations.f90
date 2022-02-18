@@ -157,7 +157,6 @@ Module P3_equations
    type(output_lists_T) :: output
    type(output_lists_T) :: timeseries
    type(source_rhs_recipe_T) :: sources
-   logical :: smagorinsky_flag
   contains
    procedure :: add_outputs
    procedure :: add_timeseries
@@ -369,8 +368,7 @@ Module P3_equations
    character(len=:), allocatable :: linear_var_name
    real(dp) :: dsca
    type(atom_linearOp_T), dimension(:), allocatable :: pieces_of_definition
-   character(len=:), allocatable :: QVar_name, LVar1_name, LVar2_name, nuSmagoStr
-   logical :: have_not_considered_smagorinsky_yet = .True.
+   character(len=:), allocatable :: QVar_name, LVar1_name, LVar2_name
    building_step = 1
    call self%init()
    iLine = 0
@@ -419,14 +417,6 @@ Module P3_equations
                                                    pieces_of_definition, 'dz')
            call self%build_current_full_var( pieces_of_definition)
        case (6)
-           if (have_not_considered_smagorinsky_yet) then
-              if (self%smagorinsky_flag) then
-                  !allocate( character(len=7) :: nuSmagoStr, source='nuSmago')
-                  allocate( nuSmagoStr, source='nuSmago')
-                  call self%add_full_var( nuSmagoStr )     
-              end if
-              have_not_considered_smagorinsky_yet = .False.
-           end if
            call interpret_quadratic_variable_definition(text_list(iLine)(1:1024), Qvar_name, &
                                                                         Lvar1_name, Lvar2_name)
            call self%add_quadratic_var(Qvar_name, Lvar1_name, Lvar2_name)

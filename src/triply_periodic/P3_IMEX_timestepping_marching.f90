@@ -48,6 +48,11 @@
    end do
    end do
    end do
+   if (self%geometry%this_core_has_zero_mode) then
+     do isys = 1, self%recipe%numberOf_coupled_kxky_systems
+     self%coupled_kxky_set(iSys)% rhs (1, 1, 1, :) = cmplx(0._dp, 0._dp, kind=dp)
+     end do
+   end if
  end subroutine dealiase_the_rhs
 
 

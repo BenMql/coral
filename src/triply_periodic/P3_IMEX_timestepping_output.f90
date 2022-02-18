@@ -116,8 +116,8 @@
                 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 self%io_bookkeeping%dPosition = position_backup
                 current_position = (timings%i_timestep-1)*8+1
-   first_or_not = .False.
-   if (current_position.eq.1) first_or_not = .True.
+                first_or_not = .False.
+                if (current_position.eq.1) first_or_not = .True.
                 call output_cumul_d_in_timeserie(&
                               self%io_bookkeeping%output_directory,&
                               self%io_bookkeeping%output_dir_length,&
@@ -126,7 +126,11 @@
                               varAvg,&
                               first_or_not, &                      
                               current_position)            
-                if (iObj.le.3) self%cargo%KE_display = self%cargo%KE_display + varAvg
+                if ((self% recipe% nl_vars(iVar)% str .eq. 'uu')   .or. &
+                    (self% recipe% nl_vars(iVar)% str .eq. 'vv')   .or. & 
+                    (self% recipe% nl_vars(iVar)% str .eq. 'ww') ) then
+                     self% cargo% KE_display = self% cargo% KE_display + varAvg
+                end if
           case ('zSlice')
                if ((self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
                                .ge. domain_decomp%phys_iStart(1)) &
