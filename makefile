@@ -53,7 +53,7 @@ $(MISC_SRC)include_git_version.o: get_git_version
 
 
 clean:
-	rm -f $(CORAL_ROOT)src/*/*.o
+	rm -f $(CORAL_ROOT)/src/*/*.o
 	rm -f $(MODDIR)*.mod
 
 clean_o: 

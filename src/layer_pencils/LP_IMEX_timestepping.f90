@@ -132,6 +132,7 @@ module LP_IMEX_timestepping
    real(kind=dp) :: cflFactor_along_z
    real(kind=dp) :: initialCondition_amp_kxky
    real(kind=dp) :: initialCondition_amp_zero
+   real(kind=dp) :: smagorinsky_prefactor
  end type
 
  type :: sources_arrays_zero_T
@@ -462,9 +463,10 @@ module LP_IMEX_timestepping
    call self%build_operators()
    call self%prepare_chebyshev_integration()
    ! now handle the command line arguments
-   self%cargo%initialCondition_amp_kxky = 1.d-16
-   self%cargo%initialCondition_amp_zero = 1.d-16
-   self%cargo%cflFactor_along_z = 1.d0             
+   self%cargo% initialCondition_amp_kxky = 1.d-16
+   self%cargo% initialCondition_amp_zero = 1.d-16
+   self%cargo% cflFactor_along_z = 1.d0             
+   self%cargo% smagorinsky_prefactor = 1.d0
    num_args = command_argument_count()
    allocate(args(num_args))
    do ix = 1, num_args
@@ -481,6 +483,8 @@ module LP_IMEX_timestepping
                   read (args(ix+1),*) self%cargo%initialCondition_amp_zero 
              case ('--cflFactor-along-z')
                   read (args(ix+1),*) self%cargo%cflFactor_along_z
+             case ('--smagorinsky-prefactor')
+                  read (args(ix+1),*) self%cargo% smagorinsky_prefactor
       end select
    end do
  end subroutine

@@ -633,8 +633,7 @@
        ! self%linear_variables(iVar)%phys = 0._dp
        ! average it horizontally
        call self%horizontal_average_of_physical_quantity_inPlace( iVar )
-       self%linear_variables(iVar)%phys = sqrt( self%linear_variables(iVar)%phys )
-       !print *, self%linear_variables(iVar)%phys 
+       self%linear_variables(iVar)%phys = self%cargo% smagorinsky_prefactor * sqrt( self%linear_variables(iVar)%phys )
    else 
        call self%linear_variables(iVar)%spec_to_phys()
    end if
