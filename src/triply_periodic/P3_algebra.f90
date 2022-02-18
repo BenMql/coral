@@ -22,7 +22,6 @@
  Type :: operator_3d_T
     Complex(kind=dp), dimension(:,:,:,:,:), Allocatable :: mat
     Complex(kind=dp), dimension(:,:,:,:,:), Allocatable :: inv
-    Complex(kind=dp), dimension(:,:,:), Allocatable :: det
     Integer :: n1, n2, n3, nvar
   Contains
     Procedure :: initialise => initialise_zOp5
@@ -59,6 +58,8 @@
    integer, intent(in) :: nn2   !< intermediate index
    integer, intent(in) :: nn3   !< slow index 
 
+   if (Allocated(self%mat)) DeAllocate (self%mat) 
+   if (Allocated(self%inv)) DeAllocate (self%inv)
 
    self%n1 = nn1
    self%n2 = nn2
@@ -248,8 +249,6 @@
    class(operator_3d_T), intent(in) :: typeB
    complex(kind=dp), intent(in) :: zSca
    
-   if (Allocated(self%mat)) DeAllocate (self%mat) 
-   if (Allocated(self%inv)) DeAllocate (self%inv)
    call self%initialise( typeA%nVar, typeA%n1, typeA%n2, typeA%n3)
 
    if ((self%n1  .ne. typeB%n1  )  .or. &

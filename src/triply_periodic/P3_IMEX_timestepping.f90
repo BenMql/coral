@@ -111,6 +111,7 @@ module P3_IMEX_timestepping
    procedure :: compute_cfl_based_timestep
    procedure :: copy_fields_to_aux => LPIMEX_copy_fields_to_aux
    procedure :: copy_aux_to_fields => LPIMEX_copy_aux_to_fields
+   procedure :: dealiase_the_rhs
    procedure :: export_allPhys
    procedure :: export_allProfiles
    procedure :: export_slice

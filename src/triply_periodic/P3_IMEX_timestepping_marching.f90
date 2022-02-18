@@ -17,6 +17,7 @@
          call self%add_K_hat_to_rhs(my_dt*self%shandle%a_hat(i+1,j),j)
       end do
       call self%add_K_hat_to_rhs(my_dt*self%shandle%a_hat(i+1,i),i)
+      call self%dealiase_the_rhs()
       ! ...
       ! implicit step (solve)
       ! ...
@@ -31,7 +32,23 @@
    
  end subroutine one_step_beyond
 
-
+ subroutine dealiase_the_rhs(self)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer :: iSys, ix, iy, iz
+   do ix = 1, self%geometry% spec% local_NX
+   do iy = 1, self%geometry% spec% local_NY
+   do iz = 1, self%geometry% NZAA            
+   if ( self%geometry% dealiase_x (ix)   .or. & 
+        self%geometry% dealiase_y (iy)   .or. & 
+        self%geometry% dealiase_z (iz) ) then
+        do isys = 1, self%recipe%numberOf_coupled_kxky_systems
+        self%coupled_kxky_set(iSys)% rhs (iz, iy, ix, :) = cmplx(0._dp, 0._dp, kind=dp)
+        end do
+   end if
+   end do
+   end do
+   end do
+ end subroutine dealiase_the_rhs
 
 
  subroutine LPIMEX_backsolve_to_aux(self)
@@ -188,20 +205,21 @@
 
    end do
    end do
-
+   
+   !//////////////// DONE DIRECTLY FOR THE RHS ////////////////
    !deAliase K_hat
-   do isys = 1, self%recipe%numberOf_coupled_kxky_systems
-   do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
-   do ix = 1, self%geometry%spec%local_NX
-   do iy = 1, self%geometry%spec%local_NY
-   if (self%geometry%deAliase_x(ix) .or. &
-       self%geometry%deAliase_y(iy) ) then
-       self%coupled_kxky_set(isys)%step(i)%K_hat(:, iy, ix, iVar) = cmplx(0._dp, 0._dp, kind=dp)
-   end if
-   end do
-   end do
-   end do
-   end do
+   !do isys = 1, self%recipe%numberOf_coupled_kxky_systems
+   !do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
+   !!do ix = 1, self%geometry%spec%local_NX
+   !!do iy = 1, self%geometry%spec%local_NY
+   !if (self%geometry%deAliase_x(ix) .or. &
+       !self%geometry%deAliase_y(iy) ) then
+       !self%coupled_kxky_set(isys)%step(i)%K_hat(:, iy, ix, iVar) = cmplx(0._dp, 0._dp, kind=dp)
+   !end if
+   !end do
+   !end do
+   !end do
+   !end do
       
  end subroutine
 
