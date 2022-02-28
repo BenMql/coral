@@ -252,8 +252,12 @@ Module LP_equations
                  self%timeseries%linear(iVar)%object(1:self%timeseries%numberOf_linearObjects(iVar)-1)
          larger_list_of_objects(  self%timeseries%numberOf_linearObjects(iVar)) % counter = 0
          larger_list_of_objects(  self%timeseries%numberOf_linearObjects(iVar)) % period  = 0 
-         larger_list_of_objects(  self%timeseries%numberOf_linearObjects(iVar)) % slice_index = positionInt
          larger_list_of_objects(  self%timeseries%numberOf_linearObjects(iVar)) % kind = kindStr
+         if (kindStr .eq. 'zSlice') then
+         larger_list_of_objects(  self%timeseries%numberOf_linearObjects(iVar)) % slice_index = positionInt
+         else 
+         larger_list_of_objects(  self%timeseries%numberOf_linearObjects(iVar)) % slice_index = 0
+         end if
          call move_alloc( from = larger_list_of_objects, to = self%timeseries%linear(iVar)%object)
       end if
       end do
@@ -265,8 +269,12 @@ Module LP_equations
                  self%timeseries%quadra(iVar)%object(1:self%timeseries%numberOf_quadraObjects(iVar)-1)
          larger_list_of_objects(  self%timeseries%numberOf_quadraObjects(iVar)) % counter = 0
          larger_list_of_objects(  self%timeseries%numberOf_quadraObjects(iVar)) % period  = 0
-         larger_list_of_objects(  self%timeseries%numberOf_quadraObjects(iVar)) % slice_index = positionInt
          larger_list_of_objects(  self%timeseries%numberOf_quadraObjects(iVar)) % kind = kindStr
+         if (kindStr .eq. 'zSlice') then
+         larger_list_of_objects(  self%timeseries%numberOf_quadraObjects(iVar)) % slice_index = positionInt
+         else 
+         larger_list_of_objects(  self%timeseries%numberOf_quadraObjects(iVar)) % slice_index = 0
+         end if
          call move_alloc( from = larger_list_of_objects, to = self%timeseries%quadra(iVar)%object)
       end if
       end do
