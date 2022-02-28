@@ -162,7 +162,7 @@ module LP_geometry
    do iy = 1, self%spec%local_NY
       k_index = domain_decomp%spec_iStart(2) - 1 + iy
       !> array of wave numbers
-      if (k_index.ge.(self%NYAA/2)) then
+      if (k_index.ge.(self%NYAA/2+1)) then
          self%ky (iy) =-real( &
                         (self%NYAA + 1 - k_index) * self%ky_box ,& 
                         kind=dp )
@@ -186,7 +186,7 @@ module LP_geometry
    do ix = 1, self%spec%local_NX
       k_index = domain_decomp%spec_iStart(3) - 1 + ix
       !> array of wave numbers
-      if (k_index.ge.(self%NXAA/2)) then
+      if (k_index.ge.(self%NXAA/2+1)) then
          self%kx (ix) =-real( &
                         (self%NXAA + 1 - k_index) * self%kx_box ,& 
                         kind=dp )
