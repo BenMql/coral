@@ -191,7 +191,7 @@
       nl_buffer_deAliased = cmplx(0._dp, 0._dp, kind=dp)
       do ix = 1, self%geometry%spec%local_NX
       do iy = 1, self%geometry%spec%local_NY
-      do iz = 1, self%geometry%NZ
+      do iz = 1, self%geometry%NZAA
       nl_buffer_deAliased(iz,iy,ix) = self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dsca * &
              self%geometry%px(ix)**self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dx_exponent *&
              self%geometry%py(iy)**self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dy_exponent *&
