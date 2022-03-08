@@ -1,4 +1,4 @@
-module LP_algebra_d_1D
+module PL_algebra_d_1D
 
  use fortran_kinds
  use sparse_formats
@@ -226,38 +226,4 @@ module LP_algebra_d_1D
    self%has_lu = .True.
  end subroutine
 
- ! delme delme 
- ! THIS (BELOW) DOES NOT WORK, AND I DON'T KNOW WHY!! delme
- ! VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV delme
- !delme
- !delme
- !subroutine dot_dOp_DIA_1d_1coupled_vec_oop(self, transpose_A, x, y) delme
-   !class(dOperator_1d_1coupled_T), intent(inOut) :: self delme
-   !character(len=1), intent(in) :: transpose_A delme
-   !real(dp), allocatable, intent(in)    :: x(:) delme
-   !real(dp), allocatable, intent(inout) :: y(:) delme
-   !real(dp) :: alpha = 1._dp delme
-   !real(dp) :: beta  = 0._dp delme
-   !integer, allocatable :: idiag(:) delme
-   !integer :: i delme
-   !allocate(idiag( self%dia%nl + self%dia%nu + 1)) delme
-   !do i = 1, self%dia%nl + self%dia%nu + 1 delme
-     !idiag(i) = i-1-self%dia%nl delme
-     !idiag(i) = self%dia%nu - i + 1  delme
-   !end do delme
-   !print *, idiag delme
-   !do i = 1, self%dia%ncol delme
-     !print *, self%dia%dat(i,:) delme
-   !end do delme
-   !call mkl_ddiamv(transpose_A, self%dia%nrow, self%dia%ncol,    alpha,& delme
-                   !'GxxFxx', self%dia%dat, & delme
-                    !self%dia%ncol,&!  2*self%dia%nl + self%dia%nu+1,&!size(self%dia%dat,1), delme
-                    !idiag,& delme
-                    !self%dia%nl + self%dia%nu+1,& delme
-                    !x, beta, y) delme
-   ! delme
-  !! NOTE TO SELF: this is where I stop tonight (wedneday 9 september) delme
-  !! this needs to be fixed and thoroughly debugged! delme
- !end subroutine delme
- !delme
-end module LP_algebra_d_1D
+end module PL_algebra_d_1D

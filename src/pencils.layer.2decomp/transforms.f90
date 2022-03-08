@@ -1,17 +1,17 @@
-module LP_transforms
+module transforms
 
  use decomp_2d
  use decomp_2d_fft
  use MPI_vars
- use LP_domain_decomp
+ use domain_decomposition
  use fftw3_wrap
  use read_command_line_args
 
  implicit none
 
  type :: PS_fields_T
-   complex(kind=dp), allocatable, dimension(:,:,:) :: spec
-   real   (kind=dp), allocatable, dimension(:,:,:) :: phys
+   complex(C_double), pointer :: spec (:,:,:)
+   real   (C_double), pointer :: phys (:,:,:)
  contains
    procedure :: alloc => allocate_fields
    procedure :: spec_to_phys => c2r_transform
@@ -19,7 +19,7 @@ module LP_transforms
  end type PS_Fields_T
  
  type :: specField_T
-   complex(kind=dp), allocatable, dimension(:,:,:) :: spec
+   complex(C_double), pointer :: spec (:,:,:)
  contains
    procedure :: alloc => allocate_specField
  end type specField_T
@@ -36,24 +36,41 @@ module LP_transforms
 
  subroutine allocate_fields(self)
    class(PS_fields_T), intent(inOut) :: self
+   type(c_ptr) :: p1, p2
    202 format ('allocating spectral fields of shape ', (i4.4), &
                                                  ', ', (i4.4), &
                                                  ', ', (i4.4))
+
    201 format ('allocating physical fields of shape ', (i4.4), &
                                                  ', ', (i4.4), &
                                                  ', ', (i4.4))
+
    if (my_rank.eq.0) write (*,202) domain_decomp%spec_iSize(1),&
-                        domain_decomp%spec_iSize(2),&
-                        domain_decomp%spec_iSize(3)
+                                   domain_decomp%spec_iSize(2),&
+                                   domain_decomp%spec_iSize(3)
+
    if (my_rank.eq.0) write (*,201) domain_decomp%phys_iSize(1),&
-                        domain_decomp%phys_iSize(2),&
-                        domain_decomp%phys_iSize(3)
-   allocate( self%spec (domain_decomp%spec_iSize(1),&
-                        domain_decomp%spec_iSize(2),&
-                        domain_decomp%spec_iSize(3)))
-   allocate( self%phys (domain_decomp%phys_iSize(1),&
-                        domain_decomp%phys_iSize(2),&
-                        domain_decomp%phys_iSize(3)))
+                                   domain_decomp%phys_iSize(2),&
+                                   domain_decomp%phys_iSize(3)
+
+   p1 = fftw_alloc_complex(int( domain_decomp%spec_iSize(1) * &
+                                domain_decomp%spec_iSize(2) * &
+                                domain_decomp%spec_iSize(3) , &
+                                C_size_T))
+
+   call c_f_pointer(p1, self%spec, [domain_decomp%spec_iSize(1),&
+                                    domain_decomp%spec_iSize(2),&
+                                    domain_decomp%spec_iSize(3)]) 
+
+   p2 = fftw_alloc_real   (int( domain_decomp%phys_iSize(1) * &
+                                domain_decomp%phys_iSize(2) * &
+                                domain_decomp%phys_iSize(3) , &
+                                C_size_T))
+
+   call c_f_pointer(p2, self%phys, [domain_decomp%phys_iSize(1),&
+                                    domain_decomp%phys_iSize(2),&
+                                    domain_decomp%phys_iSize(3)]) 
+
  end subroutine allocate_fields
 
  subroutine r2r_backward( arr )
@@ -225,5 +242,5 @@ module LP_transforms
  end subroutine dct_planner 
  
 
-end module LP_transforms
+end module transforms
 

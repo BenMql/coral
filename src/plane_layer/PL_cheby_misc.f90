@@ -1,24 +1,8 @@
- Module LP_Cheby_misc   
+ Module PL_Cheby_misc   
  Use fortran_kinds
  Implicit None
 
- !Real(kind=dp), Dimension(:,:,:), Allocatable :: Gauss_chebyshev_grid_a3
- !Real(kind=dp), Dimension(:,:,:), Allocatable :: Gauss_chebyshev_weight_a3
- !Real(kind=dp), Dimension(:), Allocatable :: Gauss_chebyshev_grid_a1
- !Real(kind=dp), Dimension(:), Allocatable :: Gauss_chebyshev_weight_a1
-
  Contains
-
- !Subroutine Init_Gauss_Chebyshev_arrays_3d(NZ, NY, NX, zcenter, zgap)
-   !Integer, Intent(In) :: NX, NY, NZ
-   !Real(dp), Intent(In) :: zcenter, zgap
-   !Call Gauss_chebyshev_grid_3d  (Gauss_Chebyshev_grid_a3, &
-                                  !Gauss_Chebyshev_grid_a1, &
-                                  !NZ, NY, NX, zcenter, zgap)
-   !Call Gauss_chebyshev_weight_3d(Gauss_Chebyshev_weight_a3, &
-                                  !Gauss_Chebyshev_weight_a1, &
-                                  !NZ, NY, NX, zgap)
- !End Subroutine Init_Gauss_Chebyshev_arrays_3d
 
 
  Subroutine Gauss_Chebyshev_grid_cos(GC_cos, N1)
@@ -109,4 +93,4 @@
   
 
   
- End Module LP_Cheby_misc   
+ End Module PL_Cheby_misc   

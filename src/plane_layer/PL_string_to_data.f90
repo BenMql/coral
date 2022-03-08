@@ -1,4 +1,4 @@
-module LP_string_to_data
+module PL_string_to_data
  use fortran_kinds
  implicit none
 
@@ -422,4 +422,4 @@ module LP_string_to_data
 
 
  End Function
-end module LP_string_to_data
+end module PL_string_to_data

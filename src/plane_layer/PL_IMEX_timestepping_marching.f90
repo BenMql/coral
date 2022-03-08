@@ -791,7 +791,7 @@
    integer, intent(in) :: sourceIndex
    real(dp), intent(in) :: definition
    if (sourceIndex .gt. self%numberOf_sources) then
-      print *, 'In LP_user_sources_definitions.f90, the position of the'
+      print *, 'In PL_user_sources_definitions.f90, the position of the'
       print *, 'source is greater than the total number of sources!'
       error stop
    end if
@@ -804,7 +804,7 @@
    integer, intent(in) :: sourceIndex
    real(dp), allocatable, intent(in) :: definition(:)
    if (sourceIndex .gt. self%numberOf_sources) then
-      print *, 'In LP_user_sources_definitions.f90, the position of the'
+      print *, 'In PL_user_sources_definitions.f90, the position of the'
       print *, 'source is greater than the total number of sources!'
       error stop
    end if
@@ -840,7 +840,7 @@
                                  self%geometry%gap)
    allocate (sourceDef (self%geometry%NZAA) )
 
-   include "LP_user_sources_definitions.f90"
+   include "PL_user_sources_definitions.f90"
 
    call self%transform_sources()
  End Subroutine init_all_sources

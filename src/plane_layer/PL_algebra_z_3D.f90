@@ -1,4 +1,4 @@
-module LP_algebra_z_3d
+module PL_algebra_z_3d
 
  use MPI_vars
  use fortran_kinds
@@ -28,7 +28,9 @@ module LP_algebra_z_3d
                              backsolve_zOp_3d_1coupled_knownLDB
    procedure :: dot_zOp_3d_1coupled_vec_oop
    procedure :: dot_zOp_3d_1coupled_vec_oop_normal
+   procedure :: dot_zOp_3d_1coupled_vec_oop_normal_to_pointer
    generic   :: dot => dot_zOp_3d_1coupled_vec_oop_normal, &
+                       dot_zOp_3d_1coupled_vec_oop_normal_to_pointer, &
                        dot_zOp_3d_1coupled_vec_oop
 
  end type zOperator_3d_1coupled_T
@@ -90,6 +92,37 @@ contains
    self%has_csr = .True.
  end subroutine
 
+ subroutine dot_zOp_3d_1coupled_vec_oop_normal_to_pointer(self,  x, y)
+   class(zOperator_3d_1coupled_T), intent(inOut) :: self
+   complex(dp), allocatable, intent(in)     :: x(:,:,:)
+   complex(dp), pointer,     intent(inout)  :: y(:,:,:)
+   complex(dp) :: alpha = cmplx(1._dp, 0._dp, kind=dp)
+   complex(dp) :: beta  = cmplx(0._dp, 0._dp, kind=dp)
+   complex(dp), allocatable :: columnVector_x(:)
+   complex(dp), allocatable :: columnVector_y(:)
+   integer :: i1, i2
+   
+   if (.not.self%has_csr) STOP 'CSR matrix missing' 
+   allocate(columnVector_x(self%csr(1,1)%ncol))
+   allocate(columnVector_y(self%csr(1,1)%ncol))
+   do i2 = 1, self%n2
+   do i1 = 1, self%n1
+     columnVector_x = x(1:self%csr(i1,i2)%ncol, i1, i2)
+     columnVector_y = cmplx(0._dp, 0._dp, kind=dp)
+     call mkl_zcsrmv('N', &
+                     self%csr(i1,i2)%nrow, &
+                     self%csr(i1,i2)%ncol, alpha, 'GxxFxx', &
+                     self%csr(i1,i2)%dat, &
+                     self%csr(i1,i2)%col, &
+                     self%csr(i1,i2)%row(1: self%csr(i1,i2)%nrow), &
+                     self%csr(i1,i2)%row(2:(self%csr(i1,i2)%nrow+1)), &
+                     columnVector_x, &
+                     beta, &
+                     columnVector_y)
+     y(1:self%csr(i1,i2)%ncol, i1, i2) = columnVector_y 
+   end do 
+   end do 
+ end subroutine
 
  subroutine dot_zOp_3d_1coupled_vec_oop_normal(self,  x, y)
    class(zOperator_3d_1coupled_T), intent(inOut) :: self
@@ -241,4 +274,4 @@ contains
    self%has_lu = .True.
  end subroutine
 
-end module LP_algebra_z_3d
+end module PL_algebra_z_3d

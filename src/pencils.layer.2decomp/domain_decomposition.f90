@@ -2,17 +2,17 @@
  !                            C O R A L
  !=============================================================================
  !
- ! MODULE: LP_data_structure                              
+ ! MODULE: domain_decomposition
  ! 
  !> @author
  !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@tutanota.com
  !
  ! DESCRIPTION
- !> TODO
+ !> Domain decomposition for linking with 2decomp library
  !>  
  !
  !=============================================================================
- Module LP_domain_decomp
+ Module domain_decomposition
 
    use fortran_kinds
    use decomp_2d
@@ -69,4 +69,4 @@
    End Subroutine domain_decomp_init
 
 
- End Module LP_domain_decomp
+ End Module domain_decomposition

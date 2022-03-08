@@ -54,12 +54,18 @@
     procedure :: sort => zcsr_sort              
     procedure :: dot_zCSR_1d_manyCoupled_vec_rescale
     procedure :: dot_zCSR_1d_manyCoupled_vec
+    procedure :: dot_zCSR_1d_manyCoupled_vec_to_pointer
+    procedure :: dot_zCSR_1d_manyCoupled_vec_from_pointer
     procedure :: dot_zCSR_1d_manyCoupled_vec_general
+    procedure :: dot_zCSR_1d_manyCoupled_vec_general_pointer
+    procedure :: dot_zCSR_1d_manyCoupled_vec_general_from_pointer
     procedure :: dot_zCSR_1d_manyCoupled_vec_rescale_T
     procedure :: dot_zCSR_1d_manyCoupled_vec_T
     !procedure :: dot_zCSR_1d_manyCoupled_vec_transpose_general
     generic :: dot => dot_zCSR_1d_manyCoupled_vec_rescale, &
                       dot_zCSR_1d_manyCoupled_vec, &
+                      dot_zCSR_1d_manyCoupled_vec_to_pointer, &
+                      dot_zCSR_1d_manyCoupled_vec_from_pointer, &
                       dot_zCSR_1d_manyCoupled_vec_general, &
                       dot_zCSR_1d_manyCoupled_vec_rescale_T, &
                       dot_zCSR_1d_manyCoupled_vec_T, &
@@ -191,6 +197,81 @@
                       size(B, dim=3), 1)
                       
  end subroutine
+
+ subroutine dot_zcsr_1d_manyCoupled_vec_general_pointer(self_csr, transpose_A, &
+                  zalpha, B, zbeta, C, N2, N3, sta3)
+   !................................................................
+   ! Intended use:
+   ! Apply an operator (discretized by csr_matrix A) along the first
+   ! dimension of a 3D array B. Update C with the result. Visually:
+   ! Do i2=1,N2 and i3=sta3,N3
+   ! C(:,i2,i3) = zalpha * A(:,j) * B(j,i2,i3) + zbeta * C(:,i2,i3)
+   !................................................................
+   class(zcsr_matrix), intent(in) :: self_csr
+   Complex(Kind=dp), allocatable, intent(inOut), target :: B(:,:,:) 
+   Complex(Kind=dp), pointer,     intent(inOut) :: C(:,:,:) 
+   Complex(Kind=dp), Intent(in) :: zalpha, zbeta
+   Integer, Intent(In) :: N2, N3
+   Integer, Intent(In) :: sta3
+   Character(len=1), intent(in) :: transpose_A 
+   type(C_Ptr) :: dumPtr
+   Complex(Kind=dp), Pointer :: ptr2B(:,:)
+   Complex(Kind=dp), Pointer :: ptr2C(:,:)
+   Character :: matdescra(4)
+   matdescra = ['G','X', 'N', 'F']
+   if (sta3.le.N3) then
+   dumPtr = C_Loc(B(1,1,sta3))
+   Call C_F_Pointer (dumPtr, ptr2B, [self_csr%nCol, N2*(N3+1-sta3)] )
+   dumPtr = C_Loc(C(1,1,sta3))
+   Call C_F_Pointer (dumPtr, ptr2C, [self_csr%nCol, N2*(N3+1-sta3)] )
+   Call mkl_zcsrmm(transpose_A,&
+                   self_csr%nrow, N2*(N3+1-sta3), self_csr%ncol, zalpha, matdescra,&
+                   self_csr%dat, self_csr%col, &
+                   self_csr%row(1: self_csr%nrow   ), &
+                   self_csr%row(2:(self_csr%nrow+1)), &
+                   ptr2B, self_csr%ncol, zbeta, &
+                   ptr2C, self_csr%nrow)
+   end if
+ end subroutine 
+
+
+ subroutine dot_zcsr_1d_manyCoupled_vec_general_from_pointer(self_csr, transpose_A, &
+                  zalpha, B, zbeta, C, N2, N3, sta3)
+   !................................................................
+   ! Intended use:
+   ! Apply an operator (discretized by csr_matrix A) along the first
+   ! dimension of a 3D array B. Update C with the result. Visually:
+   ! Do i2=1,N2 and i3=sta3,N3
+   ! C(:,i2,i3) = zalpha * A(:,j) * B(j,i2,i3) + zbeta * C(:,i2,i3)
+   !................................................................
+   class(zcsr_matrix), intent(in) :: self_csr
+   Complex(Kind=dp), allocatable, intent(inOut), target :: C(:,:,:) 
+   Complex(Kind=dp), pointer,     intent(inOut) :: B(:,:,:) 
+   Complex(Kind=dp), Intent(in) :: zalpha, zbeta
+   Integer, Intent(In) :: N2, N3
+   Integer, Intent(In) :: sta3
+   Character(len=1), intent(in) :: transpose_A 
+   type(C_Ptr) :: dumPtr
+   Complex(Kind=dp), Pointer :: ptr2B(:,:)
+   Complex(Kind=dp), Pointer :: ptr2C(:,:)
+   Character :: matdescra(4)
+   matdescra = ['G','X', 'N', 'F']
+   if (sta3.le.N3) then
+   dumPtr = C_Loc(B(1,1,sta3))
+   Call C_F_Pointer (dumPtr, ptr2B, [self_csr%nCol, N2*(N3+1-sta3)] )
+   dumPtr = C_Loc(C(1,1,sta3))
+   Call C_F_Pointer (dumPtr, ptr2C, [self_csr%nCol, N2*(N3+1-sta3)] )
+   Call mkl_zcsrmm(transpose_A,&
+                   self_csr%nrow, N2*(N3+1-sta3), self_csr%ncol, zalpha, matdescra,&
+                   self_csr%dat, self_csr%col, &
+                   self_csr%row(1: self_csr%nrow   ), &
+                   self_csr%row(2:(self_csr%nrow+1)), &
+                   ptr2B, self_csr%ncol, zbeta, &
+                   ptr2C, self_csr%nrow)
+   end if
+ end subroutine 
+
+
  
  !> @brief
  !> \callgraph Apply a sparse operator \p A on multiple right-hand sides \p B and
@@ -256,6 +337,82 @@
                       zbeta,&
                       C,&
                       size(B, dim=2),  &
+                      size(B, dim=3), 1)
+                      
+ end subroutine
+
+ subroutine dot_zCSR_1d_manyCoupled_vec_from_pointer(self, B, C, o_or_c)
+   class(zcsr_matrix), intent(in) :: self
+   Complex(Kind=dp), allocatable,  intent(inOut) :: C(:,:,:)                                        
+   Complex(Kind=dp), pointer,      intent(inOut) :: B(:,:,:)                                        
+   character (len=5) :: o_or_c
+   complex(kind=dp) :: zBeta
+   select case (o_or_c)
+          case ('overW')
+               zbeta = cmplx(0._dp, 0._dp, kind=dp)
+          case ('cumul')
+               zbeta = cmplx(1._dp, 0._dp, kind=dp)
+          case default
+               print *, 'bad overwrite_or_cumul flag in dot_zOp_1d_manyCoupled_vec'
+               print *, 'passed value is: ', o_or_c
+               stop
+   end select
+   if (size(B, dim=2) .ne. size(C, dim=2)) then
+      print *, 'dot_zCSR_1d_manyCoupled_vec, uncompatible sizes along dim.2'
+      print *, 'C:', size(C, dim=2),'; B:', size(B, dim=2)
+      stop
+   end if
+   if (size(B, dim=3) .ne. size(C, dim=3)) then
+      print *, 'dot_zCSR_1d_manyCoupled_vec, uncompatible sizes along dim.3'
+      print *, 'C:', size(C, dim=3),'; B:', size(B, dim=3)
+      stop
+   end if
+   call self%dot_zcsr_1d_manyCoupled_vec_general_from_pointer(&
+                      'N', &
+                      cmplx(1._dp, 0._dp, kind=dp),&
+                      B,& 
+                      zbeta,&
+                      C,&
+                      size(B, dim=2),              &
+                      size(B, dim=3), 1)
+                      
+ end subroutine
+ 
+
+
+ subroutine dot_zCSR_1d_manyCoupled_vec_to_pointer(self, B, C, o_or_c)
+   class(zcsr_matrix), intent(in) :: self
+   Complex(Kind=dp), allocatable,  intent(inOut) :: B(:,:,:)                                        
+   Complex(Kind=dp), pointer,      intent(inOut) :: C(:,:,:)                                        
+   character (len=5) :: o_or_c
+   complex(kind=dp) :: zBeta
+   select case (o_or_c)
+          case ('overW')
+               zbeta = cmplx(0._dp, 0._dp, kind=dp)
+          case ('cumul')
+               zbeta = cmplx(1._dp, 0._dp, kind=dp)
+          case default
+               print *, 'bad overwrite_or_cumul flag in dot_zOp_1d_manyCoupled_vec'
+               print *, 'passed value is: ', o_or_c
+               stop
+   end select
+   if (size(B, dim=2) .ne. size(C, dim=2)) then
+      print *, 'dot_zCSR_1d_manyCoupled_vec, uncompatible sizes along dim.2'
+      print *, 'C:', size(C, dim=2),'; B:', size(B, dim=2)
+      stop
+   end if
+   if (size(B, dim=3) .ne. size(C, dim=3)) then
+      print *, 'dot_zCSR_1d_manyCoupled_vec, uncompatible sizes along dim.3'
+      print *, 'C:', size(C, dim=3),'; B:', size(B, dim=3)
+      stop
+   end if
+   call self%dot_zcsr_1d_manyCoupled_vec_general_pointer(&
+                      'N', &
+                      cmplx(1._dp, 0._dp, kind=dp),&
+                      B,& 
+                      zbeta,&
+                      C,&
+                      size(B, dim=2),              &
                       size(B, dim=3), 1)
                       
  end subroutine

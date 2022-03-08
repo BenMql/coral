@@ -2,7 +2,7 @@
  !                            C O R A L 
  !============================================================================= 
  ! 
- ! MODULE: LP_IMEX_timestepping
+ ! MODULE: PL_IMEX_timestepping
  !  
  !> @author 
  !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@tutanota.com 
@@ -15,19 +15,19 @@
  !============================================================================= 
 
 
-module LP_IMEX_timestepping
+module PL_IMEX_timestepping
 
 
- use LP_algebra
- use LP_cheby_misc
- use LP_equations
- use LP_geometry
+ use PL_algebra
+ use PL_cheby_misc
+ use PL_equations
+ use PL_geometry
  use output_misc
  use IMEX_schemes
  use sparse_manipulations
  use chebyshev_elementary
  use chebyshev_galerkin_2
- use LP_transforms
+ use transforms
  use decomp_2d_io
  use timeKeeping, only: timings
  implicit none
@@ -558,8 +558,8 @@ module LP_IMEX_timestepping
  end subroutine
 
 
- include "LP_IMEX_timestepping_marching.f90"
- include 'LP_IMEX_timestepping_output.f90'
+ include "PL_IMEX_timestepping_marching.f90"
+ include 'PL_IMEX_timestepping_output.f90'
 
  subroutine prepare_stencils(self)
    class(full_problem_data_structure_T) :: self
@@ -1534,4 +1534,4 @@ pure function recipe_to_prefactors_array(a_recipe, iPiece, geo)
    end do
  end subroutine
  
-end module LP_IMEX_timestepping
+end module PL_IMEX_timestepping

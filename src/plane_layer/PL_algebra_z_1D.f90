@@ -1,4 +1,4 @@
-module LP_algebra_z_1D
+module PL_algebra_z_1D
 
  use fortran_kinds
  use sparse_formats
@@ -25,11 +25,13 @@ module LP_algebra_z_1D
                        dot_zOp_DIA_1d_1coupled_vec_oop
    procedure :: backsolve_zOp_DIA_1d_1coupled
    procedure :: backsolve_zOp_DIA_1d_1coupled_PTR
+   procedure :: backsolve_zOp_DIA_1d_1coupled_3dPTR
    procedure :: backsolve_zOp_DIA_1d_1coupled_3drhs
    procedure :: backsolve_zOp_DIA_1d_1coupled_knownLdb
    procedure :: backsolve_zOp_DIA_1d_1coupled_unique
    generic   :: backsolve => backsolve_zOp_DIA_1d_1coupled,&
                              backsolve_zOp_DIA_1d_1coupled_PTR,&
+                             backsolve_zOp_DIA_1d_1coupled_3dPTR,&
                              backsolve_zOp_DIA_1d_1coupled_3drhs,&
                              backsolve_zOp_DIA_1d_1coupled_unique,&
                              backsolve_zOp_DIA_1d_1coupled_knownLdb
@@ -120,6 +122,31 @@ module LP_algebra_z_1D
    integer, intent(in) :: ldb
    integer :: info
    dummptr = c_loc(right_hand_sides_3d(1,1,1))
+   call c_f_pointer(dummPtr, right_hand_sides, [nrhs*ldb])
+   if (.not.self%has_lu) STOP 'LU factorization is missing'
+   call zgbtrs('N', self%dia%ncol,  &   
+                    self%dia%nl,    &   
+                    self%dia%nu,    &   
+                    nrhs,           &   
+                    self%lu%factors,&  
+                    2*self%dia%nl + self%dia%nu+1,&
+                    self%lu %pivots,&
+                    right_hand_sides, ldb, info)
+    
+   if (info.ne.0) print *, "Problem during LU routine zgbtrs"
+   if (info.ne.0) print *, "Error Diagnostic:", info
+   if (info.ne.0) stop
+ end subroutine
+
+ subroutine backsolve_zOp_DIA_1d_1coupled_3dPTR(self, right_hand_sides3d, nrhs, ldb)
+   class(zOperator_1d_1coupled_T), intent(inOut) :: self
+   complex(dp), pointer :: right_hand_sides3d(:,:,:)
+   complex(dp), pointer :: right_hand_sides  (:)
+   type(C_ptr) :: dummptr                
+   integer, intent(in) :: nrhs
+   integer, intent(in) :: ldb
+   integer :: info
+   dummptr = c_loc(right_hand_sides3d(1,1,1))
    call c_f_pointer(dummPtr, right_hand_sides, [nrhs*ldb])
    if (.not.self%has_lu) STOP 'LU factorization is missing'
    call zgbtrs('N', self%dia%ncol,  &   
@@ -243,4 +270,4 @@ module LP_algebra_z_1D
    self%has_lu = .True.
  end subroutine
 
-end module LP_algebra_z_1d
+end module PL_algebra_z_1d

@@ -2,7 +2,7 @@
 !                            C O R A L
 !=============================================================================
 !
-! MODULE: LP_equations
+! MODULE: PL_equations
 ! 
 !> @author
 !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@tutanota.com
@@ -13,10 +13,10 @@
 !
 !=============================================================================
 
-Module LP_equations
+Module PL_equations
  use Fortran_kinds
  use MPI_vars, only: my_rank
- use LP_string_to_data
+ use PL_string_to_data
  implicit None
 
  type :: atom_NL_term_T   
@@ -1824,4 +1824,4 @@ Module LP_equations
             
  end subroutine determine_kind_of_information
 
- End Module LP_equations
+ End Module PL_equations

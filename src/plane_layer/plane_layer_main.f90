@@ -1,14 +1,14 @@
-Program layer_pencils_main
+Program plane_layer_main
 
  use include_git_version 
  use MPI_vars
  use ftext_parsing
  use timeKeeping
  use wallclock
- use LP_equations
- use LP_algebra
- use LP_IMEX_timestepping
- use LP_transforms
+ use PL_equations
+ use PL_algebra
+ use PL_IMEX_timestepping
+ use transforms
  use decomp_2d_io
  use fftw3_wrap
  use read_command_line_args
@@ -118,7 +118,7 @@ Program layer_pencils_main
  if (is_string_in_the_list('--rolling-qsaves', 16)) misc_cargo%rolling_qsaves = .True.
  if (is_string_in_the_list('--checks',8)) then
 
-   include "LP_checks.f90"
+   include "PL_checks.f90"
 
  else
    !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -229,7 +229,7 @@ Program layer_pencils_main
   call MPI_finalize(ierr)
 
 
-End Program layer_pencils_main
+End Program plane_layer_main
 
 
 

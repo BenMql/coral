@@ -2,7 +2,7 @@
  !                            C O R A L
  !=============================================================================
  !
- ! MODULE: LP_geometry
+ ! MODULE: PL_geometry
  ! 
  !> @author
  !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@tutanota.com
@@ -12,11 +12,11 @@
  !>  
  !
  !=============================================================================
-module LP_geometry
+module PL_geometry
 
  use chdir_mod
  use fortran_kinds
- use LP_domain_decomp
+ use domain_decomposition
  use MPI_vars
  use read_command_line_args
         
@@ -206,7 +206,7 @@ module LP_geometry
    self%py = Cmplx(0._dp, self%ky, kind=dp)
    if (my_rank.eq.0) then
    print*, '================================================================='
-   print *, " Initializing geometry ... (LP_geometry.f90)"
+   print *, " Initializing geometry ... (PL_geometry.f90)"
    print *, 'gridSize before dealiasing :', self%NXAA, self%NYAA, self%NZAA
    print *, 'gridSize after  dealiasing :', self%NX, self%NY, self%NZ
    print *, "                       ... done. "
@@ -286,4 +286,4 @@ module LP_geometry
  
    End Subroutine read_input_file_parameters
 
-end module LP_geometry
+end module PL_geometry
