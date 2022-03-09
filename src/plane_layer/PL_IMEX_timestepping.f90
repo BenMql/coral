@@ -28,7 +28,7 @@ module PL_IMEX_timestepping
  use chebyshev_elementary
  use chebyshev_galerkin_2
  use transforms
- use decomp_2d_io
+ !use decomp_2d_io
  use timeKeeping, only: timings
  implicit none
 

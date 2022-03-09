@@ -9,8 +9,6 @@ Program plane_layer_main
  use PL_algebra
  use PL_IMEX_timestepping
  use transforms
- use decomp_2d_io
- use fftw3_wrap
  use read_command_line_args
  use, intrinsic :: iso_c_binding
  Implicit None
@@ -100,9 +98,10 @@ Program plane_layer_main
    main%io_bookkeeping%output_directory = misc_cargo%output_directory
    main%io_bookkeeping%output_dir_length= misc_cargo%output_dir_length
 
-   call dct_planner()             
 
    call main%init(misc_cargo%scheme_id)
+
+   call dct_planner()             
 
    if (misc_cargo%qsave_restart) then
       if (verbose) print *, ">> loading a quicksave"

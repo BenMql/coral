@@ -108,8 +108,8 @@ module PL_geometry
 
    if (my_rank.eq.0) print*, '================================================================='
    if (my_rank.eq.0) print*, ' ...'
-   if (my_rank.eq.0) print*, ' ... Now calling 2decomp lib.'
-   if (my_rank.eq.0) print*, ' ... The optimal domain decomposition is being found'
+   if (my_rank.eq.0) print*, ' ... Now initialising fftw3-mpi.'
+   if (my_rank.eq.0) print*, ' ... The optimal data distribution is being found'
    if (my_rank.eq.0) print*, ' ...'
    call domain_decomp%init( self%NZAA, &
                             self%NYAA, &

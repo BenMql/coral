@@ -255,10 +255,10 @@
    select case(linear_or_quadra)
           case ('linear')
           write (fileName,405) iVar, iTime
-          call decomp_2d_write_one(3, self%linear_variables(iVar)%phys, fileName)              
+          call self%linear_variables(iVar)% write_phys_to_disk (fileName)
           case ('quadra')
           write (fileName,415) iVar, iTime
-          call decomp_2d_write_one(3, self%quadratic_variables(iVar)%phys, fileName)              
+          call self%quadratic_variables(iVar)% write_phys_to_disk (fileName)
    end select
  end subroutine
 
@@ -287,8 +287,7 @@
                  case (3)
                  write (fileName, 447) iVar, slice_index, iTime
           end select
-          call decomp_2d_write_plane(3, self%linear_variables(iVar)%phys, slice_kind, &
-                                     slice_index, fileName)              
+          call self%linear_variables(iVar)% slice_phys_to_disk (slice_kind, slice_index, fileName)
           case ('quadra')
           select case (slice_kind)
                  case (1)
@@ -298,8 +297,7 @@
                  case (3)
                  write (fileName, 457) iVar, slice_index, iTime
           end select
-          call decomp_2d_write_plane(3, self%quadratic_variables(iVar)%phys, slice_kind, &
-                                     slice_index, fileName)              
+          call self%quadratic_variables(iVar)% slice_phys_to_disk (slice_kind, slice_index, fileName)
    end select
  end subroutine
 
@@ -338,7 +336,7 @@
    ! copy spectral coefficients into the first array we can think of
    self%linear_variables(1)%spec = cmplx(0._dp, 0._dp, kind=dp)
    write (fileName,506) iSys, iVar, rolInt
-   call decomp_2d_read_one(3, self%linear_variables(1)%phys, fileName)              
+   call self%linear_variables(1)% read_phys_from_disk (fileName)
    ! now tranform back to Galerkin coefficients, stored in 'field'
    call self%linear_variables(1)%phys_to_spec()
    ! backsolve for galerkin
@@ -404,7 +402,7 @@
                         self%linear_variables(1)%spec, 'overW')
    write (fileName,406) iSys, iVar, self%io_bookkeeping%rolling_integer
    call self%linear_variables(1)%spec_to_phys()
-   call decomp_2d_write_one(3, self%linear_variables(1)%phys, fileName)              
+   call self%linear_variables(1)% write_phys_to_disk( filename )
    ! now tranform back to Galerkin coefficients, stored in 'field'
    call self%linear_variables(1)%phys_to_spec()
    ! backsolve for galerkin
@@ -436,14 +434,6 @@
       open (unit=9, file=fileName, status='replace', access='stream')
       write(9) buff
       close(unit=9)
-      !call r2r_forward(buff)
-      !! backsolve for galerkin
-      !call self%coupled_zero_set(iSys)%square_stencil(iVar)%backsolve(buff)
-      !! truncate, shuffle and insert at the right location
-      !call self%coupled_zero_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
-                  !buff, &                                 
-                  !self%coupled_zero_set(isys)%field,&
-                  !'cumul')
 
    end do
    end do

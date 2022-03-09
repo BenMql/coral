@@ -1,7 +1,9 @@
- Module FFTW3mpi
- Use, Intrinsic :: Iso_C_Binding
- Use MPI
- Implicit None
- Include 'fftw3-mpi.f03'
- End Module FFTW3mpi
+ module fftw3mpi
+
+   use, intrinsic :: iso_C_binding
+   use mpi
+   implicit none
+   include 'fftw3-mpi.f03'
+
+ end module fftw3mpi
 
