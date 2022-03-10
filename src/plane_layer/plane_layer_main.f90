@@ -98,7 +98,6 @@ Program plane_layer_main
    main%io_bookkeeping%output_directory = misc_cargo%output_directory
    main%io_bookkeeping%output_dir_length= misc_cargo%output_dir_length
 
-
    call main%init(misc_cargo%scheme_id)
 
    call dct_planner()             

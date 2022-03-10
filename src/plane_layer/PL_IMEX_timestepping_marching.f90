@@ -377,6 +377,8 @@
    complex(kind=dp), allocatable :: nl_buffer_deAliased(:,:,:)
    real   (kind=dp), allocatable :: nl_buffer_zero(:)
    integer :: iSource
+   real(kind=dp) :: varAvg
+   integer :: iz
 
    call self%compute_full_variables_in_physical_space()
    
@@ -389,6 +391,19 @@
       self%quadratic_variables(iQvar)%phys = &
               self%linear_variables( self%recipe%nl_vars(iQvar)%iVar1 )%phys *&
               self%linear_variables( self%recipe%nl_vars(iQvar)%iVar2 )%phys
+       !varAvg  = 0._dp                                                       
+       !do ix = 1, self%geometry%phys%local_NX
+       !do iy = 1, self%geometry%phys%local_NY
+       !do iz = 1, self%geometry%phys%local_NZ
+       !varAvg = varAvg + self%quadratic_variables(iQVar)%phys(iz,iy,ix) &
+                       !* self%gauss_cheby%weight1d( domain_decomp%phys_iStart(1) -1 + iz)
+       !end do
+       !end do
+       !end do
+      !print *, iQvar, 'pouet',  self%recipe%nl_vars(iQvar)%iVar1 ,  &
+           !self%recipe%nl_vars(iQvar)%iVar2, self%quadratic_variables(iQvar)%phys(1,1,1), &
+                                  !varAvg
+     
       call self%quadratic_variables(iQvar)%phys_to_spec()
    end do
 

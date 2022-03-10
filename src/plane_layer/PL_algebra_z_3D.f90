@@ -268,7 +268,8 @@ contains
                       self%lu (i1,i2)%pivots,&
                       info)
        if (info.ne.0) print *, "Problem during LU routine zgbtrf, (process, info, ix, iy)", my_rank, info, i1, i2
-       if (info.ne.0) stop
+       !if (info.ne.0) print *, self%dia(i1,i2)%dat
+       !if (info.ne.0) stop
      end do
    end do
    self%has_lu = .True.

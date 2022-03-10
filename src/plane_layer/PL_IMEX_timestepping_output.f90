@@ -178,7 +178,11 @@
                               varAvg,&
                               first_or_not, &                      
                               current_position)            
-                if (iObj.le.3) self%cargo%KE_display = self%cargo%KE_display + varAvg
+                if ((self%recipe%nl_vars(iVar)%str .eq. 'uu')   .or. &
+                    (self%recipe%nl_vars(iVar)%str .eq. 'vv')   .or. &
+                    (self%recipe%nl_vars(iVar)%str .eq. 'ww') ) then  
+                        self%cargo%KE_display = self%cargo%KE_display + varAvg
+                end if
           case ('zSlice')
                if ((self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
                                .ge. domain_decomp%phys_iStart(1)) &

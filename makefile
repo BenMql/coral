@@ -165,7 +165,7 @@ Slabs_layer_Objects += $(LAYER)plane_layer_main.o
 
 slabs: $(Slabs_layer_Objects)
 	mkdir -p $(BUILD_DIR)
-	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $^ $(MPI_FFTW_link) -L$(FFTW_LIB) $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
+	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $^ $(MPI_FFTW_link) -L$(FFTW_LIB) -I$(FFTW_INC) $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
 	$(MAKE) clean
 
 

@@ -46,6 +46,7 @@
    write (*,*)  '... Creating Chebyshev Elementary Matrices for integration and'
    110 format (' ... product, with total size ',I4,' after padding with ',I2,' elmts.')
    write (*,110) Npad, padding 
+   write (*,*)  '...'
    write (*,*)  '================================================================='
    write (*,*) New_Line('s')
    end if

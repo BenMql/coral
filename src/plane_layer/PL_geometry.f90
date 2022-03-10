@@ -118,9 +118,11 @@ module PL_geometry
    self%spec%local_NX = domain_decomp%spec_iSize(3)                 
    self%spec%local_NY = domain_decomp%spec_iSize(2)                 
    self%spec%local_NZ = domain_decomp%spec_iSize(1)                 
-   self%phys%local_NX = domain_decomp%phys_iSize(3) !checkme suspicious???
+
+   self%phys%local_NX = domain_decomp%phys_iSize(3)
    self%phys%local_NY = domain_decomp%phys_iSize(2)                 
    self%phys%local_NZ = domain_decomp%phys_iSize(1)                 
+
    allocate (self%kx (self%spec%local_NX ))
    allocate (self%px (self%spec%local_NX ))
    allocate (self%ky (self%spec%local_NY ))
