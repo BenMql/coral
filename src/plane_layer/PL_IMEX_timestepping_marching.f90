@@ -325,6 +325,9 @@
    local_cheby_weight = self%gauss_cheby%weight1d (domain_decomp%phys_iStart(1) : &
                                                    domain_decomp%phys_iStart(1) + &
                                                    self%geometry%phys%local_NZ  -1)
+   if (domain_decomp% y_is_empty_in_phys) then
+   self%cargo%cfl_based_DT = 1._dp
+   else
    ! beware: potential stack problem by computing the max of the abs of an array?
    u_over_dx_max = maxVal(dAbs(self%linear_variables(1)%phys)) 
    u_over_dx_max = u_over_dx_max * self%geometry%NXAA / self%geometry%Lx
@@ -344,6 +347,7 @@
    self%cargo%cfl_based_DT = 1._dp/ dMax1 ( u_over_dx_max,&
                                             v_over_dy_max,&
                                             w_over_dz_max)
+   end if 
 
    if (self%recipe%smagorinsky_flag) then
       self%cargo%cfl_based_DT = dMin1( self%cargo%cfl_based_DT, &

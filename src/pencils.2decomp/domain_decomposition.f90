@@ -28,6 +28,8 @@
       Integer, dimension(3) :: phys_iStart, phys_iEnd, phys_iSize
       Integer, dimension(3) :: spec_iStart, spec_iEnd, spec_iSize
       integer :: NXAA, NYAA, NZAA
+      logical :: x_is_empty_in_spec = .false.
+      logical :: y_is_empty_in_phys = .false.
     Contains
       Procedure :: init => domain_decomp_init
    End Type domain_decomposition_T            

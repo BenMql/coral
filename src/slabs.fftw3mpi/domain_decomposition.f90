@@ -33,6 +33,8 @@
       integer(kind=C_intPtr_T) :: local_ky_offset
       integer(kind=C_intPtr_T) :: local_NX_spec
       integer(kind=C_intPtr_T) :: local_NY_phys  
+      logical :: x_is_empty_in_spec
+      logical :: y_is_empty_in_phys
     Contains
       Procedure :: init => domain_decomp_init
    End Type domain_decomposition_T            
@@ -122,6 +124,9 @@
    202 format ('Core ', (i4.4), ' has ', (i4.4), ' x modes and ',(i4.4),' y gridpoints (offsets: ', (i4.4),',',(i4.4))
 
    write (*,202) my_rank, self% local_NX_spec, self% local_NY_phys, self% local_mx_offset, self% local_ky_offset
+
+   if (self% local_NX_spec .eq. 0) self% x_is_empty_in_spec = .True.
+   if (self% local_NY_phys .eq. 0) self% y_is_empty_in_phys = .True.
 
    End Subroutine domain_decomp_init
 

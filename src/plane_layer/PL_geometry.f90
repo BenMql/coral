@@ -147,10 +147,11 @@ module PL_geometry
    call MPI_Comm_Size(self%MPI_yPhys%comm, self%MPI_yPhys%size, ierr)
    call MPI_Comm_Rank(self%MPI_yPhys%comm, self%MPI_yPhys%rank, ierr) 
 
-   if ((domain_decomp%spec_iStart(1)+ &
-        domain_decomp%spec_iStart(2)+ &
-        domain_decomp%spec_iStart(3)) .eq. 3) then
-        self%this_core_has_zero_mode = .true.
+   if (((domain_decomp%spec_iStart(1)+ &
+         domain_decomp%spec_iStart(2)+ &
+         domain_decomp%spec_iStart(3)) .eq. 3) .and. &
+  (.not. domain_decomp% x_is_empty_in_spec)   ) then
+         self%this_core_has_zero_mode = .true.
    else
         self%this_core_has_zero_mode = .false.
    end if
