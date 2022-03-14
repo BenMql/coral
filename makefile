@@ -20,6 +20,7 @@ MPI_SRC    = $(CORAL_ROOT)/src/MPI_tools/
 MKL_LIB    = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl -m64 -I${MKLROOT}/include
 PENCILS_LAYER_2DECOMP  = $(CORAL_ROOT)/src/pencils.2decomp/
 SLABS_LAYER_FFTW3MPI   = $(CORAL_ROOT)/src/slabs.fftw3mpi/
+SLABS_49_FFTW3MPI   = $(CORAL_ROOT)/src/slabs.fourNinths.fftw3mpi/
 FFTW_INC:=$(FFTW_ROOT)/include/
 FFTW_LIB:=$(FFTW_ROOT)/lib/
 JMODDIR = $(MOD_DIR_FLAG)$(MODDIR)
@@ -114,6 +115,28 @@ pencils: $(Layer_pencil_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.pencils.2dcmp.x $^ -lfftw3 -l2decomp_fft -L$(FFTW_LIB) -L$(DECOMP2D_ROOT)/lib $(MKL_LIB) -I$(MODDIR) -I$(DECOMP2D_ROOT)/include -I$(MKLROOT)/include  
 	$(MAKE) clean
+
+
+                        #############################
+                        #############################
+# ~~~~~~~~~~~~~~~~~~~   #  LAYER SLABS four ninths  #  ~~~~~~~~~~~~~~~~~~~
+                        #############################
+                        #############################
+
+
+Slabs49_layer_Objects := $(MISC_SRC)chdir_mod.o    
+Slabs49_layer_Objects += $(MISC_SRC)fortran_kinds.o
+Slabs49_layer_Objects += $(FFTW_SRC)fftw3_mpi.o
+Slabs49_layer_Objects += $(MPI_SRC)MPI_vars.o
+Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)domain_decomposition.o
+Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)driver_decomp.o
+
+slabs49: $(Slabs49_layer_Objects)
+	mkdir -p $(BUILD_DIR)
+	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $^ $(MPI_FFTW_link) -L$(FFTW_LIB) -I$(FFTW_INC) $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
+	$(MAKE) clean
+
+
 
 
 
