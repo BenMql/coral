@@ -19,8 +19,8 @@ SLABS      = $(CORAL_ROOT)/src/slab_layer/
 MPI_SRC    = $(CORAL_ROOT)/src/MPI_tools/
 MKL_LIB    = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl -m64 -I${MKLROOT}/include
 PENCILS_LAYER_2DECOMP  = $(CORAL_ROOT)/src/pencils.2decomp/
-SLABS_LAYER_FFTW3MPI   = $(CORAL_ROOT)/src/slabs.fftw3mpi/
-SLABS_49_FFTW3MPI   = $(CORAL_ROOT)/src/slabs.fourNinths.fftw3mpi/
+SLABS_LAYER_FFTW3MPI   = $(CORAL_ROOT)/src/paddedSlabs.fftw3mpi/
+SLABS_49_FFTW3MPI   = $(CORAL_ROOT)/src/slabs.fftw3mpi/
 FFTW_INC:=$(FFTW_ROOT)/include/
 FFTW_LIB:=$(FFTW_ROOT)/lib/
 JMODDIR = $(MOD_DIR_FLAG)$(MODDIR)
@@ -131,7 +131,7 @@ Slabs49_layer_Objects += $(MPI_SRC)MPI_vars.o
 Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)domain_decomposition.o
 Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)driver_decomp.o
 
-slabs49: $(Slabs49_layer_Objects)
+slabs: $(Slabs49_layer_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $^ $(MPI_FFTW_link) -L$(FFTW_LIB) -I$(FFTW_INC) $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
 	$(MAKE) clean
@@ -186,7 +186,7 @@ Slabs_layer_Objects += $(LAYER)PL_IMEX_timestepping.o
 Slabs_layer_Objects += $(LAYER)plane_layer_main.o
 
 
-slabs: $(Slabs_layer_Objects)
+slabsPadded: $(Slabs_layer_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $^ $(MPI_FFTW_link) -L$(FFTW_LIB) -I$(FFTW_INC) $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
 	$(MAKE) clean

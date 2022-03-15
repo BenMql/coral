@@ -19,17 +19,27 @@ module transforms
    procedure :: read_phys_from_disk
  end type PS_Fields_T
  
+ type(C_ptr), private, save :: p_c2c_backward_y
+ type(C_ptr), private, save :: p_c2c_forward_y
+ type(C_ptr), private, save :: p_c2r_x
+ type(C_ptr), private, save :: p_r2c_x
+ type(C_ptr), private, save :: p_r2r_backward_z
+ type(C_ptr), private, save :: p_r2r_forward_z
 
- type(C_ptr), private, save :: p_r2c
- type(C_ptr), private, save :: p_c2r
- type(C_ptr), private, save :: p_r2r_f           
- type(C_ptr), private, save :: p_r2r_i           
 
  logical :: dct_includes_endpoints = .False.
  integer :: logical_NZ 
 
- real(C_double), pointer, private :: phys_buffer (:,:,:)
- real(C_double), pointer, private :: phys_padded (:,:,:)
+ complex(C_double), pointer, private :: buf_1c (:,:,:)
+ complex(C_double), pointer, private :: buf_2c (:,:,:)
+ complex(C_double), pointer, private :: buf_3c (:,:,:)
+ real   (C_double), pointer, private :: buf_1r (:,:,:)
+ real   (C_double), pointer, private :: buf_2r (:,:,:)
+ real   (C_double), pointer, private :: buf_4r (:,:,:)
+ real   (C_double), pointer, private :: buf_5r (:,:,:)
+ !> buffers that are only used for plans creation
+ complex(C_double), pointer, private :: buf_spec_cplx (:,:,:)
+ real   (C_double), pointer, private :: buf_phys_real (:,:,:)
 
  contains
 
@@ -39,117 +49,59 @@ module transforms
    integer, intent(in) :: slice_kind
    integer, intent(in) :: slice_index
    print *, 'todo'
-   !call decomp_2d_write_plane(3, self%phys, slice_kind, &
-                                     !slice_index, fileName)              
  end subroutine
 
  subroutine write_phys_to_disk (self, filename)
    character(len=*), intent(in) :: fileName
    class(PS_fields_T), intent(inOut) :: self
    print *, 'todo'
-   !call decomp_2d_write_one(3, self%phys, fileName)              
  end subroutine
 
  subroutine read_phys_from_disk (self, filename)
    class(PS_fields_T), intent(inOut) :: self
    character(len=*), intent(in) :: fileName
    print *, 'todo'
-   !call decomp_2d_read_one(3, self%phys, fileName)              
  end subroutine
 
  subroutine allocate_fields(self)
    class(PS_fields_T), intent(inOut) :: self
-   type(c_ptr) :: p1, p3
+   type(c_ptr) :: p1, p7
 
-   p1 = fftw_alloc_complex( domain_decomp% alloc_local )
+   p1 = fftw_alloc_real   ( domain_decomp% NX_long   * &
+                            domain_decomp% NZ_long   * &
+                            domain_decomp% NYAA_long / &
+                            world_size )
 
-   call c_f_pointer(p1, self%spec, [domain_decomp% NZAA_long,&
-                                    domain_decomp% NYAA_long,&
-                                    domain_decomp% local_NX_spec]) 
 
-   p3 = fftw_alloc_real   ( 2*domain_decomp% alloc_local )
+   call c_f_pointer(p1, self%spec,      [domain_decomp% NZ_long,&
+                                         domain_decomp% NYAA_long,&
+                                         domain_decomp% local_NX_spec]) 
 
-   call c_f_pointer(p3, self%phys, [domain_decomp% NZAA_long,&
+   call c_f_pointer(p1, self%spec_real, [domain_decomp% NZ_long,&
+                                         domain_decomp% NYAA_long,&
+                                         domain_decomp% local_NX_spec*2]) 
+
+   p7 = fftw_alloc_real   ( domain_decomp% NXAA_long * &
+                            domain_decomp% NZAA_long * &
+                            domain_decomp% NYAA_long / &
+                            world_size )
+
+   call c_f_pointer(p7, self%phys, [domain_decomp% NZAA_long,&
                                     domain_decomp% NXAA_long,&
                                     domain_decomp% local_NY_phys]) 
 
  end subroutine allocate_fields
-
- subroutine r2r_backward( arr )
-   real(kind=dp), allocatable, intent(inOut) :: arr(:)
-   type(c_ptr) :: p1, p2
-   real(kind=dp), pointer :: meanField_physical(:)
-   real(kind=dp), pointer :: meanField_spectral(:)
-   type(C_ptr) :: dct_plan_backward_meanFields
-   
-   p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
-   call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
-   p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
-   call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
-   
-   dct_plan_backward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
-                                                   meanField_spectral, &
-                                                   meanField_physical, &
-                                                   FFTW_REDFT01, FFTW_MEASURE)
-   meanField_spectral = arr
-   
-   meanfield_spectral(1) = meanField_spectral(1) *2._dp
-   call fftw_execute_r2r( dct_plan_backward_meanFields, &
-                          meanField_spectral, & 
-                          meanField_physical)
-   arr = meanField_physical/2._dp
-   call fftw_destroy_plan( dct_plan_backward_meanFields)
-   call fftw_free(p1)
-   call fftw_free(p2)
- end subroutine
-
- subroutine r2r_forward( arr )
-   real(kind=dp), allocatable, intent(inOut) :: arr(:)
-   type(c_ptr) :: p1, p2
-   real(kind=dp), pointer :: meanField_physical(:)
-   real(kind=dp), pointer :: meanField_spectral(:)
-   type(C_ptr) :: dct_plan_forward_meanFields
-   
-   p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
-   call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
-   p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
-   call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
-
-   dct_plan_forward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
-                                                   meanField_physical, &
-                                                   meanField_spectral, &
-                                                   FFTW_REDFT10, FFTW_MEASURE)
-   meanField_physical = arr
-   call fftw_execute_r2r( dct_plan_forward_meanFields, &
-                          meanField_physical, & 
-                          meanField_spectral)
-   meanfield_spectral(1) = meanField_spectral(1) *0.5_dp
-   arr                   = meanField_spectral / domain_decomp%NZAA 
-   
-   call fftw_destroy_plan( dct_plan_forward_meanFields)
-   call fftw_free(p1)
-   call fftw_free(p2)
- end subroutine
 
 
  subroutine c2r_transform(self)
    class(PS_fields_T), intent(inOut), target :: self
    integer :: u 
    
-   !open(newunit=u, file='spec3.dat', status='replace', access='stream')
-   !write(u) self%spec
-   !close(u)
    self%spec(1,:,:) = self%spec(1,:,:) * 2._dp
    call fftw_mpi_execute_dft_c2r( p_c2r, self%spec, phys_padded)          
-   !open(newunit=u, file='nosq3.dat', status='replace', access='stream')
-   !write(u) self%non_square
-   !close(u)
    phys_buffer(:,:,:) = phys_padded(:, 1:domain_decomp% NXAA, :)  * 0.5_dp 
    call fftw_execute_r2r        ( p_r2r_i, phys_buffer, self%phys)
 
-   !open(newunit=u, file='phys2.dat', status='replace', access='stream')
-   !write(u) self%phys
-   !close(u)
  end subroutine c2r_transform
 
  subroutine r2c_transform(self)
@@ -159,34 +111,22 @@ module transforms
 
    integer :: u 
 
-   !open(newunit=u, file='phys1.dat', status='replace', access='stream')
-   !write(u) self%phys
-   !close(u)
    call fftw_execute_r2r        ( p_r2r_f, self%phys, phys_buffer)
    phys_padded = 0._dp
    phys_padded(:, 1:domain_decomp% NXAA, :) = phys_buffer(:,:,:)
 
-   !open(newunit=u, file='nosq1.dat', status='replace', access='stream')
-   !write(u) self%non_square
-   !close(u)
    call fftw_mpi_execute_dft_r2c( p_r2c, phys_padded, self%spec )
-   !open(newunit=u, file='spec1.dat', status='replace', access='stream')
-   !write(u) self%spec
-   !close(u)
 
    self% spec(1,:,:) = self% spec(1,:,:) * 0.5_dp
    self% spec = self% spec  /  Real(domain_decomp% NXAA,  Kind = dp)
    self% spec = self% spec  /  Real(domain_decomp% NYAA,  Kind = dp)
    self% spec = self% spec  /  Real(domain_decomp% NZAA,  Kind = dp)
-   !open(newunit=u, file='spec2.dat', status='replace', access='stream')
-   !write(u) self%spec
-   !close(u)
  end subroutine r2c_transform
 
 
  subroutine dct_planner()
    integer(kind=C_intPtr_T) :: n_fft(2)
-   type(c_ptr) :: x_real_ptr, x_cplx_ptr, p2, p3
+   type(c_ptr) :: buf_A, buf_B
    real(dp), pointer :: x_real(:,:,:)
    complex(dp), pointer :: x_cplx(:,:,:)
    real(kind=dp), pointer :: a1(:,:,:)
@@ -197,17 +137,182 @@ module transforms
        dct_includes_endpoints = .True.
    end if
 
-   x_real_ptr = fftw_alloc_real ( 2*domain_decomp% alloc_local )
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   ! allocate all necessary buffers
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   call c_f_pointer(x_real_ptr, x_real, [domain_decomp% NZAA_long,&
-                                         domain_decomp% NXAA_long+2,&
-                                         domain_decomp% local_NY_phys]) 
+   buf_A = fftw_alloc_real   ((domain_decomp% NXAA_long+2)   * &
+                               domain_decomp% NZAA_long   * &
+                               domain_decomp% NYAA_long / &
+                               world_size )
+   buf_B = fftw_alloc_real   ((domain_decomp% NXAA_long+2)   * &
+                               domain_decomp% NZAA_long   * &
+                               domain_decomp% NYAA_long / &
+                               world_size )
 
-   x_cplx_ptr = fftw_alloc_complex( domain_decomp% alloc_local )
 
-   call c_f_pointer(x_cplx_ptr, x_cplx, [domain_decomp% NZAA_long,&
-                                    domain_decomp% NYAA_long,&
-                                    domain_decomp% local_NX_spec]) 
+   call c_f_pointer(buf_B, buf_spec_cplx, [domain_decomp% NZ_long,&
+                                           domain_decomp% NYAA_long,&
+                                           domain_decomp% local_NX_spec]) 
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> stores the result of the y transform
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   call c_f_pointer(buf_A, buf_1c, &                         
+                                  [domain_decomp% NZ_long,&
+                                   domain_decomp% NYAA_long,&
+                                   domain_decomp% local_NX_spec]) 
+   call c_f_pointer(buf_A, buf_1r, &                         
+                                  [domain_decomp% NZ_long,&
+                                   domain_decomp% NYAA_long,&
+                                   domain_decomp% local_NX_spec*2]) 
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> stores the transposed x <=> y       
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   call c_f_pointer(buf_B, buf_2c, &                         
+                                  [domain_decomp% NZ_long,  &
+                                   domain_decomp% NX_long/2,&
+                                   domain_decomp% NYAA_long/&
+                                   world_size]) 
+   call c_f_pointer(buf_B, buf_2r, &                         
+                                  [domain_decomp% NZ_long,&
+                                   domain_decomp% NX_long,&
+                                   domain_decomp% NYAA_long/&
+                                   world_size]) 
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> padds the x direction               
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   call c_f_pointer(buf_A, buf_3c, &                         
+                                  [domain_decomp% NZ_long,  &
+                                   domain_decomp% NXAA_long/2 + 1,&
+                                   domain_decomp% NYAA_long/&
+                                   world_size]) 
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> stores the result of the c2r-transform in x
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   call c_f_pointer(buf_B, buf_4r, &                         
+                                  [domain_decomp% NZ_long,  &
+                                   domain_decomp% NXAA_long + 2,&
+                                   domain_decomp% NYAA_long/&
+                                   world_size]) 
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> padds the z direction                       
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   call c_f_pointer(buf_A, buf_5r, &                         
+                                  [domain_decomp% NZAA_long,  &
+                                   domain_decomp% NXAA_long,&
+                                   domain_decomp% NYAA_long/&
+                                   world_size]) 
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> stores the result of the r2r-transform in z 
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   call c_f_pointer(buf_B, buf_phys_real, &                         
+                                  [domain_decomp% NZAA_long,  &
+                                   domain_decomp% NXAA_long,&
+                                   domain_decomp% NYAA_long/&
+                                   world_size]) 
+
+
+   ! /////////////////////////////////
+   ! /////////////////////////////////
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> plans the y transform, from spec to buf_1
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   p_c2c_backward_y = fftw_plan_many_dft( &
+             1,&
+            [domain_decomp% spec_iSize(2)], & !< size of the transform
+             domain_decomp% spec_iSize(1) * domain_decomp% spec_iSize(3) & ! howmany
+             ,&
+             buf_spec_cplx, &
+             domain_decomp% spec_iSize(2), & !< inembed
+             domain_decomp% spec_iSize(1), & !< istride
+             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
+             ,&
+             buf_1c, &
+             domain_decomp% spec_iSize(2), & !< inembed
+             domain_decomp% spec_iSize(1), & !< istride
+             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
+             ,&
+             FFTW_BACKWARD, FFTW_PATIENT &
+             )
+   ! >>>>>   and its inverse
+   p_c2c_forward_y = fftw_plan_many_dft( &
+             1,&
+            [domain_decomp% spec_iSize(2)], & !< size of the transform
+             domain_decomp% spec_iSize(1) * domain_decomp% spec_iSize(3) & ! howmany
+             ,&
+             buf_1c, &
+             domain_decomp% spec_iSize(2), & !< inembed
+             domain_decomp% spec_iSize(1), & !< istride
+             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
+             ,&
+             buf_spec_cplx, &
+             domain_decomp% spec_iSize(2), & !< inembed
+             domain_decomp% spec_iSize(1), & !< istride
+             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
+             ,&
+             FFTW_FORWARD, FFTW_PATIENT &
+             )
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> the transpose from buf_1 to buf_2 is already planned
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> padding from buf_2 to buf_3 is taken care of elsewhere
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> plan the c2r-transform in x from buf_3 to buf_4        
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   p_r2c_backward_y = fftw_plan_many_dft( &
+             1,&
+            [domain_decomp% spec_iSize(2)], & !< size of the transform
+             domain_decomp% spec_iSize(1) * domain_decomp% spec_iSize(3) & ! howmany
+             ,&
+             buf_spec_cplx, &
+             domain_decomp% spec_iSize(2), & !< inembed
+             domain_decomp% spec_iSize(1), & !< istride
+             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
+             ,&
+             buf_1c, &
+             domain_decomp% spec_iSize(2), & !< inembed
+             domain_decomp% spec_iSize(1), & !< istride
+             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
+             ,&
+             FFTW_BACKWARD, FFTW_PATIENT &
+             )
+   ! >>>>>   and its inverse
 
    n_fft = [domain_decomp% NYAA_long, domain_decomp% NXAA_long]
 
@@ -281,6 +386,62 @@ module transforms
 
  end subroutine dct_planner 
  
+ subroutine r2r_backward( arr )
+   real(kind=dp), allocatable, intent(inOut) :: arr(:)
+   type(c_ptr) :: p1, p2
+   real(kind=dp), pointer :: meanField_physical(:)
+   real(kind=dp), pointer :: meanField_spectral(:)
+   type(C_ptr) :: dct_plan_backward_meanFields
+   
+   p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
+   call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
+   p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
+   call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
+   
+   dct_plan_backward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
+                                                   meanField_spectral, &
+                                                   meanField_physical, &
+                                                   FFTW_REDFT01, FFTW_MEASURE)
+   meanField_spectral = arr
+   
+   meanfield_spectral(1) = meanField_spectral(1) *2._dp
+   call fftw_execute_r2r( dct_plan_backward_meanFields, &
+                          meanField_spectral, & 
+                          meanField_physical)
+   arr = meanField_physical/2._dp
+   call fftw_destroy_plan( dct_plan_backward_meanFields)
+   call fftw_free(p1)
+   call fftw_free(p2)
+ end subroutine
+
+ subroutine r2r_forward( arr )
+   real(kind=dp), allocatable, intent(inOut) :: arr(:)
+   type(c_ptr) :: p1, p2
+   real(kind=dp), pointer :: meanField_physical(:)
+   real(kind=dp), pointer :: meanField_spectral(:)
+   type(C_ptr) :: dct_plan_forward_meanFields
+   
+   p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
+   call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
+   p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
+   call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
+
+   dct_plan_forward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
+                                                   meanField_physical, &
+                                                   meanField_spectral, &
+                                                   FFTW_REDFT10, FFTW_MEASURE)
+   meanField_physical = arr
+   call fftw_execute_r2r( dct_plan_forward_meanFields, &
+                          meanField_physical, & 
+                          meanField_spectral)
+   meanfield_spectral(1) = meanField_spectral(1) *0.5_dp
+   arr                   = meanField_spectral / domain_decomp%NZAA 
+   
+   call fftw_destroy_plan( dct_plan_forward_meanFields)
+   call fftw_free(p1)
+   call fftw_free(p2)
+ end subroutine
+
 
 end module transforms
 
