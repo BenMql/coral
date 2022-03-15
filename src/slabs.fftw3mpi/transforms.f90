@@ -66,20 +66,15 @@ module transforms
  subroutine allocate_fields(self)
    class(PS_fields_T), intent(inOut) :: self
    type(c_ptr) :: p1, p7
-
-   p1 = fftw_alloc_real   ( domain_decomp% NX_long   * &
+   p1 = fftw_alloc_real   ((domain_decomp% NX_long)   * &
                             domain_decomp% NZ_long   * &
                             domain_decomp% NYAA_long / &
                             world_size )
 
 
-   call c_f_pointer(p1, self%spec,      [domain_decomp% NZ_long,&
-                                         domain_decomp% NYAA_long,&
-                                         domain_decomp% local_NX_spec]) 
-
-   call c_f_pointer(p1, self%spec_real, [domain_decomp% NZ_long,&
-                                         domain_decomp% NYAA_long,&
-                                         domain_decomp% local_NX_spec*2]) 
+   call c_f_pointer(p1, self%spec,  [domain_decomp% NZ_long,&
+                                     domain_decomp% NYAA_long,&
+                                     domain_decomp% local_NX_spec]) 
 
    p7 = fftw_alloc_real   ( domain_decomp% NXAA_long * &
                             domain_decomp% NZAA_long * &
@@ -98,9 +93,9 @@ module transforms
    integer :: u 
    
    self%spec(1,:,:) = self%spec(1,:,:) * 2._dp
-   call fftw_mpi_execute_dft_c2r( p_c2r, self%spec, phys_padded)          
-   phys_buffer(:,:,:) = phys_padded(:, 1:domain_decomp% NXAA, :)  * 0.5_dp 
-   call fftw_execute_r2r        ( p_r2r_i, phys_buffer, self%phys)
+   !call fftw_mpi_execute_dft_c2r( p_c2r, self%spec, phys_padded)          
+   !phys_buffer(:,:,:) = phys_padded(:, 1:domain_decomp% NXAA, :)  * 0.5_dp 
+   !call fftw_execute_r2r        ( p_r2r_i, phys_buffer, self%phys)
 
  end subroutine c2r_transform
 
@@ -109,18 +104,18 @@ module transforms
    real(dp) :: normalization_factor
    real(kind=dp), pointer :: recast_spec_real(:,:,:)
 
-   integer :: u 
+   !integer :: u 
+!
+   !call fftw_execute_r2r        ( p_r2r_f, self%phys, phys_buffer)
+   !phys_padded = 0._dp
+   !phys_padded(:, 1:domain_decomp% NXAA, :) = phys_buffer(:,:,:)
 
-   call fftw_execute_r2r        ( p_r2r_f, self%phys, phys_buffer)
-   phys_padded = 0._dp
-   phys_padded(:, 1:domain_decomp% NXAA, :) = phys_buffer(:,:,:)
-
-   call fftw_mpi_execute_dft_r2c( p_r2c, phys_padded, self%spec )
+   !call fftw_mpi_execute_dft_r2c( p_r2c, phys_padded, self%spec )
 
    self% spec(1,:,:) = self% spec(1,:,:) * 0.5_dp
-   self% spec = self% spec  /  Real(domain_decomp% NXAA,  Kind = dp)
-   self% spec = self% spec  /  Real(domain_decomp% NYAA,  Kind = dp)
-   self% spec = self% spec  /  Real(domain_decomp% NZAA,  Kind = dp)
+   !self% spec = self% spec  /  Real(domain_decomp% NXAA,  Kind = dp)
+   !self% spec = self% spec  /  Real(domain_decomp% NYAA,  Kind = dp)
+   !self% spec = self% spec  /  Real(domain_decomp% NZAA,  Kind = dp)
  end subroutine r2c_transform
 
 
@@ -209,7 +204,7 @@ module transforms
 
    call c_f_pointer(buf_B, buf_4r, &                         
                                   [domain_decomp% NZ_long,  &
-                                   domain_decomp% NXAA_long + 2,&
+                                   domain_decomp% NXAA_long,&
                                    domain_decomp% NYAA_long/&
                                    world_size]) 
 
@@ -295,94 +290,128 @@ module transforms
    !> plan the c2r-transform in x from buf_3 to buf_4        
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   p_r2c_backward_y = fftw_plan_many_dft( &
+   p_c2r_x = fftw_plan_many_dft_c2r( &
              1,&
-            [domain_decomp% spec_iSize(2)], & !< size of the transform
-             domain_decomp% spec_iSize(1) * domain_decomp% spec_iSize(3) & ! howmany
+            [domain_decomp% NXAA], & !< size of the transform
+             domain_decomp% NYAA * domain_decomp% NZ/ world_size & ! howmany
              ,&
-             buf_spec_cplx, &
-             domain_decomp% spec_iSize(2), & !< inembed
+             buf_3c, &
+            [domain_decomp% NXAA/2 + 1],   & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
+             domain_decomp% spec_iSize(1)*(domain_decomp% NXAA/2 + 1) &
              ,&
-             buf_1c, &
-             domain_decomp% spec_iSize(2), & !< inembed
+             buf_4r, &
+            [domain_decomp% NXAA],         & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
+             domain_decomp% spec_iSize(1)* domain_decomp% NXAA & 
              ,&
-             FFTW_BACKWARD, FFTW_PATIENT &
+             FFTW_PATIENT &
              )
    ! >>>>>   and its inverse
-
-   n_fft = [domain_decomp% NYAA_long, domain_decomp% NXAA_long]
-
-   p_c2r = fftw_mpi_plan_many_dft_c2r( 2,& ! rank
-                                   n_fft,& ! logical size
-                domain_decomp% NZAA_long,& ! how many transforms
-                  FFTW_MPI_DEFAULT_BLOCK,& ! let fftw decide
-                  FFTW_MPI_DEFAULT_BLOCK,& ! let fftw decide
-                                  X_cplx,& ! complex input (TRANSPOSED)
-                                  X_real,& ! real output
-                          MPI_COMM_WORLD,&
-                          ior(FFTW_patient, FFTW_MPI_TRANSPOSED_In))
-
-   p_r2c = fftw_mpi_plan_many_dft_r2c( 2,& ! rank
-                                   N_fft,& ! logical size
-                domain_decomp% NZAA_long,& ! how many transforms
-                  FFTW_MPI_DEFAULT_BLOCK,& ! let fftw decide
-                  FFTW_MPI_DEFAULT_BLOCK,& ! let fftw decide
-                                  X_real,& ! Real input
-                                  X_cplx,& ! Complex output (TRANSPOSED)
-                          MPI_COMM_WORLD,&
-                          ior(FFTW_patient, FFTW_MPI_TRANSPOSED_Out))
-
-
-
+   p_r2c_x = fftw_plan_many_dft_r2c( &
+             1,&
+            [domain_decomp% NXAA], & !< size of the transform
+             domain_decomp% NYAA * domain_decomp% NZ / world_size& ! howmany
+             ,&
+             buf_4r, &
+            [domain_decomp% NXAA],         & !< inembed
+             domain_decomp% spec_iSize(1), & !< istride
+             domain_decomp% spec_iSize(1)* domain_decomp% NXAA & 
+             ,&
+             buf_3c, &
+            [domain_decomp% NXAA/2 + 1],   & !< inembed
+             domain_decomp% spec_iSize(1), & !< istride
+             domain_decomp% spec_iSize(1)*(domain_decomp% NXAA/2 + 1) &
+             ,&
+             FFTW_PATIENT &
+             )
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> padding from buf_4 to buf_5 is taken care of elsewhere
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> plan the r2r-transform in z from buf_5 to phys_real    
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    if (dct_includes_endpoints) then
      ! adjust the logical size of the transforms
      logical_NZ = domain_decomp%NZAA - 1
-     ! plan the transforms
-     p_r2r_f =  fftw_plan_many_r2r(1, [domain_decomp%phys_iSize(1)], &
-         domain_decomp%phys_iSize(2)*domain_decomp%phys_iSize(3), &
-         x_real, [domain_decomp%phys_iSize(1)], 1, domain_decomp%phys_iSize(1), &
-         x_real, [domain_decomp%phys_iSize(1)], 1, domain_decomp%phys_iSize(1), &
-         [FFTW_REDFT00], FFTW_patient)
-     p_r2r_i =  fftw_plan_many_r2r(1, [domain_decomp%phys_iSize(1)], &
-         domain_decomp%phys_iSize(2)*domain_decomp%phys_iSize(3), &
-         x_real, [domain_decomp%phys_iSize(1)], 1, domain_decomp%phys_iSize(1), &
-         x_real, [domain_decomp%phys_iSize(1)], 1, domain_decomp%phys_iSize(1), &
-         [FFTW_REDFT00], FFTW_patient)
+   p_r2r_backward_z = fftw_plan_many_dft_r2r( &
+             1,&
+            [domain_decomp% NZAA], & !< size of the transform
+             domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
+             ,&
+             buf_5r, &
+            [domain_decomp% NZAA],   & !< inembed
+             1, & !< istride
+             domain_decomp% NZAA &
+             ,&
+             buf_phys_real, &
+            [domain_decomp% NZAA],   & !< inembed
+             1, & !< istride
+             domain_decomp% NZAA &
+             ,&
+            [FFTW_REDFT00],FFTW_PATIENT &
+             )
+   ! >>>>>   and its inverse
+   p_r2r_forward_z = fftw_plan_many_dft_r2r( &
+             1,&
+            [domain_decomp% NZAA], & !< size of the transform
+             domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
+             ,&
+             buf_phys_real, &
+            [domain_decomp% NZAA],   & !< inembed
+             1, & !< istride
+             domain_decomp% NZAA &
+             ,&
+             buf_5r, &
+            [domain_decomp% NZAA],   & !< inembed
+             1, & !< istride
+             domain_decomp% NZAA &
+             ,&
+            [FFTW_REDFT00],FFTW_PATIENT &
+             )
    else
      ! adjust the logical size of the transforms
      logical_NZ = domain_decomp%NZAA
-     ! plan the transforms
-     p_r2r_f =  fftw_plan_many_r2r(1, [domain_decomp%phys_iSize(1)], &
-         domain_decomp%phys_iSize(2)*domain_decomp%phys_iSize(3), &
-         x_real, [domain_decomp%phys_iSize(1)], 1, domain_decomp%phys_iSize(1), &
-         x_real, [domain_decomp%phys_iSize(1)], 1, domain_decomp%phys_iSize(1), &
-         [FFTW_REDFT10], FFTW_patient)
-     p_r2r_i =  fftw_plan_many_r2r(1, [domain_decomp%phys_iSize(1)], &
-         domain_decomp%phys_iSize(2)*domain_decomp%phys_iSize(3), &
-         x_real, [domain_decomp%phys_iSize(1)], 1, domain_decomp%phys_iSize(1), &
-         x_real, [domain_decomp%phys_iSize(1)], 1, domain_decomp%phys_iSize(1), &
-         [FFTW_REDFT01], FFTW_patient)
+   p_r2r_backward_z = fftw_plan_many_dft_r2r( &
+             1,&
+            [domain_decomp% NZAA], & !< size of the transform
+             domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
+             ,&
+             buf_5r, &
+            [domain_decomp% NZAA],   & !< inembed
+             1, & !< istride
+             domain_decomp% NZAA &
+             ,&
+             buf_phys_real, &
+            [domain_decomp% NZAA],   & !< inembed
+             1, & !< istride
+             domain_decomp% NZAA &
+             ,&
+            [FFTW_REDFT01],FFTW_PATIENT &
+             )
+   ! >>>>>   and its inverse
+   p_r2r_forward_z = fftw_plan_many_dft_r2r( &
+             1,&
+            [domain_decomp% NZAA], & !< size of the transform
+             domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
+             ,&
+             buf_phys_real, &
+            [domain_decomp% NZAA],   & !< inembed
+             1, & !< istride
+             domain_decomp% NZAA &
+             ,&
+             buf_5r, &
+            [domain_decomp% NZAA],   & !< inembed
+             1, & !< istride
+             domain_decomp% NZAA &
+             ,&
+            [FFTW_REDFT10],FFTW_PATIENT &
+             )
    end if
-
-   
-   call fftw_free(x_real_ptr)
-   call fftw_free(x_cplx_ptr)
-
-   p2 = fftw_alloc_real   ( 2*domain_decomp% alloc_local )
-
-   call c_f_pointer(p2, phys_padded,[domain_decomp% NZAA_long,&
-                                     domain_decomp% NXAA_long+2,&
-                                     domain_decomp% local_NY_phys]) 
-
-   p3 = fftw_alloc_real   ( 2*domain_decomp% alloc_local )
-
-   call c_f_pointer(p3, phys_buffer,[domain_decomp% NZAA_long,&
-                                     domain_decomp% NXAA_long,&
-                                     domain_decomp% local_NY_phys]) 
 
  end subroutine dct_planner 
  

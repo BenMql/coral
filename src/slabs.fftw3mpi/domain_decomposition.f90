@@ -60,7 +60,8 @@
       Integer, dimension(3) :: phys_iStart, phys_iEnd, phys_iSize
       Integer, dimension(3) :: spec_iStart, spec_iEnd, spec_iSize
       integer :: NXAA, NYAA, NZAA
-      integer(kind=C_intPtr_T) :: NYAA_long
+      integer :: NX, NY, NZ
+      integer(kind=C_intPtr_T) :: NYAA_long, NXAA_long, NZAA_long
       integer(kind=C_intPtr_T) :: NX_long, NZ_long
       integer(kind=C_intPtr_T) :: alloc_local
       integer(kind=C_intPtr_T) :: local_mx_offset
@@ -93,22 +94,22 @@
       integer, intent(in) :: n1, n2, n3
       !-  internal vars
       integer (C_intPtr_T) :: n_fft(2)
-      integer (C_intPtr_T) :: howmany
       type(c_ptr) :: cplx_ptr_1, cplx_ptr_2
       Real(C_double), pointer :: X_in_core(:,:,:), Y_in_core(:,:,:)
       complex(C_double), pointer :: X_in_core_complex(:,:,:), Y_in_core_complex(:,:,:)
-      integer :: ix, iy, iz, NX, NY, NZ
       
 
       self% NXAA = n3
       self% NYAA = n2
       self% NZAA = n1
-      NX = n3*2/3
-      NY = n2*2/3
-      NZ = n1*2/3
+      self% NX = n3*2/3
+      self% NY = n2*2/3
+      self% NZ = n1*2/3
+      self% NXAA_long = int( self% NXAA, kind= C_intPtr_T)
       self% NYAA_long = int( self% NYAA, kind= C_intPtr_T)
-      self% NX_long = int( self% NXAA*2/3, kind= C_intPtr_T)
-      self% NZ_long = int( self% NZAA*2/3, kind= C_intPtr_T)
+      self% NZAA_long = int( self% NZAA, kind= C_intPtr_T)
+      self% NX_long = int( self% NX, kind= C_intPtr_T)
+      self% NZ_long = int( self% NZ, kind= C_intPtr_T)
 
       self% p_row = 1
       self% p_col = world_size
@@ -210,19 +211,19 @@
       !/////////////////////////////////////////////
       !-- In spectral space, the fast index z (1) is in-core
       self% spec_iStart(1) = 1 
-      self% spec_iSize (1) = NZ
-      self% spec_iEnd  (1) = NZ
+      self% spec_iSize (1) = self% NZ
+      self% spec_iEnd  (1) = self% NZ
       !-- In spectral space, the intermediate index y (2) is in-core
       self% spec_iStart(2) = 1 
       self% spec_iSize (2) = self% NYAA
       self% spec_iEnd  (2) = self% NYAA
       !-- In spectral space, the slow index x (3) is distributed    
-      self% spec_iStart(3) = NX/2/world_size * my_rank + 1
-      self% spec_iSize (3) = NX/2/world_size
-      self% spec_iEnd  (3) = NX/2/world_size
+      self% spec_iStart(3) = self% NX/2/world_size * my_rank + 1
+      self% spec_iSize (3) = self% NX/2/world_size
+      self% spec_iEnd  (3) = self% NX/2/world_size
 
-      self% local_NX_spec   = NX/2/world_size
-      self% local_mx_offset = NX/2/world_size * my_rank
+      self% local_NX_spec   = self% NX/2/world_size
+      self% local_mx_offset = self% NX/2/world_size * my_rank
 
       !/////////////////////////////////////////////
       !

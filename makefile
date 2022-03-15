@@ -126,9 +126,11 @@ pencils: $(Layer_pencil_Objects)
 
 Slabs49_layer_Objects := $(MISC_SRC)chdir_mod.o    
 Slabs49_layer_Objects += $(MISC_SRC)fortran_kinds.o
+Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
 Slabs49_layer_Objects += $(FFTW_SRC)fftw3_mpi.o
 Slabs49_layer_Objects += $(MPI_SRC)MPI_vars.o
 Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)domain_decomposition.o
+Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)transforms.o
 Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)driver_decomp.o
 
 slabs: $(Slabs49_layer_Objects)
