@@ -93,7 +93,6 @@
       class(domain_decomposition_T) :: self
       integer, intent(in) :: n1, n2, n3
       !-  internal vars
-      integer (C_intPtr_T) :: n_fft(2)
       type(c_ptr) :: cplx_ptr_1, cplx_ptr_2
       Real(C_double), pointer :: X_in_core(:,:,:), Y_in_core(:,:,:)
       complex(C_double), pointer :: X_in_core_complex(:,:,:), Y_in_core_complex(:,:,:)

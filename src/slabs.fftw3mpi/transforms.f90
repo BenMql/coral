@@ -338,7 +338,7 @@ module transforms
    if (dct_includes_endpoints) then
      ! adjust the logical size of the transforms
      logical_NZ = domain_decomp%NZAA - 1
-   p_r2r_backward_z = fftw_plan_many_dft_r2r( &
+   p_r2r_backward_z = fftw_plan_many_r2r( &
              1,&
             [domain_decomp% NZAA], & !< size of the transform
              domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
@@ -356,7 +356,7 @@ module transforms
             [FFTW_REDFT00],FFTW_PATIENT &
              )
    ! >>>>>   and its inverse
-   p_r2r_forward_z = fftw_plan_many_dft_r2r( &
+   p_r2r_forward_z = fftw_plan_many_r2r( &
              1,&
             [domain_decomp% NZAA], & !< size of the transform
              domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
@@ -376,7 +376,7 @@ module transforms
    else
      ! adjust the logical size of the transforms
      logical_NZ = domain_decomp%NZAA
-   p_r2r_backward_z = fftw_plan_many_dft_r2r( &
+   p_r2r_backward_z = fftw_plan_many_r2r( &
              1,&
             [domain_decomp% NZAA], & !< size of the transform
              domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
@@ -394,7 +394,7 @@ module transforms
             [FFTW_REDFT01],FFTW_PATIENT &
              )
    ! >>>>>   and its inverse
-   p_r2r_forward_z = fftw_plan_many_dft_r2r( &
+   p_r2r_forward_z = fftw_plan_many_r2r( &
              1,&
             [domain_decomp% NZAA], & !< size of the transform
              domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
