@@ -124,14 +124,54 @@ pencils: $(Layer_pencil_Objects)
                         #############################
 
 
+
 Slabs49_layer_Objects := $(MISC_SRC)chdir_mod.o    
 Slabs49_layer_Objects += $(MISC_SRC)fortran_kinds.o
 Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
 Slabs49_layer_Objects += $(FFTW_SRC)fftw3_mpi.o
+Slabs49_layer_Objects += $(TEXT_SRC)cwraps.o
+Slabs49_layer_Objects += $(TEXT_SRC)cfun_parse_text.o
+Slabs49_layer_Objects += $(TEXT_SRC)ftext_parsing.o
 Slabs49_layer_Objects += $(MPI_SRC)MPI_vars.o
+Slabs49_layer_Objects += $(OUT_SRC)output_misc.o          
+Slabs49_layer_Objects += $(MISC_SRC)timeKeeping.o
+Slabs49_layer_Objects += $(MISC_SRC)time_mpi.o
+Slabs49_layer_Objects += $(TSTEP_SRC)IMEX_schemes.o
+Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
+Slabs49_layer_Objects += $(MISC_SRC)include_git_version.o
+Slabs49_layer_Objects += $(MISC_SRC)wallclock.o
 Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)domain_decomposition.o
+Slabs49_layer_Objects += $(LAYER)PL_geometry.o
+Slabs49_layer_Objects += $(LAYER)PL_cheby_misc.o
+Slabs49_layer_Objects += $(MISC_SRC)include_git_version.o
+Slabs49_layer_Objects += $(CHEBY_SRC)lapack_module.o
+Slabs49_layer_Objects += $(LAYER)PL_string_to_data.o
+Slabs49_layer_Objects += $(LAYER)PL_equations.o             
+Slabs49_layer_Objects += $(SPARSE_SRC)sparse_formats_d.o
+Slabs49_layer_Objects += $(SPARSE_SRC)sparse_formats_z.o
+Slabs49_layer_Objects += $(SPARSE_SRC)sparse_formats.o
+Slabs49_layer_Objects += $(SPARSE_SRC)sparse_conversions.o
+Slabs49_layer_Objects += $(SPARSE_SRC)sparse_blas.o
+Slabs49_layer_Objects += $(SPARSE_SRC)sparse_manipulations.o
+Slabs49_layer_Objects += $(CHEBY_SRC)chebyshev_elementary.o
+Slabs49_layer_Objects += $(CHEBY_SRC)chebyshev_galerkin_2.o
+Slabs49_layer_Objects += $(LAYER)PL_algebra_d_1D.o
+Slabs49_layer_Objects += $(LAYER)PL_algebra_z_1D.o
+Slabs49_layer_Objects += $(LAYER)PL_algebra_z_3D.o
+Slabs49_layer_Objects += $(LAYER)PL_algebra.o             
 Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)transforms.o
-Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)driver_decomp.o
+Slabs49_layer_Objects += $(LAYER)PL_IMEX_timestepping.o
+Slabs49_layer_Objects += $(LAYER)plane_layer_main.o
+
+
+#Slabs49_layer_Objects := $(MISC_SRC)chdir_mod.o    
+#Slabs49_layer_Objects += $(MISC_SRC)fortran_kinds.o
+#Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
+#Slabs49_layer_Objects += $(FFTW_SRC)fftw3_mpi.o
+#Slabs49_layer_Objects += $(MPI_SRC)MPI_vars.o
+#Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)domain_decomposition.o
+#Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)transforms.o
+#Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)driver_decomp.o
 
 slabs: $(Slabs49_layer_Objects)
 	mkdir -p $(BUILD_DIR)

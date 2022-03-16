@@ -41,8 +41,10 @@
    first_moment = sum(main%linear_variables(1)%phys)
    second_moment = sum((main%linear_variables(1)%phys)**2)
    third_moment = sum((main%linear_variables(1)%phys)**3)
+   call wclock%init()
    call main%linear_variables(1)%phys_to_spec()
    call main%linear_variables(1)%spec_to_phys()
+   call wclock%check(.false.)
    !print*, my_rank, first_moment, &
    !                 sum(main%linear_variables(1)%phys),&
    !                 abs(first_moment- sum(main%linear_variables(1)%phys)),&
@@ -58,3 +60,16 @@
                     abs((first_moment- sum(main%linear_variables(1)%phys))/first_moment),&
                     abs((second_moment- sum((main%linear_variables(1)%phys)**2))/second_moment),&
                     abs((third_moment- sum((main%linear_variables(1)%phys)**3))/third_moment)
+   if (my_rank.eq.0) then
+      print *, "One forward/backward transform takes: ", wclock% time_now - wclock% start_time, " seconds"
+   end if
+   call wclock%init()
+   do i1 = 1,10
+   call main%linear_variables(1)%phys_to_spec()
+   call main%linear_variables(1)%spec_to_phys()
+   end do
+   call wclock%check(.false.)
+   if (my_rank.eq.0) then
+   print *, "Ten forward/backward transforms take: ", wclock% time_now - wclock% start_time, " seconds"
+   end if
+

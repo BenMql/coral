@@ -90,32 +90,148 @@ module transforms
 
  subroutine c2r_transform(self)
    class(PS_fields_T), intent(inOut), target :: self
-   integer :: u 
+   integer :: ix, iy
+   type(c_ptr) :: dummy_p1, dummy_p2
+   complex(c_double), pointer :: spec_ix(:)
+   complex(c_double), pointer :: buf_1c_ix(:)
+   complex(c_double), pointer :: buf_3c_iy(:)
+   real   (c_double), pointer :: buf_4r_iy(:)
    
-   self%spec(1,:,:) = self%spec(1,:,:) * 2._dp
-   !call fftw_mpi_execute_dft_c2r( p_c2r, self%spec, phys_padded)          
-   !phys_buffer(:,:,:) = phys_padded(:, 1:domain_decomp% NXAA, :)  * 0.5_dp 
-   !call fftw_execute_r2r        ( p_r2r_i, phys_buffer, self%phys)
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> execute the y transform, from spec to buf_1
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   do ix = 1, domain_decomp% local_NX_spec
+   dummy_p1 = C_loc(self% spec(1,1,ix))
+   dummy_p2 = C_loc(buf_1c    (1,1,ix))
+   call C_F_pointer(dummy_p1, spec_ix,   [1])
+   call C_F_pointer(dummy_p2, buf_1c_ix, [1])
+   !call fftw_execute_dft(p_c2c_backward_y, self% spec(1,1,ix), buf_1c(1,1,ix))
+   call fftw_execute_dft(p_c2c_backward_y, spec_ix, buf_1c_ix)                        
+   end do
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> remember the cosine > Chebyshev normalisation
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   buf_1c(1,:,:) = buf_1c(1,:,:) * 2._dp
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> execute the transpose from buf_1 to buf_2
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   call fftw_execute_r2r(domain_decomp% plan_forward_transpose, &
+                         buf_1r, buf_2r)
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> padd buf_2 into buf_3 
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   buf_3c = cmplx(0._dp, 0._dp, kind=dp)
+   buf_3c(:,1:domain_decomp% NX/2, :) = buf_2c ! incorrect but gives an idea of performance
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> execute the c2r-transform in x from buf_3 to buf_4        
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   do iy = 1, domain_decomp% NYAA/world_size
+   dummy_p1 = C_loc(buf_3c(1,1,iy))        
+   dummy_p2 = C_loc(buf_4r(1,1,iy))        
+   call C_F_pointer(dummy_p1, buf_3c_iy, [1])
+   call C_F_pointer(dummy_p2, buf_4r_iy, [1])
+   call fftw_execute_dft_c2r(p_c2r_x, buf_3c_iy, buf_4r_iy)                   
+   end do
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> padd buf_4 into buf_5 
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   buf_5r = 0._dp
+   buf_5r(1:domain_decomp% NZ, :,:) = buf_4r ! incorrect but gives an idea of performance
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> execute the r2r-transform in z from buf_5 to phys_real    
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   call fftw_execute_r2r (p_r2r_forward_z, buf_5r, self% phys)
 
  end subroutine c2r_transform
 
  subroutine r2c_transform(self)
    class(PS_fields_T), intent(inOut), target :: self
    real(dp) :: normalization_factor
-   real(kind=dp), pointer :: recast_spec_real(:,:,:)
+   integer :: ix, iy
+   type(c_ptr) :: dummy_p1, dummy_p2
+   complex(c_double), pointer :: spec_ix(:)
+   complex(c_double), pointer :: buf_1c_ix(:)
+   complex(c_double), pointer :: buf_3c_iy(:)
+   real   (c_double), pointer :: buf_4r_iy(:)
 
-   !integer :: u 
-!
-   !call fftw_execute_r2r        ( p_r2r_f, self%phys, phys_buffer)
-   !phys_padded = 0._dp
-   !phys_padded(:, 1:domain_decomp% NXAA, :) = phys_buffer(:,:,:)
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> execute the r2r-transform in z from phys_real to buf_5    
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   call fftw_execute_r2r (p_r2r_backward_z, self% phys, buf_5r)
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> shrink buf_5 to buf_4
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   buf_4r = buf_5r(1:domain_decomp% NZ, :,:) ! incorrect but gives an idea of performance
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> execute the r2c-transform in x from buf_4 to buf_3        
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   do iy = 1, domain_decomp% NYAA/world_size
+   dummy_p1 = C_loc(buf_3c(1,1,iy))        
+   dummy_p2 = C_loc(buf_4r(1,1,iy))        
+   call C_F_pointer(dummy_p1, buf_3c_iy, [1])
+   call C_F_pointer(dummy_p2, buf_4r_iy, [1])
+   call fftw_execute_dft_r2c(p_r2c_x, buf_4r_iy, buf_3c_iy)                   
+   end do
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> shrink buf_3 into buf_2
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   buf_2c = buf_3c(:,1:domain_decomp% NX/2, :) ! incorrect but gives an idea of performance
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> execute the transpose from buf_2 to buf_1
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   call fftw_execute_r2r(domain_decomp% plan_inverse_transpose, &
+                         buf_2r, buf_1r)
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> remember the cosine > Chebyshev normalisation
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   buf_1c(1,:,:) = buf_1c(1,:,:) * 0.5_dp
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
+   !> execute the y transform, from buf_1 to spec
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   do ix = 1, domain_decomp% local_NX_spec
+   dummy_p1 = C_loc(self% spec(1,1,ix))
+   dummy_p2 = C_loc(buf_1c    (1,1,ix))
+   call C_F_pointer(dummy_p1, spec_ix,   [1])
+   call C_F_pointer(dummy_p2, buf_1c_ix, [1])
+   !call fftw_execute_dft(p_c2c_backward_y, self% spec(1,1,ix), buf_1c(1,1,ix))
+   call fftw_execute_dft(p_c2c_forward_y, buf_1c_ix, spec_ix)
+   end do
+   normalization_factor = 1._dp / (domain_decomp%NXAA * &
+                                   domain_decomp%NYAA * &
+                                   logical_NZ )
+   self% spec = self% spec * normalization_factor
 
-   !call fftw_mpi_execute_dft_r2c( p_r2c, phys_padded, self%spec )
 
-   self% spec(1,:,:) = self% spec(1,:,:) * 0.5_dp
-   !self% spec = self% spec  /  Real(domain_decomp% NXAA,  Kind = dp)
-   !self% spec = self% spec  /  Real(domain_decomp% NYAA,  Kind = dp)
-   !self% spec = self% spec  /  Real(domain_decomp% NZAA,  Kind = dp)
+
+
  end subroutine r2c_transform
 
 
@@ -147,10 +263,14 @@ module transforms
                                domain_decomp% NYAA_long / &
                                world_size )
 
-
+   !print *, "pouet BUF_A,B have size:", (domain_decomp% NXAA_long+2)   * &
+                               !domain_decomp% NZAA_long   * &
+                               !domain_decomp% NYAA_long / &
+                               !world_size
    call c_f_pointer(buf_B, buf_spec_cplx, [domain_decomp% NZ_long,&
                                            domain_decomp% NYAA_long,&
                                            domain_decomp% local_NX_spec]) 
+   !print *, "pouet spec has size:", shape(buf_spec_cplx)
 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
@@ -166,6 +286,8 @@ module transforms
                                   [domain_decomp% NZ_long,&
                                    domain_decomp% NYAA_long,&
                                    domain_decomp% local_NX_spec*2]) 
+   !print *, "pouet buf_1c has size:", shape(buf_1c)
+   !print *, "pouet buf_1r has size:", shape(buf_1r)             
 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
@@ -240,39 +362,41 @@ module transforms
    !> plans the y transform, from spec to buf_1
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !print *, "pouet p_c2c has size            :", domain_decomp% spec_iSize(2)
+   !print *, "pouet p_c2c has howmany         :",  domain_decomp% spec_iSize(1) * domain_decomp% spec_iSize(3)
+   !print *, "pouet p_c2c has inembed         :", domain_decomp% spec_iSize(2)
+   !print *, "pouet p_c2c has istride         :", domain_decomp% spec_iSize(1)
+   !print *, "pouet p_c2c has iDist           :", domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) 
+
    p_c2c_backward_y = fftw_plan_many_dft( &
              1,&
             [domain_decomp% spec_iSize(2)], & !< size of the transform
-             domain_decomp% spec_iSize(1) * domain_decomp% spec_iSize(3) & ! howmany
+             domain_decomp% spec_iSize(1)  & ! howmany
              ,&
              buf_spec_cplx, &
              domain_decomp% spec_iSize(2), & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
-             ,&
+             1,&                             !< idist                        
              buf_1c, &
              domain_decomp% spec_iSize(2), & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
-             ,&
+             1,&
              FFTW_BACKWARD, FFTW_PATIENT &
              )
    ! >>>>>   and its inverse
    p_c2c_forward_y = fftw_plan_many_dft( &
              1,&
             [domain_decomp% spec_iSize(2)], & !< size of the transform
-             domain_decomp% spec_iSize(1) * domain_decomp% spec_iSize(3) & ! howmany
+             domain_decomp% spec_iSize(1)  & ! howmany
              ,&
              buf_1c, &
              domain_decomp% spec_iSize(2), & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
-             ,&
+             1,&                             !< idist                        
              buf_spec_cplx, &
              domain_decomp% spec_iSize(2), & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) &
-             ,&
+             1,&                             !< idist                        
              FFTW_FORWARD, FFTW_PATIENT &
              )
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -293,36 +417,32 @@ module transforms
    p_c2r_x = fftw_plan_many_dft_c2r( &
              1,&
             [domain_decomp% NXAA], & !< size of the transform
-             domain_decomp% NYAA * domain_decomp% NZ/ world_size & ! howmany
+             domain_decomp% NZ & ! howmany
              ,&
              buf_3c, &
             [domain_decomp% NXAA/2 + 1],   & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)*(domain_decomp% NXAA/2 + 1) &
-             ,&
+             1,&
              buf_4r, &
             [domain_decomp% NXAA],         & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)* domain_decomp% NXAA & 
-             ,&
+             1,&
              FFTW_PATIENT &
              )
    ! >>>>>   and its inverse
    p_r2c_x = fftw_plan_many_dft_r2c( &
              1,&
             [domain_decomp% NXAA], & !< size of the transform
-             domain_decomp% NYAA * domain_decomp% NZ / world_size& ! howmany
+             domain_decomp% NZ & ! howmany
              ,&
              buf_4r, &
             [domain_decomp% NXAA],         & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)* domain_decomp% NXAA & 
-             ,&
+             1,&
              buf_3c, &
             [domain_decomp% NXAA/2 + 1],   & !< inembed
              domain_decomp% spec_iSize(1), & !< istride
-             domain_decomp% spec_iSize(1)*(domain_decomp% NXAA/2 + 1) &
-             ,&
+             1,&
              FFTW_PATIENT &
              )
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
