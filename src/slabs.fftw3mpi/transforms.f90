@@ -557,12 +557,12 @@ module transforms
    real(kind=dp), pointer :: meanField_spectral(:)
    type(C_ptr) :: dct_plan_backward_meanFields
    
-   p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
-   call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
+   p1 = fftw_alloc_real(int( domain_decomp% NZAA, C_size_T))
+   call c_f_pointer(p1, meanField_physical, [domain_decomp% NZAA])
    p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
-   call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
+   call c_f_pointer(p2, meanField_spectral, [domain_decomp% NZAA])
    
-   dct_plan_backward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
+   dct_plan_backward_meanFields = fftw_plan_r2r_1d( domain_decomp% NZAA, &
                                                    meanField_spectral, &
                                                    meanField_physical, &
                                                    FFTW_REDFT01, FFTW_MEASURE)
@@ -585,12 +585,12 @@ module transforms
    real(kind=dp), pointer :: meanField_spectral(:)
    type(C_ptr) :: dct_plan_forward_meanFields
    
-   p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
-   call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
+   p1 = fftw_alloc_real(int( domain_decomp%NZAA, C_size_T))
+   call c_f_pointer(p1, meanField_physical, [domain_decomp%NZAA])
    p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
-   call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
+   call c_f_pointer(p2, meanField_spectral, [domain_decomp%NZAA])
 
-   dct_plan_forward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
+   dct_plan_forward_meanFields = fftw_plan_r2r_1d( domain_decomp%NZAA, &
                                                    meanField_physical, &
                                                    meanField_spectral, &
                                                    FFTW_REDFT10, FFTW_MEASURE)

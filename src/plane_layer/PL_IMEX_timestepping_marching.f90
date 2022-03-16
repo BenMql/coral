@@ -1,140 +1,5 @@
 
 
- subroutine output_zero_fie_sample(self, time_integer)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer, intent(in) :: time_integer
-   real(kind=dp), allocatable :: chebyCoefs_zeroMode(:)
-   character(len=46) :: fileName
-   integer :: iSys, iVar
-   if (my_rank.eq.0) then
-   1125 format ('chebyCoefs_fie0Smpl_sys',(i2.2),'_var',(i2.2),'_t',(i8.8),'.full')
-   allocate ( chebyCoefs_zeroMode (self%geometry%NZAA) )
-   do iSys = 1, self%recipe%numberOf_coupled_zero_systems
-   do iVar = 1, self%recipe%zero_recipes(iSys)%n_coupled_vars
-   chebyCoefs_zeroMode =  0._dp
-   call self%coupled_zero_set(iSys)%padStencilExtractShuffle(iVar)%dot(&
-        self%coupled_zero_set(iSys)%field, chebyCoefs_zeroMode, 'cumul')
-   write (fileName, 1125) iSys, iVar, time_integer
-   Open (Unit=9, File=fileName, Status='replace', Access='stream')
-   Write(9) chebyCoefs_zeroMode(:)
-   Close (Unit=9)
-   end do
-   end do
-   end if
- end subroutine
-
-
- subroutine output_zero_aux_sample(self, time_integer)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer, intent(in) :: time_integer
-   real(kind=dp), allocatable :: chebyCoefs_zeroMode(:)
-   character(len=46) :: fileName
-   integer :: iSys, iVar
-   if (my_rank.eq.0) then
-   1124 format ('chebyCoefs_aux0Smpl_sys',(i2.2),'_var',(i2.2),'_t',(i8.8),'.full')
-   allocate ( chebyCoefs_zeroMode (self%geometry%NZAA) )
-   do iSys = 1, self%recipe%numberOf_coupled_zero_systems
-   do iVar = 1, self%recipe%zero_recipes(iSys)%n_coupled_vars
-   chebyCoefs_zeroMode =  0._dp
-   call self%coupled_zero_set(iSys)%padStencilExtractShuffle(iVar)%dot(&
-        self%coupled_zero_set(iSys)%aux,   chebyCoefs_zeroMode, 'cumul')
-   write (fileName, 1124) iSys, iVar, time_integer
-   Open (Unit=9, File=fileName, Status='replace', Access='stream')
-   Write(9) chebyCoefs_zeroMode(:)
-   Close (Unit=9)
-   end do
-   end do
-   end if
- end subroutine
-
-
-
- subroutine output_zero_rhs_sample(self, time_integer)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer, intent(in) :: time_integer
-   character(len=46) :: fileName
-   integer :: iSys, iVar
-   if (my_rank.eq.0) then
-   1123 format ('chebyCoefs_rhs0Smpl_sys',(i2.2),'_var',(i2.2),'_t',(i8.8),'.full')
-   do iSys = 1, self%recipe%numberOf_coupled_zero_systems
-   do iVar = 1, self%recipe%zero_recipes(iSys)%n_coupled_vars
-   write (fileName, 1123) iSys, iVar, time_integer
-   Open (Unit=9, File=fileName, Status='replace', Access='stream')
-   Write(9) self%coupled_zero_set(iSys)%rhs
-   Close (Unit=9)
-   end do
-   end do
-   end if
- end subroutine
- subroutine output_kxky_fie_sample(self, time_integer)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer, intent(in) :: time_integer
-   complex(kind=dp), allocatable :: chebyCoefs_kxkyMode(:,:,:)
-   character(len=46) :: fileName
-   integer :: iSys, iVar
-   if (my_rank.eq.0) then
-   1115 format ('chebyCoefs_fie_Smpl_sys',(i2.2),'_var',(i2.2),'_t',(i8.8),'.full')
-   allocate ( chebyCoefs_kxkyMode (self%geometry%NZAA, self%geometry%spec%local_NY, self%geometry%spec%local_NX) )
-   do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
-   do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
-   chebyCoefs_kxkyMode = cmplx( 0._dp, 0._dp, kind=dp)
-   call self%coupled_kxky_set(iSys)%padStencilExtractShuffle(iVar)%dot(&
-        self%coupled_kxky_set(iSys)%field, chebyCoefs_kxkyMode, 'cumul')
-   write (fileName, 1115) iSys, iVar, time_integer
-   Open (Unit=9, File=fileName, Status='replace', Access='stream')
-   Write(9) chebyCoefs_kxkyMode(:,1,1)
-   Close (Unit=9)
-   end do
-   end do
-   end if
- end subroutine
- subroutine output_kxky_aux_sample(self, time_integer)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer, intent(in) :: time_integer
-   complex(kind=dp), allocatable :: chebyCoefs_kxkyMode(:,:,:)
-   character(len=46) :: fileName
-   integer :: iSys, iVar
-   if (my_rank.eq.0) then
-   1113 format ('chebyCoefs_aux_Smpl_sys',(i2.2),'_var',(i2.2),'_t',(i8.8),'.full')
-   allocate ( chebyCoefs_kxkyMode (self%geometry%NZAA, self%geometry%spec%local_NY, self%geometry%spec%local_NX) )
-   do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
-   do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
-   chebyCoefs_kxkyMode = cmplx( 0._dp, 0._dp, kind=dp)
-   call self%coupled_kxky_set(iSys)%padStencilExtractShuffle(iVar)%dot(&
-        self%coupled_kxky_set(iSys)%aux, chebyCoefs_kxkyMode, 'cumul')
-   write (fileName, 1113) iSys, iVar, time_integer
-   open (Unit=9, File=fileName, Status='replace', Access='stream')
-   write(9) chebyCoefs_kxkyMode(:,1,1)
-   close (Unit=9)
-   end do
-   end do
-   end if
- end subroutine
-
- subroutine output_kxky_rhs_sample(self, time_integer)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer, intent(in) :: time_integer
-   complex(kind=dp), allocatable :: chebyCoefs_kxkyMode(:,:,:)
-   character(len=46) :: fileName
-   integer :: iSys, iVar
-   if (my_rank.eq.0) then
-   1112 format ('chebyCoefs_rhs_Smpl_sys',(i2.2),'_var',(i2.2),'_t',(i8.8),'.full')
-   allocate ( chebyCoefs_kxkyMode (self%geometry%NZAA, self%geometry%spec%local_NY, self%geometry%spec%local_NX) )
-   do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
-   do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
-   chebyCoefs_kxkyMode = cmplx( 0._dp, 0._dp, kind=dp)
-   call self%coupled_kxky_set(iSys)%padStencilExtractShuffle(iVar)%dot(&
-        self%coupled_kxky_set(iSys)%rhs, chebyCoefs_kxkyMode, 'cumul')
-   write (fileName, 1112) iSys, iVar, time_integer
-   Open (Unit=9, File=fileName, Status='replace', Access='stream')
-   Write(9) chebyCoefs_kxkyMode(:,1,1)
-   Close (Unit=9)
-   end do
-   end do
-   end if
- end subroutine
-
-
  subroutine one_step_beyond(self, my_dt)
    class(full_problem_data_structure_T), intent(inOut), target :: self
    integer :: i, j
@@ -414,14 +279,14 @@
    if (i.eq.1) call self%output_global_quantities()
    if (i.eq.1) call self%output_slices_volumes_and_profiles()
   
-   allocate( nl_buffer( self%geometry%NZAA,&
-                        self%geometry%spec%local_NY, &
-                        self%geometry%spec%local_NX) )
+   allocate( nl_buffer( domain_decomp% spec_iSize(1), &
+                        domain_decomp% spec_iSize(2), &
+                        domain_decomp% spec_iSize(3)) )
 
    allocate( nl_buffer_deAliased( &
                         self%geometry%NZ,&
-                        self%geometry%spec%local_NY, &
-                        self%geometry%spec%local_NX) )
+                        domain_decomp% spec_iSize(2), &
+                        domain_decomp% spec_iSize(3)) )
 
 
    ! => for each set of coupled eqns: linear combinations of 
@@ -430,8 +295,8 @@
    do isys = 1, self%recipe%numberOf_coupled_kxky_systems
    self%coupled_kxky_set(isys)%step(i)%K_hat = cmplx(0._dp, 0._dp, kind=dp)
    do iTerm = 1, self%recipe%kxky_recipes(iSys)%NL%n_pieces
-      do ix = 1, self%geometry%spec%local_NX
-      do iy = 1, self%geometry%spec%local_NY
+      do ix = 1, domain_decomp% spec_iSize(3)
+      do iy = 1, domain_decomp% spec_iSize(2)
       nl_buffer(:,iy,ix) = self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dsca * &
              self%geometry%px(ix)**self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dx_exponent *&
              self%geometry%py(iy)**self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dy_exponent *&
@@ -470,8 +335,8 @@
 
    !deAliase K_hat
    do isys = 1, self%recipe%numberOf_coupled_kxky_systems
-   do ix = 1, self%geometry%spec%local_NX
-   do iy = 1, self%geometry%spec%local_NY
+   do ix = 1, domain_decomp% spec_iSize(3)
+   do iy = 1, domain_decomp% spec_iSize(2)
    if (self%geometry%deAliase_x(ix) .or. &
        self%geometry%deAliase_y(iy) ) then
        self%coupled_kxky_set(isys)%step(i)%K_hat(:,iy,ix) = cmplx(0._dp, 0._dp, kind=dp)
@@ -487,7 +352,7 @@
    ! self%quadratic_variables(iQvar)%spec are computed 
    ! and stored in the corresponding K_hat array
    if (self%geometry%this_core_has_zero_mode) then
-   allocate( nl_buffer_zero( self%geometry%NZAA )) 
+           allocate( nl_buffer_zero( domain_decomp% spec_iSize(1) )) 
    do isys = 1, self%recipe%numberOf_coupled_zero_systems
    self%coupled_zero_set(isys)%step(i)%K_hat = 0._dp
    do iTerm = 1, self%recipe%zero_recipes(iSys)%NL%n_pieces
@@ -542,10 +407,10 @@
    complex (kind=dp), allocatable :: datBuffer (:,:,:)
    real    (kind=dp), allocatable :: datBufferZero (:)
 
-   allocate( datBuffer (self%geometry%NZAA, &
-                        self%geometry%spec%local_NY, &
-                        self%geometry%spec%local_NX) )
-   allocate( datBufferZero (self%geometry%NZAA) )
+   allocate( datBuffer (domain_decomp% spec_iSize(1), &
+                        domain_decomp% spec_iSize(2), &
+                        domain_decomp% spec_iSize(3)) )
+   allocate( datBufferZero (domain_decomp% spec_iSize(1)) )
    ! ==================================================
    ! >>> spectral space computations
    do iVar = 1, self%recipe%numberOf_linear_variables_full

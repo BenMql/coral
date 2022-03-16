@@ -192,14 +192,6 @@ module PL_IMEX_timestepping
    procedure :: noisy_initial_conditions
    procedure :: output_global_quantities
    procedure :: output_slices_volumes_and_profiles
-   procedure :: output_zero_modes
-   procedure :: output_kxky_modes_sample
-   procedure :: output_kxky_aux_sample
-   procedure :: output_kxky_fie_sample
-   procedure :: output_kxky_rhs_sample
-   procedure :: output_zero_aux_sample
-   procedure :: output_zero_fie_sample
-   procedure :: output_zero_rhs_sample
    procedure :: prepare_building_tools
    procedure :: prepare_stencils
    procedure :: prepare_chebyshev_integration
@@ -232,31 +224,32 @@ module PL_IMEX_timestepping
      error stop
    else 
    do iOrder = 1, dOrder
-   allocate (deriv( self%geometry%NZAA, &
-                    self%geometry%spec%local_NY, &
-                    self%geometry%spec%local_NX))
+   allocate (deriv( domain_decomp% spec_iSize(1), &
+                    domain_decomp% spec_iSize(2), &
+                    domain_decomp% spec_iSize(3)))
+      
    deriv = cmplx(0._dp, 0._dp, kind=dp)
-   do ix = 1, self%geometry%spec%local_NX 
-   do iy = 1, self%geometry%spec%local_NY
+   do ix = 1, domain_decomp% spec_iSize(3)
+   do iy = 1, domain_decomp% spec_iSize(2)
    do iz = 1, self%geometry%NZ - 1
    deriv(iz,iy,ix) = field(iz+1, iy, ix)
    end do
    end do
    end do
    dummyPtr = C_loc(deriv(1,1,1))
-   call C_F_pointer(dummyPtr, fDummyPtr, [self%geometry%NZAA*&
-                                          self%geometry%spec%local_NX*&
-                                          self%geometry%spec%local_NY])
+   call C_F_pointer(dummyPtr, fDummyPtr, [domain_decomp% spec_iSize(1)*&
+                                          domain_decomp% spec_iSize(2)*&
+                                          domain_decomp% spec_iSize(3)])
    call self%Chebyshev_integration_z%backsolve( fDummyPtr,&
-                                      self%geometry%spec%local_NX*&
-                                      self%geometry%spec%local_NY,&
-                                      self%geometry%NZAA)
+                                      domain_decomp% spec_iSize(3)*&
+                                      domain_decomp% spec_iSize(2),&
+                                      domain_decomp% spec_iSize(1))
               
    call move_alloc(from=deriv, to=field)
    end do
-   do ix = 1, self%geometry%spec%local_NX 
-   do iy = 1, self%geometry%spec%local_NY
-   field(self%geometry%NZ : self%geometry%NZAA,iy,ix) = cmplx(0._dp, 0._dp, kind=dp)
+   do ix = 1, domain_decomp% spec_iSize(3)
+   do iy = 1, domain_decomp% spec_iSize(2)
+   field(self%geometry%NZ : domain_decomp% spec_iSize(1),iy,ix) = cmplx(0._dp, 0._dp, kind=dp)
    end do
    end do
    end if
@@ -276,19 +269,19 @@ module PL_IMEX_timestepping
      error stop
    else 
    do iOrder = 1, dOrder
-   allocate (deriv( self%geometry%NZAA ))
+   allocate (deriv( domain_decomp% spec_iSize(1) ))
    deriv = 0._dp                             
    do iz = 1, self%geometry%NZ - 1
    deriv(iz) = field(iz+1)
    end do
    dummyPtr = C_loc(deriv(1))
-   call C_F_pointer(dummyPtr, fDummyPtr, [self%geometry%NZAA])
+   call C_F_pointer(dummyPtr, fDummyPtr, [domain_decomp% spec_iSize(1)])
    call self%Chebyshev_integration_d%backsolve( fDummyPtr,&
-                                      1, self%geometry%NZAA)
+           1, domain_decomp% spec_iSize(1))
               
    call move_alloc(from=deriv, to=field)
    end do
-   field(self%geometry%NZ : self%geometry%NZAA) = 0._dp
+   field(self%geometry%NZ : domain_decomp% spec_iSize(1)) = 0._dp
    end if
  end subroutine
 
@@ -773,10 +766,10 @@ module PL_IMEX_timestepping
          print *, Neqs, Nvars
          stop 
       else
-         self%coupled_kxky_set(isys)%shape%spectral_local_NX = self%geometry%spec%local_NX
-         self%coupled_kxky_set(isys)%shape%spectral_local_NY = self%geometry%spec%local_NY
-         self%coupled_kxky_set(isys)%shape%physical_local_NX = self%geometry%phys%local_NX
-         self%coupled_kxky_set(isys)%shape%physical_local_NY = self%geometry%phys%local_NY
+         self%coupled_kxky_set(isys)%shape%spectral_local_NX = domain_decomp% spec_iSize(3)
+         self%coupled_kxky_set(isys)%shape%spectral_local_NY = domain_decomp% spec_iSize(2)
+         self%coupled_kxky_set(isys)%shape%physical_local_NX = domain_decomp% phys_iSize(3)
+         self%coupled_kxky_set(isys)%shape%physical_local_NY = domain_decomp% phys_iSize(2)
          ! on one hand...
          total_dof1 = Neqs * NZ - &
                      sum(self%recipe%kxky_recipes(isys)%eqn_order)
@@ -1005,7 +998,7 @@ module PL_IMEX_timestepping
    integer :: iVar, iElem
    ! => build the "padding matrix"   
    padding_coo%nelems = self%geometry%NZ                           
-   padding_coo%nrow   = self%geometry%NZAA                       
+   padding_coo%nrow   = domain_decomp% spec_iSize(1)             
    padding_coo%ncol   = self%geometry%NZ
    allocate(padding_coo%row (padding_coo%nelems))
    allocate(padding_coo%col (padding_coo%nelems))
@@ -1020,7 +1013,7 @@ module PL_IMEX_timestepping
    do iVar = 1, self%recipe%kxky_recipes(isys)%n_coupled_vars
       ! => build the "truncation matrix"
       truncate_coo%nelems = self%coupled_kxky_set(isys)%shape%variable_size(iVar)
-      truncate_coo%ncol   = self%geometry%NZAA                       
+      truncate_coo%ncol   = domain_decomp% spec_iSize(1)             
       truncate_coo%nrow   = self%coupled_kxky_set(isys)%shape%variable_size(iVar)
       if (allocated( truncate_coo%row)) then
          deAllocate(truncate_coo%row)
@@ -1138,7 +1131,7 @@ module PL_IMEX_timestepping
    integer :: iVar, iElem
    ! => build the "padding matrix"   
    padding_coo%nelems = self%geometry%NZ                           
-   padding_coo%nrow   = self%geometry%NZAA                       
+   padding_coo%nrow   = domain_decomp% spec_iSize(1)
    padding_coo%ncol   = self%geometry%NZ
    allocate(padding_coo%row (padding_coo%nelems))
    allocate(padding_coo%col (padding_coo%nelems))
@@ -1153,7 +1146,7 @@ module PL_IMEX_timestepping
    do iVar = 1, self%recipe%zero_recipes(isys)%n_coupled_vars
       ! => build the "truncation matrix"
       truncate_coo%nelems = self%coupled_zero_set(isys)%shape%variable_size(iVar)
-      truncate_coo%ncol   = self%geometry%NZAA                       
+      truncate_coo%ncol   = domain_decomp% spec_iSize(1)             
       truncate_coo%nrow   = self%coupled_zero_set(isys)%shape%variable_size(iVar)
       if (allocated( truncate_coo%row)) then
          deAllocate(truncate_coo%row)

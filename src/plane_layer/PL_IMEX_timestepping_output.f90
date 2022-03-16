@@ -1,50 +1,5 @@
 
 
- subroutine output_kxky_modes_sample(self, time_integer)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer, intent(in) :: time_integer
-   complex(kind=dp), allocatable :: chebyCoefs_kxkyMode(:,:,:)
-   character(len=46) :: fileName
-   integer :: iSys, iVar
-   if (my_rank.eq.0) then
-   1111 format ('chebyCoefs_k_sample_sys',(i2.2),'_var',(i2.2),'_t',(i8.8),'.full')
-   allocate ( chebyCoefs_kxkyMode (self%geometry%NZAA, self%geometry%spec%local_NY, self%geometry%spec%local_NX) )
-   do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
-   do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
-   chebyCoefs_kxkyMode = cmplx( 0._dp, 0._dp, kind=dp)
-   call self%coupled_kxky_set(iSys)%padStencilExtractShuffle(iVar)%dot(&
-        self%coupled_kxky_set(iSys)%field, chebyCoefs_kxkyMode, 'cumul')
-   write (fileName, 1111) iSys, iVar, time_integer
-   Open (Unit=9, File=fileName, Status='replace', Access='stream')
-   Write(9) chebyCoefs_kxkyMode(:,1,1)
-   Close (Unit=9)
-   end do
-   end do
-   end if
- end subroutine
-
- subroutine output_zero_modes(self, time_integer)
-   class(full_problem_data_structure_T), intent(inOut) :: self
-   integer, intent(in) :: time_integer
-   real(kind=dp), allocatable :: chebyCoefs_zeroMode(:)
-   character(len=46) :: fileName
-   integer :: iSys, iVar
-   if (self%geometry%this_core_has_zero_mode) then
-   1111 format ('chebyCoefs_zeroMode_sys',(i2.2),'_var',(i2.2),'_t',(i8.8),'.full')
-   allocate ( chebyCoefs_zeroMode (self%geometry%NZAA) )
-   do iSys = 1, self%recipe%numberOf_coupled_zero_systems
-   do iVar = 1, self%recipe%zero_recipes(iSys)%n_coupled_vars
-   chebyCoefs_zeroMode = 0._dp
-   call self%coupled_zero_set(iSys)%padStencilExtractShuffle(iVar)%dot(&
-        self%coupled_zero_set(iSys)%field, chebyCoefs_zeroMode, 'cumul')
-   write (fileName, 1111) iSys, iVar, time_integer
-   Open (Unit=9, File=fileName, Status='replace', Access='stream')
-   Write(9) chebyCoefs_zeroMode
-   Close (Unit=9)
-   end do
-   end do
-   end if
- end subroutine
 
 
  subroutine output_global_quantities(self)
@@ -413,7 +368,7 @@
    call self%coupled_kxky_set(iSys)%square_stencil(iVar)%backsolve(&
                   self%linear_variables(1)%spec, &
                   self%geometry%spec%local_NY*self%geometry%spec%local_NX, &
-                  self%geometry%NZAA)
+                  domain_decomp% spec_iSize(1))
    ! truncate, shuffle and insert at the right location
    call self%coupled_kxky_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
                   self%linear_variables(1)%spec, &
@@ -423,7 +378,7 @@
    end do
 
    if (self%geometry%this_core_has_zero_mode) then
-   allocate(buff( self%geometry%NZAA))
+           allocate(buff( domain_decomp% NZAA))
    !self%coupled_zero_set(isys)%field = 0._dp ! it has been backed-up before
    do iSys = 1, self%recipe%numberOf_coupled_zero_systems
    do iVar = 1, self%recipe%zero_recipes(iSys)%n_Coupled_vars

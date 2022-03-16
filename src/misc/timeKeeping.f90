@@ -37,7 +37,7 @@ implicit none
    Real(dp), Dimension(:), Allocatable :: array_of_dts !< MPI communications
    real(dp):: dt_min !< tolerance. Below that value, the code is very likely to
                      !! be blowing-up. Triggers STOP.
-   integer :: checkpoint_period=50 !< how often we output checkpoints.
+   integer :: checkpoint_period=200 !< how often we output checkpoints.
    integer :: checkpoint_counter   !< a dummy variable for checkpoint outputs.
  contains
    procedure :: init      => initialize_timings
