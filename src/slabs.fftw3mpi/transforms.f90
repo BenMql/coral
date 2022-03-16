@@ -97,6 +97,15 @@ module transforms
    complex(c_double), pointer :: buf_3c_iy(:)
    real   (c_double), pointer :: buf_4r_iy(:)
    
+   !!pouet
+   !!do ix = 1, domain_decomp% local_NX_spec
+      !print *, '////////////////////////////////////////////'
+      !print *, self%spec (:,:,1)
+      !print *, '////////////////////////////////////////////'
+   !!end do
+   !!pouet
+
+
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
    !> execute the y transform, from spec to buf_1
@@ -107,7 +116,6 @@ module transforms
    dummy_p2 = C_loc(buf_1c    (1,1,ix))
    call C_F_pointer(dummy_p1, spec_ix,   [1])
    call C_F_pointer(dummy_p2, buf_1c_ix, [1])
-   !call fftw_execute_dft(p_c2c_backward_y, self% spec(1,1,ix), buf_1c(1,1,ix))
    call fftw_execute_dft(p_c2c_backward_y, spec_ix, buf_1c_ix)                        
    end do
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,7 +137,7 @@ module transforms
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    buf_3c = cmplx(0._dp, 0._dp, kind=dp)
-   buf_3c(:,1:domain_decomp% NX/2, :) = buf_2c ! incorrect but gives an idea of performance
+   buf_3c(:,1:domain_decomp% NX/2, :) = buf_2c*0.5_dp 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
    !> execute the c2r-transform in x from buf_3 to buf_4        
@@ -148,7 +156,7 @@ module transforms
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    buf_5r = 0._dp
-   buf_5r(1:domain_decomp% NZ, :,:) = buf_4r ! incorrect but gives an idea of performance
+   buf_5r(1:domain_decomp% NZ, :,:) = buf_4r 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
    !> execute the r2r-transform in z from buf_5 to phys_real    
@@ -179,7 +187,7 @@ module transforms
    !> shrink buf_5 to buf_4
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   buf_4r = buf_5r(1:domain_decomp% NZ, :,:) ! incorrect but gives an idea of performance
+   buf_4r = buf_5r(1:domain_decomp% NZ, :,:) 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
    !> execute the r2c-transform in x from buf_4 to buf_3        
@@ -197,7 +205,7 @@ module transforms
    !> shrink buf_3 into buf_2
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   buf_2c = buf_3c(:,1:domain_decomp% NX/2, :) ! incorrect but gives an idea of performance
+   buf_2c = buf_3c(:,1:domain_decomp% NX/2, :)
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
    !> execute the transpose from buf_2 to buf_1
@@ -230,6 +238,13 @@ module transforms
    self% spec = self% spec * normalization_factor
 
 
+   !!pouet
+   !!do ix = 1, domain_decomp% local_NX_spec
+      !print *, '////////////////////////////////////////////'
+      !print *, self%spec (:,:,1)
+      !print *, '////////////////////////////////////////////'
+   !!end do
+   !!pouet
 
 
  end subroutine r2c_transform

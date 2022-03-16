@@ -37,6 +37,10 @@
    end do
    end do
    end do
+   call wclock%init()
+   call main%linear_variables(1)%phys_to_spec()
+   call main%linear_variables(1)%spec_to_phys()
+   call wclock%check(.false.)
    !print *, main%linear_variables(1)%phys
    first_moment = sum(main%linear_variables(1)%phys)
    second_moment = sum((main%linear_variables(1)%phys)**2)
