@@ -652,12 +652,13 @@
  class(full_problem_data_structure_T), intent(in) :: self
  character(len=6), intent(in) :: paramString
  integer :: iParam
- do iParam = 1, size(self%recipe%sources%sourceParams)
+ sourceParams = 0._dp
+ do iParam = 1, self%recipe%sources% n_sourceParams
     if (paramString .eq. self%recipe%sources%sourceParams(iParam)%str) then
        sourceParams= self%recipe%sources%sourceParams(iParam)%dsca
        exit
     end if
-    if (iParam .eq. size(self%recipe%sources%sourceParams)) then
+    if (iParam .eq. self%recipe%sources% n_sourceParams) then
         print *, 'In user-defined sources, LP_user_sources_definitions.f90, '
         print *, 'the parameter name did not match any definition from input file coral.equations'
         error stop

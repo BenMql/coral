@@ -302,7 +302,7 @@
    call self%coupled_kxky_set(iSys)%square_stencil(iVar)%backsolve(&
                   self%linear_variables(1)%spec, &
                   self%geometry%spec%local_NY*self%geometry%spec%local_NX, &
-                  self%geometry%NZAA)
+                  domain_decomp% spec_iSize(1))
    ! truncate, shuffle and insert at the right location
    call self%coupled_kxky_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
                   self%linear_variables(1)%spec, &

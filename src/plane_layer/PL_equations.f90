@@ -51,6 +51,7 @@ Module PL_equations
 
  type :: source_rhs_recipe_T
     integer :: n_sources
+    integer :: n_sourceParams
     type(sourceParams_T), allocatable :: sourceParams(:)
     type(source_term_T), dimension(:), allocatable :: term
  end type source_rhs_recipe_T
@@ -598,6 +599,7 @@ Module PL_equations
    allocate (self%linear_vars_full ( 0 ) )
    allocate (self%nl_vars     ( 0 ) )
    self%sources%n_sources = 0
+   self%sources%n_sourceParams = 0
    allocate(self%sources%term(0))
    allocate(self%sources%sourceParams(0))                           
  End Subroutine initialize_full_recipe
@@ -874,12 +876,11 @@ Module PL_equations
    type(sourceParams_T), allocatable :: temporary_list(:)
    character(len=:), intent(in), allocatable :: string
    real(dp), intent(in) :: dsca
-   integer :: numberOf_source_params
-   numberOf_source_params = size(self%sources%sourceParams) + 1 
-   allocate (temporary_list( numberOf_source_params ) )
-   temporary_list (1: numberOf_source_params-1) = self%sources%sourceParams(1:numberOf_source_params-1)
-   temporary_list (   numberOf_source_params  ) % str = string
-   temporary_list (   numberOf_source_params  ) % dsca= dsca
+   self%sources% n_sourceParams = self% sources% n_sourceParams + 1 
+   allocate (temporary_list( self% sources% n_sourceParams ) )
+   temporary_list (1: self% sources% n_sourceParams-1) = self%sources%sourceParams(1:self% sources% n_sourceParams-1)
+   temporary_list (   self% sources% n_sourceParams  ) % str = string
+   temporary_list (   self% sources% n_sourceParams  ) % dsca= dsca
    call move_alloc (from= temporary_list, to= self%sources%sourceParams )
  End Subroutine add_source_parameter_to_full_recipe
 

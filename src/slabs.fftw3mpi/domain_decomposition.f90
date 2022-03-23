@@ -243,7 +243,7 @@
       self% phys_iEnd  (3) =  self% NYAA / world_size       
 
       self% local_NY_phys   = self% NYAA / world_size
-      self% local_mx_offset = self% NYAA / world_size * my_rank
+      self% local_ky_offset = self% NYAA / world_size * my_rank
 
    202 format ('Core ', (i4.4), ' has ', (i4.4), ' x modes and ',(i4.4),' y gridpoints (offsets: ', (i4.4),',',(i4.4))
 

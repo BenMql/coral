@@ -25,6 +25,8 @@ module transforms
  type(C_ptr), private, save :: p_r2c_x
  type(C_ptr), private, save :: p_r2r_backward_z
  type(C_ptr), private, save :: p_r2r_forward_z
+ type(C_ptr), private, save ::  dct_plan_backward_meanFields 
+ type(C_ptr), private, save ::  dct_plan_forward_meanFields 
 
 
  logical :: dct_includes_endpoints = .False.
@@ -54,7 +56,24 @@ module transforms
  subroutine write_phys_to_disk (self, filename)
    character(len=*), intent(in) :: fileName
    class(PS_fields_T), intent(inOut) :: self
-   print *, 'todo'
+   real(dp), pointer :: dum_ptr
+   !Type(C_Ptr) :: cptr          !< dummy C_PTR
+
+   !! now point to the data
+   !cptr = C_LOC(self% phys)
+
+   dum_ptr => self% phys(1,1,1)
+   call DiskWrite_contiguous_memory_chunk(dum_ptr, &
+                                          domain_decomp% phys_iSize(1) * &
+                                          domain_decomp% phys_iSize(2) * &
+                                          domain_decomp% phys_iSize(3) , &
+                                          filename,&
+                                      int(domain_decomp% phys_iSize(1) * &
+                                          domain_decomp% phys_iSize(2) * &
+                                          domain_decomp% phys_iSize(3) * &
+                                          my_rank, kind= mpi_offset_kind))
+
+   if (my_rank.eq.0) Print *, "... Saving a volume."
  end subroutine
 
  subroutine read_phys_from_disk (self, filename)
@@ -255,13 +274,48 @@ module transforms
    type(c_ptr) :: buf_A, buf_B
    real(dp), pointer :: x_real(:,:,:)
    complex(dp), pointer :: x_cplx(:,:,:)
-   real(kind=dp), pointer :: a1(:,:,:)
+   type(c_ptr) :: p1, p2
+   real(kind=dp), pointer :: meanField_physical(:)
+   real(kind=dp), pointer :: meanField_spectral(:)
+   integer(C_fftw_r2r_kind) :: r2r_kind_forward (1), r2r_kind_backward(1)
    if (is_string_in_the_list('--grid-with-endpoints', 21)  &
        .or.                                                &
        is_string_in_the_list('--gauss-lobatto-grid',  20)) then
        
        dct_includes_endpoints = .True.
    end if
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ! 
+   ! first the 1d chebyshev transforms
+   ! 
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   
+   p1 = fftw_alloc_real(int( domain_decomp% NZAA, C_size_T))
+   call c_f_pointer(p1, meanField_physical, [domain_decomp% NZAA])
+   p2 = fftw_alloc_real(int( domain_decomp% NZAA, C_size_T))
+   call c_f_pointer(p2, meanField_spectral, [domain_decomp% NZAA])
+   if (dct_includes_endpoints) then
+   ! adjust the logical size of the transforms
+   logical_NZ = domain_decomp%NZAA - 1
+   r2r_kind_backward = [FFTW_REDFT00]
+   r2r_kind_forward  = [FFTW_REDFT00]
+   else
+   logical_NZ = domain_decomp% NZAA
+   r2r_kind_backward = [FFTW_REDFT01]
+   r2r_kind_forward  = [FFTW_REDFT10]
+   end if
+
+   dct_plan_backward_meanFields = fftw_plan_r2r_1d( domain_decomp% NZAA, &
+                                                   meanField_spectral, &
+                                                   meanField_physical, &
+                                                   r2r_kind_backward(1), FFTW_PATIENT)
+   dct_plan_forward_meanFields = fftw_plan_r2r_1d( domain_decomp% NZAA, &
+                                                   meanField_physical, &
+                                                   meanField_spectral, &
+                                                   r2r_kind_forward(1), FFTW_PATIENT)
+   call fftw_free(p1)
+   call fftw_free(p2)
 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
@@ -389,11 +443,11 @@ module transforms
              domain_decomp% spec_iSize(1)  & ! howmany
              ,&
              buf_spec_cplx, &
-             domain_decomp% spec_iSize(2), & !< inembed
+            [domain_decomp% spec_iSize(2)],& !< inembed
              domain_decomp% spec_iSize(1), & !< istride
              1,&                             !< idist                        
              buf_1c, &
-             domain_decomp% spec_iSize(2), & !< inembed
+            [domain_decomp% spec_iSize(2)],& !< inembed
              domain_decomp% spec_iSize(1), & !< istride
              1,&
              FFTW_BACKWARD, FFTW_PATIENT &
@@ -405,11 +459,11 @@ module transforms
              domain_decomp% spec_iSize(1)  & ! howmany
              ,&
              buf_1c, &
-             domain_decomp% spec_iSize(2), & !< inembed
+            [domain_decomp% spec_iSize(2)],& !< inembed
              domain_decomp% spec_iSize(1), & !< istride
              1,&                             !< idist                        
              buf_spec_cplx, &
-             domain_decomp% spec_iSize(2), & !< inembed
+            [domain_decomp% spec_iSize(2)],& !< inembed
              domain_decomp% spec_iSize(1), & !< istride
              1,&                             !< idist                        
              FFTW_FORWARD, FFTW_PATIENT &
@@ -470,9 +524,6 @@ module transforms
    !> plan the r2r-transform in z from buf_5 to phys_real    
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   if (dct_includes_endpoints) then
-     ! adjust the logical size of the transforms
-     logical_NZ = domain_decomp%NZAA - 1
    p_r2r_backward_z = fftw_plan_many_r2r( &
              1,&
             [domain_decomp% NZAA], & !< size of the transform
@@ -488,7 +539,7 @@ module transforms
              1, & !< istride
              domain_decomp% NZAA &
              ,&
-            [FFTW_REDFT00],FFTW_PATIENT &
+             r2r_kind_backward,FFTW_PATIENT &
              )
    ! >>>>>   and its inverse
    p_r2r_forward_z = fftw_plan_many_r2r( &
@@ -506,47 +557,8 @@ module transforms
              1, & !< istride
              domain_decomp% NZAA &
              ,&
-            [FFTW_REDFT00],FFTW_PATIENT &
+             r2r_kind_forward,FFTW_PATIENT &
              )
-   else
-     ! adjust the logical size of the transforms
-     logical_NZ = domain_decomp%NZAA
-   p_r2r_backward_z = fftw_plan_many_r2r( &
-             1,&
-            [domain_decomp% NZAA], & !< size of the transform
-             domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
-             ,&
-             buf_5r, &
-            [domain_decomp% NZAA],   & !< inembed
-             1, & !< istride
-             domain_decomp% NZAA &
-             ,&
-             buf_phys_real, &
-            [domain_decomp% NZAA],   & !< inembed
-             1, & !< istride
-             domain_decomp% NZAA &
-             ,&
-            [FFTW_REDFT01],FFTW_PATIENT &
-             )
-   ! >>>>>   and its inverse
-   p_r2r_forward_z = fftw_plan_many_r2r( &
-             1,&
-            [domain_decomp% NZAA], & !< size of the transform
-             domain_decomp% NYAA * domain_decomp% NXAA/ world_size & ! howmany
-             ,&
-             buf_phys_real, &
-            [domain_decomp% NZAA],   & !< inembed
-             1, & !< istride
-             domain_decomp% NZAA &
-             ,&
-             buf_5r, &
-            [domain_decomp% NZAA],   & !< inembed
-             1, & !< istride
-             domain_decomp% NZAA &
-             ,&
-            [FFTW_REDFT10],FFTW_PATIENT &
-             )
-   end if
 
  end subroutine dct_planner 
  
@@ -555,17 +567,12 @@ module transforms
    type(c_ptr) :: p1, p2
    real(kind=dp), pointer :: meanField_physical(:)
    real(kind=dp), pointer :: meanField_spectral(:)
-   type(C_ptr) :: dct_plan_backward_meanFields
    
    p1 = fftw_alloc_real(int( domain_decomp% NZAA, C_size_T))
    call c_f_pointer(p1, meanField_physical, [domain_decomp% NZAA])
-   p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
+   p2 = fftw_alloc_real(int( domain_decomp% NZAA, C_size_T))
    call c_f_pointer(p2, meanField_spectral, [domain_decomp% NZAA])
    
-   dct_plan_backward_meanFields = fftw_plan_r2r_1d( domain_decomp% NZAA, &
-                                                   meanField_spectral, &
-                                                   meanField_physical, &
-                                                   FFTW_REDFT01, FFTW_MEASURE)
    meanField_spectral = arr
    
    meanfield_spectral(1) = meanField_spectral(1) *2._dp
@@ -573,7 +580,6 @@ module transforms
                           meanField_spectral, & 
                           meanField_physical)
    arr = meanField_physical/2._dp
-   call fftw_destroy_plan( dct_plan_backward_meanFields)
    call fftw_free(p1)
    call fftw_free(p2)
  end subroutine
@@ -583,17 +589,12 @@ module transforms
    type(c_ptr) :: p1, p2
    real(kind=dp), pointer :: meanField_physical(:)
    real(kind=dp), pointer :: meanField_spectral(:)
-   type(C_ptr) :: dct_plan_forward_meanFields
    
    p1 = fftw_alloc_real(int( domain_decomp%NZAA, C_size_T))
    call c_f_pointer(p1, meanField_physical, [domain_decomp%NZAA])
-   p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
+   p2 = fftw_alloc_real(int( domain_decomp%NZAA, C_size_T))
    call c_f_pointer(p2, meanField_spectral, [domain_decomp%NZAA])
 
-   dct_plan_forward_meanFields = fftw_plan_r2r_1d( domain_decomp%NZAA, &
-                                                   meanField_physical, &
-                                                   meanField_spectral, &
-                                                   FFTW_REDFT10, FFTW_MEASURE)
    meanField_physical = arr
    call fftw_execute_r2r( dct_plan_forward_meanFields, &
                           meanField_physical, & 
@@ -601,10 +602,85 @@ module transforms
    meanfield_spectral(1) = meanField_spectral(1) *0.5_dp
    arr                   = meanField_spectral / domain_decomp%NZAA 
    
-   call fftw_destroy_plan( dct_plan_forward_meanFields)
    call fftw_free(p1)
    call fftw_free(p2)
  end subroutine
+
+ !> @brief  
+ !> Exports a field distributed over processes in contiguous chunks of
+ !! memory. 
+ !> @details 
+ !> Detailled explanation (to be written).                                               
+ Subroutine DiskWrite_contiguous_memory_chunk(vector_of_data,  my_nElems,&
+                        file_name_str, cumul_nelems)
+   !-------------
+   ! Arguments
+   !-------------
+   Real(dp), Pointer :: vector_of_data
+                     !< Double precision rank 1 pointer to the data 
+                     !! (N.B. this pointer may very well points to an
+                     !! allocatable with an arbitrary rank, e.g. 2 or 3).
+   Integer, Intent(In) :: my_nElems
+                     !< Represents the size (in units of dble) of the slice of
+                     !data
+                     !! allocated to the current process 
+   Integer(kind=mpi_offset_kind), Intent(In), Optional :: cumul_nElems
+                     !< Represents the position of the slice of data 
+                     !! treated by the current process, in relation to 
+                     !! the full array.
+                     !! In other terms, what is the displacement (i.e., how many
+                     !! elements we need to jump in total) from the beginning of 
+                     !! the file.
+   Character (len=*), Intent(In) :: file_name_str
+                     !< File name 
+   !----------------------
+   ! Internal variables
+   !----------------------
+   Integer(kind=MPI_Offset_Kind) :: displacement
+                     !< Convert \p cumul_nElems to bytes
+   Integer :: size_of_dble
+                     !< size of a double precision number in bytes
+   Integer :: file_id
+                     !< mpiIO keeps tracks of what it's doing
+   Integer, Dimension(:), Allocatable :: array_of_nelems
+   Integer(kind=MPI_offset_kind) :: my_cumul
+   Integer :: icore
+
+
+      ! ~~~~~~~~~~~~~~~~~~~~
+      ! if cumul_nElems is missing, we compute it
+      ! ~~~~~~~~~~~~~~~~~~~~
+      if (present(cumul_nElems)) Then
+         my_cumul = cumul_nElems
+      else
+         Allocate(array_of_nElems(0:world_size-1))
+         Call MPI_Gather(my_nElems, 1, MPI_Integer,&
+                array_of_nElems, 1, MPI_integer, 0, MPI_Comm_World, ierr)
+         Call MPI_Bcast(array_of_nElems, world_size, MPI_integer, 0, MPI_Comm_world, ierr)
+         !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         ! compute the number of elements owned by predecessors
+         my_cumul = 0
+         Do icore = 0, my_rank-1
+           my_cumul = my_cumul + array_of_nelems(icore)
+         End Do
+         DeAllocate(array_of_nElems)
+      End If
+      Call MPI_Type_Size(MPI_Double, size_of_dble, ierr)
+      displacement = my_cumul*size_of_dble
+
+      ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+      !      Write the Quicksave         !                         
+      ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+      Call MPI_File_Open(MPI_Comm_world, file_name_str,&
+                         MPI_Mode_WROnly + MPI_Mode_Create,&
+                         MPI_Info_Null, file_id, ierr)
+      Call MPI_File_set_view(file_id, displacement, MPI_Double, &
+                             MPI_Double, 'native', &
+                             MPI_Info_Null, ierr)
+      Call MPI_File_Write(file_id, vector_of_data, my_nElems, MPI_Double, &
+                             MPI_Status_Ignore, Ierr)
+      Call MPI_File_Close(file_id, ierr)
+ End Subroutine DiskWrite_contiguous_memory_chunk
 
 
 end module transforms

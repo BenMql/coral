@@ -30,6 +30,8 @@ module transforms
 
  type(C_ptr), private, save :: dct_plan_forward
  type(C_ptr), private, save :: dct_plan_backward
+ type(C_ptr), private, save :: dct_plan_backward_meanFields
+ type(C_ptr), private, save :: dct_plan_forward_meanFields
 
  logical :: dct_includes_endpoints = .False.
  integer :: logical_NZ 
@@ -101,17 +103,11 @@ module transforms
    type(c_ptr) :: p1, p2
    real(kind=dp), pointer :: meanField_physical(:)
    real(kind=dp), pointer :: meanField_spectral(:)
-   type(C_ptr) :: dct_plan_backward_meanFields
    
    p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
    call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
    p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
    call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
-   
-   dct_plan_backward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
-                                                   meanField_spectral, &
-                                                   meanField_physical, &
-                                                   FFTW_REDFT01, FFTW_MEASURE)
    meanField_spectral = arr
    
    meanfield_spectral(1) = meanField_spectral(1) *2._dp
@@ -119,7 +115,6 @@ module transforms
                           meanField_spectral, & 
                           meanField_physical)
    arr = meanField_physical/2._dp
-   call fftw_destroy_plan( dct_plan_backward_meanFields)
    call fftw_free(p1)
    call fftw_free(p2)
  end subroutine
@@ -129,17 +124,12 @@ module transforms
    type(c_ptr) :: p1, p2
    real(kind=dp), pointer :: meanField_physical(:)
    real(kind=dp), pointer :: meanField_spectral(:)
-   type(C_ptr) :: dct_plan_forward_meanFields
    
    p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
    call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
    p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
    call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
 
-   dct_plan_forward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
-                                                   meanField_physical, &
-                                                   meanField_spectral, &
-                                                   FFTW_REDFT10, FFTW_MEASURE)
    meanField_physical = arr
    call fftw_execute_r2r( dct_plan_forward_meanFields, &
                           meanField_physical, & 
@@ -147,7 +137,6 @@ module transforms
    meanfield_spectral(1) = meanField_spectral(1) *0.5_dp
    arr                   = meanField_spectral / domain_decomp%NZAA 
    
-   call fftw_destroy_plan( dct_plan_forward_meanFields)
    call fftw_free(p1)
    call fftw_free(p2)
  end subroutine
@@ -215,6 +204,9 @@ module transforms
    integer(kind=C_intPtr_T) :: sz
    type(c_ptr) :: a1_p
    real(kind=dp), pointer :: a1(:,:,:)
+   type(c_ptr) :: p1, p2
+   real(kind=dp), pointer :: meanField_physical(:)
+   real(kind=dp), pointer :: meanField_spectral(:)
    if (is_string_in_the_list('--grid-with-endpoints', 21)  &
        .or.                                                &
        is_string_in_the_list('--gauss-lobatto-grid',  20)) then
@@ -261,6 +253,23 @@ module transforms
 
    
    call fftw_free(a1_p)   
+   
+   p1 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
+   call c_f_pointer(p1, meanField_physical, [domain_decomp%spec_iSize(1)])
+   p2 = fftw_alloc_real(int( domain_decomp%spec_iSize(1), C_size_T))
+   call c_f_pointer(p2, meanField_spectral, [domain_decomp%spec_iSize(1)])
+   
+   dct_plan_backward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
+                                                   meanField_spectral, &
+                                                   meanField_physical, &
+                                                   FFTW_REDFT01, FFTW_MEASURE)
+   dct_plan_forward_meanFields = fftw_plan_r2r_1d( domain_decomp%spec_iSize(1), &
+                                                   meanField_physical, &
+                                                   meanField_spectral, &
+                                                   FFTW_REDFT10, FFTW_MEASURE)
+
+   call fftw_free(p1)
+   call fftw_free(p2)
 
  end subroutine dct_planner 
  
