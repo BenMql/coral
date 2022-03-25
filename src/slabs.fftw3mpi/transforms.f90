@@ -43,7 +43,6 @@ module transforms
  real   (C_double), pointer, private :: buf_2r (:,:,:)
  real   (C_double), pointer, private :: buf_4r (:,:,:)
  real   (C_double), pointer, private :: buf_5r (:,:,:)
- real   (C_double), pointer, private :: buf_6  (:,:,:)
  !> buffers that are only used for plans creation
  complex(C_double), pointer, private :: buf_spec_cplx (:,:,:)
  real   (C_double), pointer, private :: buf_phys_real (:,:,:)
@@ -99,13 +98,9 @@ module transforms
                                           domain_decomp% zyx_iSize(2) * &
                                           domain_decomp% zyx_iSize(3) * &
                                           my_rank, kind= mpi_offset_kind))
-   call mpi_barrier(mpi_comm_world, ierr) !delme pouet
-   !write (*,*) 'pouet, rank', my_rank,' buffer content', sum (self% transposed_phys**2)
 
    call fftw_execute_r2r(domain_decomp% plan_full_fields_transpose_zyx_to_zxy, &
                          self% transposed_phys, self% phys)
-   !write (*,*) 'pouet, rank', my_rank,' phys   content', sum ( self% phys**2) 
-   !if (my_rank.eq.0) Print *, "... Saving a volume."
  end subroutine
 
  subroutine allocate_fields(self)
@@ -136,7 +131,6 @@ module transforms
 
  subroutine transpose_zxy_to_zyx(self) 
    class(PS_fields_T), intent(inOut) :: self
-           integer :: ix, iy ! delme pouet
 
    call fftw_free(self% trans_ptr)
 
@@ -150,20 +144,8 @@ module transforms
                                    [domain_decomp% NZAA_long,&
                                     domain_decomp% NYAA_long,&
                                     domain_decomp% NXAA_long / world_size])
-   !write (*,*) 'pouet, before T content', sum ( self% phys**2)!, self%phys(1,1,1), self%phys(1,3,4)
-   !do ix = 1, domain_decomp% phys_iSize(3)
-   !do iy = 1, domain_decomp% phys_iSize(2)
-   !write (*,*) 'pouet, before T content', self% phys(:,iy,ix)
-   !end do
-   !end do
    call fftw_execute_r2r(domain_decomp% plan_full_fields_transpose_zxy_to_zyx, &
                          self% phys, self% transposed_phys)
-   !write (*,*) 'pouet, after  T content', sum ( self% transposed_phys**2)!, self% transposed_phys(1,1,1), self% transposed_phys(1,4,3)
-   !do iy = 1, domain_decomp% zyx_iSize(2)
-   !do ix = 1, domain_decomp% zyx_iSize(3)
-   !write (*,*) 'pouet, after T content', self% transposed_phys(:,iy,ix)
-   !end do
-   !end do
 
    self% has_been_transposed = .True.
  end subroutine transpose_zxy_to_zyx
@@ -305,7 +287,6 @@ module transforms
    dummy_p2 = C_loc(buf_1c    (1,1,ix))
    call C_F_pointer(dummy_p1, spec_ix,   [1])
    call C_F_pointer(dummy_p2, buf_1c_ix, [1])
-   !call fftw_execute_dft(p_c2c_backward_y, self% spec(1,1,ix), buf_1c(1,1,ix))
    call fftw_execute_dft(p_c2c_forward_y, buf_1c_ix, spec_ix)
    end do
    normalization_factor = 1._dp / (domain_decomp%NXAA * &
@@ -314,13 +295,6 @@ module transforms
    self% spec = self% spec * normalization_factor
 
 
-   !!pouet
-   !!do ix = 1, domain_decomp% local_NX_spec
-      !print *, '////////////////////////////////////////////'
-      !print *, self%spec (:,:,1)
-      !print *, '////////////////////////////////////////////'
-   !!end do
-   !!pouet
 
 
  end subroutine r2c_transform
@@ -389,14 +363,9 @@ module transforms
                                domain_decomp% NYAA_long / &
                                world_size )
 
-   !print *, "pouet BUF_A,B have size:", (domain_decomp% NXAA_long+2)   * &
-                               !domain_decomp% NZAA_long   * &
-                               !domain_decomp% NYAA_long / &
-                               !world_size
    call c_f_pointer(buf_B, buf_spec_cplx, [domain_decomp% NZ_long,&
                                            domain_decomp% NYAA_long,&
                                            domain_decomp% local_NX_spec]) 
-   !print *, "pouet spec has size:", shape(buf_spec_cplx)
 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
@@ -412,8 +381,6 @@ module transforms
                                   [domain_decomp% NZ_long,&
                                    domain_decomp% NYAA_long,&
                                    domain_decomp% local_NX_spec*2]) 
-   !print *, "pouet buf_1c has size:", shape(buf_1c)
-   !print *, "pouet buf_1r has size:", shape(buf_1r)             
 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
@@ -468,17 +435,6 @@ module transforms
                                    domain_decomp% NYAA_long/&
                                    world_size]) 
 
-   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   !
-   !> padds the z direction                       
-   !
-   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-   call c_f_pointer(buf_A, buf_6, &                         
-                                  [domain_decomp% NZAA_long,  &
-                                   domain_decomp% NYAA_long,&
-                                   domain_decomp% NXAA_long/&
-                                   world_size]) 
 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
@@ -500,11 +456,6 @@ module transforms
    !> plans the y transform, from spec to buf_1
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   !print *, "pouet p_c2c has size            :", domain_decomp% spec_iSize(2)
-   !print *, "pouet p_c2c has howmany         :",  domain_decomp% spec_iSize(1) * domain_decomp% spec_iSize(3)
-   !print *, "pouet p_c2c has inembed         :", domain_decomp% spec_iSize(2)
-   !print *, "pouet p_c2c has istride         :", domain_decomp% spec_iSize(1)
-   !print *, "pouet p_c2c has iDist           :", domain_decomp% spec_iSize(1)* domain_decomp% spec_iSize(2) 
 
    p_c2c_backward_y = fftw_plan_many_dft( &
              1,&
@@ -593,9 +544,6 @@ module transforms
    !> plan the r2r-transform in z from buf_5 to phys_real    
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   print *, 'pouet, planning r2r'
-   print *, domain_decomp% NZAA, domain_decomp% NYAA * domain_decomp% NXAA/ world_size, &
-           domain_decomp% NZAA
    p_r2r_backward_z = fftw_plan_many_r2r( &
              1,&
             [domain_decomp% NZAA], & !< size of the transform
