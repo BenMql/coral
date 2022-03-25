@@ -299,9 +299,6 @@
    write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' phys', sum(self%linear_variables(1)%phys**2)
    ! now tranform back to Galerkin coefficients, stored in 'field'
    call self%linear_variables(1)%phys_to_spec()
-   write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' spec', sum(abs(self%linear_variables(1)%spec))
-   write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' zero', sum(abs(self%linear_variables(1)%spec(1,:,:)))
-   write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' cheb', sum(abs(self%linear_variables(1)%spec(2:,:,:)))
    ! backsolve for galerkin
    call self%coupled_kxky_set(iSys)%square_stencil(iVar)%backsolve(&
                   self%linear_variables(1)%spec, &
@@ -311,7 +308,7 @@
    call self%coupled_kxky_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
                   self%linear_variables(1)%spec, &
                   self%coupled_kxky_set(isys)%field,&
-                  'overW') ! pouet pouet pouet fixme fixme fixme change to cumul!!
+                  'cumul') 
    end do
    write (*,*) 'pouet, rank', my_rank,' sys', isys,' field', sum( self%coupled_kxky_set(isys)%field**2)
    end do
