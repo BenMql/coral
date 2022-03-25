@@ -331,7 +331,6 @@
                   'cumul')
       
    end do
-   write (*,*) 'poue0, rank', my_rank,' sys', isys,' field', sum( self%coupled_zero_set(isys)%field)
    end do
    if (allocated(buff)) deAllocate(buff)
    end if
