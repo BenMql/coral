@@ -37,6 +37,14 @@
    end do
    end do
    end do
+   ! DELME BELOW
+   main%linear_variables(1)%spec = cmplx( 0._dp, 0._dp, kind=dp)
+   main%linear_variables(1)%spec( 2,4,6 )  =cmplx( 1.0_dp , 0._dp, kind=dp)
+   call main%linear_variables(1)%spec_to_phys()
+   open (unit=9, file='phys.bin', status='replace', access='stream')
+   write(9) main% linear_variables(1)% phys 
+   close(unit=9)
+   ! DELME above
    call wclock%init()
    call main%linear_variables(1)%phys_to_spec()
    call main%linear_variables(1)%spec_to_phys()

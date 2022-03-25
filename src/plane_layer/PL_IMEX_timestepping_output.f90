@@ -296,8 +296,12 @@
    self%linear_variables(1)%spec = cmplx(0._dp, 0._dp, kind=dp)
    write (fileName,506) iSys, iVar, rolInt
    call self%linear_variables(1)% read_phys_from_disk (fileName)
+   write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' phys', sum(self%linear_variables(1)%phys**2)
    ! now tranform back to Galerkin coefficients, stored in 'field'
    call self%linear_variables(1)%phys_to_spec()
+   write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' spec', sum(abs(self%linear_variables(1)%spec))
+   write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' zero', sum(abs(self%linear_variables(1)%spec(1,:,:)))
+   write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' cheb', sum(abs(self%linear_variables(1)%spec(2:,:,:)))
    ! backsolve for galerkin
    call self%coupled_kxky_set(iSys)%square_stencil(iVar)%backsolve(&
                   self%linear_variables(1)%spec, &
@@ -307,8 +311,9 @@
    call self%coupled_kxky_set(iSys)%shuffleTextractTtruncate(iVar)%dot(&
                   self%linear_variables(1)%spec, &
                   self%coupled_kxky_set(isys)%field,&
-                  'cumul')
+                  'overW') ! pouet pouet pouet fixme fixme fixme change to cumul!!
    end do
+   write (*,*) 'pouet, rank', my_rank,' sys', isys,' field', sum( self%coupled_kxky_set(isys)%field**2)
    end do
 
    if (self%geometry%this_core_has_zero_mode) then
@@ -331,6 +336,7 @@
                   'cumul')
       
    end do
+   write (*,*) 'poue0, rank', my_rank,' sys', isys,' field', sum( self%coupled_zero_set(isys)%field)
    end do
    if (allocated(buff)) deAllocate(buff)
    end if
@@ -351,6 +357,7 @@
    407 format ('./CheckPoints/QuickSave.zero.sys',(i3.3),'.var',(i3.3),'.rolling',(i1.1))
 
    do iSys = 1, self%recipe%numberOf_coupled_kxky_systems
+   write (*,*) 'pre  , rank', my_rank,' sys', isys,' field', sum( self%coupled_kxky_set(isys)%field**2)
    self%coupled_kxky_set(isys)%field = cmplx(0._dp, 0._dp, kind=dp) ! it has been backed-up before
    do iVar = 1, self%recipe%kxky_recipes(iSys)%n_coupled_vars
    ! compute Chebyshev coefficients into self%linear_variables(1)%spec
@@ -361,6 +368,7 @@
                         self%linear_variables(1)%spec, 'overW')
    write (fileName,406) iSys, iVar, self%io_bookkeeping%rolling_integer
    call self%linear_variables(1)%spec_to_phys()
+   write (*,*) 'pouet, rank', my_rank,' var kxky', iVar,' phys', sum(self%linear_variables(1)%phys**2)
    call self%linear_variables(1)% write_phys_to_disk( filename )
    ! now tranform back to Galerkin coefficients, stored in 'field'
    call self%linear_variables(1)%phys_to_spec()
@@ -375,12 +383,14 @@
                   self%coupled_kxky_set(isys)%field,&
                   'cumul')
    end do
+   write (*,*) 'pouet, rank', my_rank,' sys', isys,' field', sum( self%coupled_kxky_set(isys)%field**2)
    end do
 
    if (self%geometry%this_core_has_zero_mode) then
            allocate(buff( domain_decomp% NZAA))
    !self%coupled_zero_set(isys)%field = 0._dp ! it has been backed-up before
    do iSys = 1, self%recipe%numberOf_coupled_zero_systems
+   write (*,*) 'pre0 , rank', my_rank,' sys', isys,' field', sum( self%coupled_zero_set(isys)%field)
    do iVar = 1, self%recipe%zero_recipes(iSys)%n_Coupled_vars
       ! compute Chebyshev coefficients into self%linear_variables(1)%spec
       buff = 0._dp

@@ -221,6 +221,8 @@ module transforms
    call c_f_pointer(a1_p,a1,[2*domain_decomp%spec_iSize(1), &
                                domain_decomp%spec_iSize(2), &
                                domain_decomp%spec_iSize(3)])
+   print *, 'pouet, planning r2r'
+   print *, domain_decomp%spec_iSize(1), domain_decomp%spec_iSize(2)*domain_decomp%spec_iSize(3), 2*domain_decomp% spec_iSize(1)
    if (dct_includes_endpoints) then
      ! adjust the logical size of the transforms
      logical_NZ = domain_decomp%NZAA - 1

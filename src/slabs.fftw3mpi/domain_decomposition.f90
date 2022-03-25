@@ -57,6 +57,7 @@
    Type :: domain_decomposition_T
       Integer :: p_row = 0
       Integer :: p_col = 0
+      Integer, dimension(3) :: zyx_iStart, zyx_iEnd, zyx_iSize !< the transposed shapes
       Integer, dimension(3) :: phys_iStart, phys_iEnd, phys_iSize
       Integer, dimension(3) :: spec_iStart, spec_iEnd, spec_iSize
       integer :: NXAA, NYAA, NZAA
@@ -74,6 +75,9 @@
                                             !< out: second dimension distributed
       type(C_ptr) :: plan_inverse_transpose !< in:  second dimension distributed 
                                             !< out: third  dimension distributed
+      type(C_ptr) :: plan_full_fields_transpose_zxy_to_zyx
+      type(C_ptr) :: plan_full_fields_transpose_zyx_to_zxy
+                                                
     Contains
       Procedure :: init => domain_decomp_init
    End Type domain_decomposition_T            
@@ -95,7 +99,6 @@
       !-  internal vars
       type(c_ptr) :: cplx_ptr_1, cplx_ptr_2
       Real(C_double), pointer :: X_in_core(:,:,:), Y_in_core(:,:,:)
-      complex(C_double), pointer :: X_in_core_complex(:,:,:), Y_in_core_complex(:,:,:)
       
 
       self% NXAA = n3
@@ -113,7 +116,7 @@
       self% p_row = 1
       self% p_col = world_size
 
-      self% alloc_local = self% NYAA * self%NX_long * self%NZ_long / world_size
+      self% alloc_local = self% NYAA * self%NXAA_long * self%NZAA_long / world_size
 
 
       call fftw_mpi_init()
@@ -122,21 +125,14 @@
       cplx_ptr_1 = fftw_alloc_real( domain_decomp% alloc_local )
       cplx_ptr_2 = fftw_alloc_real( domain_decomp% alloc_local )
 
-      call c_f_pointer(cplx_ptr_1, x_in_core, [domain_decomp% NZ_long,&
+      call c_f_pointer(cplx_ptr_1, x_in_core, [domain_decomp% NZAA_long,&
                                     domain_decomp% NYAA_long/ world_size,&
-                                    domain_decomp% NX_long]) 
+                                    domain_decomp% NXAA_long]) 
 
-      call c_f_pointer(cplx_ptr_2, y_in_core, [domain_decomp% NZ_long,&
+      call c_f_pointer(cplx_ptr_2, y_in_core, [domain_decomp% NZAA_long,&
                                     domain_decomp% NYAA_long,&
-                                    domain_decomp% NX_long / world_size]) 
+                                    domain_decomp% NXAA_long / world_size]) 
       
-      call c_f_pointer(cplx_ptr_1, x_in_core_complex, [domain_decomp% NZ_long,&
-                                    domain_decomp% NYAA_long/ world_size,&
-                                    domain_decomp% NX_long/2]) 
-
-      call c_f_pointer(cplx_ptr_2, y_in_core_complex, [domain_decomp% NZ_long,&
-                                    domain_decomp% NYAA_long,&
-                                    domain_decomp% NX_long / 2/world_size]) 
       
       self%plan_forward_transpose = fftw_mpi_plan_many_transpose( &
                                          self% NX_long/2, & !n0
@@ -170,6 +166,29 @@
                                          Y_in_core, &
                                          MPI_COMM_WORLD, &             
                                          FFTW_PATIENT)
+
+      self% plan_full_fields_transpose_zxy_to_zyx = fftw_mpi_plan_many_transpose( &
+                                         self% NYAA_long, & !n1
+                                         self% NXAA_long, & !n0
+                                         self% NZAA_long,  & !howmany
+                                         self% NYAA_long/ world_size, &
+                                         self% NXAA_long/ world_size, &
+                                         X_in_core, &
+                                         Y_in_core, &
+                                         MPI_COMM_WORLD, &             
+                                         FFTW_PATIENT)
+
+      self% plan_full_fields_transpose_zyx_to_zxy = fftw_mpi_plan_many_transpose( &
+                                         self% NXAA_long, & !n1
+                                         self% NYAA_long, & !n0
+                                         self% NZAA_long,  & !howmany
+                                         self% NXAA_long/ world_size, &
+                                         self% NYAA_long/ world_size, &
+                                         X_in_core, &
+                                         Y_in_core, &
+                                         MPI_COMM_WORLD, &             
+                                         FFTW_PATIENT)
+
       call fftw_free(cplx_ptr_1)
       call fftw_free(cplx_ptr_2)
 
@@ -183,7 +202,6 @@
                                          !Y_in_core, &
                                          !MPI_COMM_WORLD, &             
                                          !ior(FFTW_PATIENT, FFTW_MPI_transposed_in))
-
       !do ix = 1, self% NX_long/2/world_size
       !do iy = 1, self% NYAA
       !do iz = 1, self% NZ_long
@@ -244,6 +262,24 @@
 
       self% local_NY_phys   = self% NYAA / world_size
       self% local_ky_offset = self% NYAA / world_size * my_rank
+
+      !/////////////////////////////////////////////
+      !
+      !      Transposed distributions for output 
+      !
+      !/////////////////////////////////////////////
+      !-- For transposed fields, the fast index z (1) is in-core
+      self% zyx_iStart(1) = 1 
+      self% zyx_iSize (1) = self% NZAA
+      self% zyx_iEnd  (1) = self% NZAA
+      !-- For transposed fields, the intermediate index y (2) is in-core
+      self% zyx_iStart(2) = 1        
+      self% zyx_iSize (2) = self% NYAA 
+      self% zyx_iEnd  (2) = self% NYAA 
+      !-- For transposed fields, the slow index x (3) is distributed    
+      self% zyx_iStart(3) =  self% NXAA / world_size * my_rank + 1
+      self% zyx_iSize (3) =  self% NXAA / world_size       
+      self% zyx_iEnd  (3) =  self% NXAA / world_size       
 
    202 format ('Core ', (i4.4), ' has ', (i4.4), ' x modes and ',(i4.4),' y gridpoints (offsets: ', (i4.4),',',(i4.4))
 

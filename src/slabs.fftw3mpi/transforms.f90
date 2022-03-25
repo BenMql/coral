@@ -10,7 +10,11 @@ module transforms
  type :: PS_fields_T
    complex(C_double), pointer :: spec (:,:,:)
    real   (C_double), pointer :: phys (:,:,:)
+   real   (C_double), pointer :: transposed_phys (:,:,:)
+   type(c_ptr) :: trans_ptr
+   logical :: has_been_transposed
  contains
+   procedure :: transpose => transpose_zxy_to_zyx
    procedure :: alloc => allocate_fields
    procedure :: spec_to_phys => c2r_transform
    procedure :: phys_to_spec => r2c_transform
@@ -25,8 +29,8 @@ module transforms
  type(C_ptr), private, save :: p_r2c_x
  type(C_ptr), private, save :: p_r2r_backward_z
  type(C_ptr), private, save :: p_r2r_forward_z
- type(C_ptr), private, save ::  dct_plan_backward_meanFields 
- type(C_ptr), private, save ::  dct_plan_forward_meanFields 
+ type(C_ptr), private, save :: dct_plan_backward_meanFields 
+ type(C_ptr), private, save :: dct_plan_forward_meanFields 
 
 
  logical :: dct_includes_endpoints = .False.
@@ -39,47 +43,69 @@ module transforms
  real   (C_double), pointer, private :: buf_2r (:,:,:)
  real   (C_double), pointer, private :: buf_4r (:,:,:)
  real   (C_double), pointer, private :: buf_5r (:,:,:)
+ real   (C_double), pointer, private :: buf_6  (:,:,:)
  !> buffers that are only used for plans creation
  complex(C_double), pointer, private :: buf_spec_cplx (:,:,:)
  real   (C_double), pointer, private :: buf_phys_real (:,:,:)
 
  contains
 
- subroutine slice_phys_to_disk (self, slice_kind, slice_index, fileName)
-   class(PS_fields_T), intent(inOut) :: self
-   character(len=*), intent(in) :: fileName
-   integer, intent(in) :: slice_kind
-   integer, intent(in) :: slice_index
-   print *, 'todo'
- end subroutine
-
  subroutine write_phys_to_disk (self, filename)
    character(len=*), intent(in) :: fileName
    class(PS_fields_T), intent(inOut) :: self
    real(dp), pointer :: dum_ptr
-   !Type(C_Ptr) :: cptr          !< dummy C_PTR
 
-   !! now point to the data
-   !cptr = C_LOC(self% phys)
-
-   dum_ptr => self% phys(1,1,1)
+   if (.not. self% has_been_transposed) call self% transpose()
+   dum_ptr => self% transposed_phys(1,1,1)
    call DiskWrite_contiguous_memory_chunk(dum_ptr, &
-                                          domain_decomp% phys_iSize(1) * &
-                                          domain_decomp% phys_iSize(2) * &
-                                          domain_decomp% phys_iSize(3) , &
+                                          domain_decomp% zyx_iSize(1) * &
+                                          domain_decomp% zyx_iSize(2) * &
+                                          domain_decomp% zyx_iSize(3) , &
                                           filename,&
-                                      int(domain_decomp% phys_iSize(1) * &
-                                          domain_decomp% phys_iSize(2) * &
-                                          domain_decomp% phys_iSize(3) * &
+                                      int(domain_decomp% zyx_iSize(1) * &
+                                          domain_decomp% zyx_iSize(2) * &
+                                          domain_decomp% zyx_iSize(3) * &
                                           my_rank, kind= mpi_offset_kind))
 
-   if (my_rank.eq.0) Print *, "... Saving a volume."
+   if (my_rank.eq.0) Print *, "... writing ", filename
  end subroutine
 
  subroutine read_phys_from_disk (self, filename)
    class(PS_fields_T), intent(inOut) :: self
    character(len=*), intent(in) :: fileName
-   print *, 'todo'
+   real(dp), pointer :: dum_ptr
+
+   call fftw_free(self% trans_ptr)
+
+   self% trans_ptr = &
+        fftw_alloc_real   ( domain_decomp% NXAA_long * &
+                            domain_decomp% NZAA_long * &
+                            domain_decomp% NYAA_long / &
+                            world_size )
+
+   call c_f_pointer(self% trans_ptr, self%transposed_phys, &
+                                   [domain_decomp% NZAA_long,&
+                                    domain_decomp% NYAA_long,&
+                                    domain_decomp% NXAA_long / world_size])
+   self% has_been_transposed = .True.
+   ! read in a buffer
+   dum_ptr => self % transposed_phys(1,1,1)
+   call DiskRead_contiguous_memory_chunk(dum_ptr, &
+                                          domain_decomp% zyx_iSize(1) * &
+                                          domain_decomp% zyx_iSize(2) * &
+                                          domain_decomp% zyx_iSize(3) , &
+                                          filename,&
+                                      int(domain_decomp% zyx_iSize(1) * &
+                                          domain_decomp% zyx_iSize(2) * &
+                                          domain_decomp% zyx_iSize(3) * &
+                                          my_rank, kind= mpi_offset_kind))
+   call mpi_barrier(mpi_comm_world, ierr) !delme pouet
+   !write (*,*) 'pouet, rank', my_rank,' buffer content', sum (self% transposed_phys**2)
+
+   call fftw_execute_r2r(domain_decomp% plan_full_fields_transpose_zyx_to_zxy, &
+                         self% transposed_phys, self% phys)
+   !write (*,*) 'pouet, rank', my_rank,' phys   content', sum ( self% phys**2) 
+   !if (my_rank.eq.0) Print *, "... Saving a volume."
  end subroutine
 
  subroutine allocate_fields(self)
@@ -104,7 +130,43 @@ module transforms
                                     domain_decomp% NXAA_long,&
                                     domain_decomp% local_NY_phys]) 
 
+   self% trans_ptr = fftw_alloc_real( int(1, kind= C_intPtr_T) ) ! just because we need to free it later
+
  end subroutine allocate_fields
+
+ subroutine transpose_zxy_to_zyx(self) 
+   class(PS_fields_T), intent(inOut) :: self
+           integer :: ix, iy ! delme pouet
+
+   call fftw_free(self% trans_ptr)
+
+   self% trans_ptr = &
+        fftw_alloc_real   ( domain_decomp% NXAA_long * &
+                            domain_decomp% NZAA_long * &
+                            domain_decomp% NYAA_long / &
+                            world_size )
+
+   call c_f_pointer(self% trans_ptr, self%transposed_phys, &
+                                   [domain_decomp% NZAA_long,&
+                                    domain_decomp% NYAA_long,&
+                                    domain_decomp% NXAA_long / world_size])
+   !write (*,*) 'pouet, before T content', sum ( self% phys**2)!, self%phys(1,1,1), self%phys(1,3,4)
+   !do ix = 1, domain_decomp% phys_iSize(3)
+   !do iy = 1, domain_decomp% phys_iSize(2)
+   !write (*,*) 'pouet, before T content', self% phys(:,iy,ix)
+   !end do
+   !end do
+   call fftw_execute_r2r(domain_decomp% plan_full_fields_transpose_zxy_to_zyx, &
+                         self% phys, self% transposed_phys)
+   !write (*,*) 'pouet, after  T content', sum ( self% transposed_phys**2)!, self% transposed_phys(1,1,1), self% transposed_phys(1,4,3)
+   !do iy = 1, domain_decomp% zyx_iSize(2)
+   !do ix = 1, domain_decomp% zyx_iSize(3)
+   !write (*,*) 'pouet, after T content', self% transposed_phys(:,iy,ix)
+   !end do
+   !end do
+
+   self% has_been_transposed = .True.
+ end subroutine transpose_zxy_to_zyx
 
 
  subroutine c2r_transform(self)
@@ -116,14 +178,8 @@ module transforms
    complex(c_double), pointer :: buf_3c_iy(:)
    real   (c_double), pointer :: buf_4r_iy(:)
    
-   !!pouet
-   !!do ix = 1, domain_decomp% local_NX_spec
-      !print *, '////////////////////////////////////////////'
-      !print *, self%spec (:,:,1)
-      !print *, '////////////////////////////////////////////'
-   !!end do
-   !!pouet
 
+   self% has_been_transposed = .False.
 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
@@ -195,6 +251,7 @@ module transforms
    complex(c_double), pointer :: buf_3c_iy(:)
    real   (c_double), pointer :: buf_4r_iy(:)
 
+   self% has_been_transposed = .False.
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
    !> execute the r2r-transform in z from phys_real to buf_5    
@@ -413,6 +470,18 @@ module transforms
 
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
+   !> padds the z direction                       
+   !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   call c_f_pointer(buf_A, buf_6, &                         
+                                  [domain_decomp% NZAA_long,  &
+                                   domain_decomp% NYAA_long,&
+                                   domain_decomp% NXAA_long/&
+                                   world_size]) 
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   !
    !> stores the result of the r2r-transform in z 
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -524,6 +593,9 @@ module transforms
    !> plan the r2r-transform in z from buf_5 to phys_real    
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   print *, 'pouet, planning r2r'
+   print *, domain_decomp% NZAA, domain_decomp% NYAA * domain_decomp% NXAA/ world_size, &
+           domain_decomp% NZAA
    p_r2r_backward_z = fftw_plan_many_r2r( &
              1,&
             [domain_decomp% NZAA], & !< size of the transform
@@ -617,7 +689,7 @@ module transforms
    ! Arguments
    !-------------
    Real(dp), Pointer :: vector_of_data
-                     !< Double precision rank 1 pointer to the data 
+                     !< pointer to the data 
                      !! (N.B. this pointer may very well points to an
                      !! allocatable with an arbitrary rank, e.g. 2 or 3).
    Integer, Intent(In) :: my_nElems
@@ -642,9 +714,7 @@ module transforms
                      !< size of a double precision number in bytes
    Integer :: file_id
                      !< mpiIO keeps tracks of what it's doing
-   Integer, Dimension(:), Allocatable :: array_of_nelems
    Integer(kind=MPI_offset_kind) :: my_cumul
-   Integer :: icore
 
 
       ! ~~~~~~~~~~~~~~~~~~~~
@@ -653,17 +723,7 @@ module transforms
       if (present(cumul_nElems)) Then
          my_cumul = cumul_nElems
       else
-         Allocate(array_of_nElems(0:world_size-1))
-         Call MPI_Gather(my_nElems, 1, MPI_Integer,&
-                array_of_nElems, 1, MPI_integer, 0, MPI_Comm_World, ierr)
-         Call MPI_Bcast(array_of_nElems, world_size, MPI_integer, 0, MPI_Comm_world, ierr)
-         !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-         ! compute the number of elements owned by predecessors
-         my_cumul = 0
-         Do icore = 0, my_rank-1
-           my_cumul = my_cumul + array_of_nelems(icore)
-         End Do
-         DeAllocate(array_of_nElems)
+         my_cumul = compute_cumul_nElems(my_nElems)
       End If
       Call MPI_Type_Size(MPI_Double, size_of_dble, ierr)
       displacement = my_cumul*size_of_dble
@@ -681,6 +741,147 @@ module transforms
                              MPI_Status_Ignore, Ierr)
       Call MPI_File_Close(file_id, ierr)
  End Subroutine DiskWrite_contiguous_memory_chunk
+
+ integer(kind=mpi_offset_kind) function compute_cumul_nElems(my_nElems)
+ integer, intent(in) :: my_nElems
+ integer, dimension(:), allocatable :: array_of_nelems
+ integer :: icore
+ !integer :: ierr
+
+         Allocate(array_of_nElems(0:world_size-1))
+         Call MPI_allGather(my_nElems, 1, MPI_Integer,&
+                array_of_nElems, 1, MPI_integer,  MPI_Comm_World, ierr)
+         !Call MPI_Gather(my_nElems, 1, MPI_Integer,&
+                !array_of_nElems, 1, MPI_integer, 0, MPI_Comm_World, ierr)
+         !Call MPI_Bcast(array_of_nElems, world_size, MPI_integer, 0, MPI_Comm_world, ierr)
+
+         !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         ! compute the number of elements owned by predecessors
+         compute_cumul_nElems = 0
+         Do icore = 0, my_rank-1
+           compute_cumul_nElems = compute_cumul_nElems + array_of_nelems(icore)
+         End Do
+         deAllocate(array_of_nElems)
+ end function
+
+ !> @brief  
+ !> Reads a files and distributes the data to processes
+ !> @details 
+ !> Detailled explanation (to be written).                                               
+ Subroutine DiskRead_contiguous_memory_chunk(vector_of_data,  my_nElems,&
+                        file_name_str,  cumul_nelems)
+   !-------------
+   ! Arguments
+   !-------------
+   Real(dp), Pointer :: vector_of_data
+                     !< pointer to the data 
+                     !! (N.B. this pointer may very well points to an
+                     !! allocatable with an arbitrary rank, e.g. 2 or 3).
+   Integer, Intent(In) :: my_nElems
+                     !< Represents the size (in units of dble) of the slice of data
+                     !! allocated to the current process 
+   Integer(kind=mpi_offset_kind), Intent(In), Optional :: cumul_nElems
+                     !< Represents the position of the slice of data 
+                     !! treated by the current process, in relation to 
+                     !! the full array.
+                     !! In other terms, what is the displacement (i.e., how many
+                     !! elements we need to jump in total) from the beginning of 
+                     !! the file.
+   Character (len=*), Intent(In) :: file_name_str
+                     !< File name 
+   !----------------------
+   ! Internal variables
+   !----------------------
+   Integer(kind=MPI_Offset_Kind) :: displacement
+                     !< Convert \p cumul_nElems to bytes
+   Integer :: size_of_dble
+                     !< size of a double precision number in bytes
+   Integer :: file_id
+                     !< mpiIO keeps tracks of what it's doing
+   Integer(kind=mpi_offset_kind) :: my_cumul
+
+
+      ! ~~~~~~~~~~~~~~~~~~~~
+      ! if cumul_nElems is missing, we compute it
+      ! ~~~~~~~~~~~~~~~~~~~~
+      if (present(cumul_nElems)) Then 
+         my_cumul = cumul_nElems
+      else 
+         my_cumul = compute_cumul_nElems(my_nElems)
+      End If
+      
+      Call MPI_Type_Size(MPI_Double, size_of_dble, ierr)
+      displacement = my_cumul*size_of_dble
+      
+
+      ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+      !      Write the Quicksave         !                         
+      ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+      Call MPI_File_Open(MPI_Comm_world, file_name_str,&
+                         MPI_Mode_RdOnly,&
+                         MPI_Info_Null, file_id, ierr)
+      Call MPI_File_set_view(file_id, displacement, MPI_Double, &
+                             MPI_Double, 'native', &
+                             MPI_Info_Null, ierr)
+      Call MPI_File_Read(file_id, vector_of_data, my_nElems, MPI_Double, &
+                             MPI_Status_Ignore, Ierr)
+      Call MPI_File_Close(file_id, ierr)
+ End Subroutine DiskRead_contiguous_memory_chunk
+
+ subroutine slice_phys_to_disk (self, slice_kind, slice_index, fileName)
+   class(PS_fields_T), intent(inOut) :: self
+   character(len=*), intent(in) :: fileName
+   integer, intent(in) :: slice_kind
+   integer, intent(in) :: slice_index
+   integer :: n1, n2
+   real(dp), allocatable, target :: aux2d(:,:)
+   real(dp), pointer :: dum_ptr
+
+
+   if (.not. self% has_been_transposed) call self% transpose()
+
+   select case (slice_kind)
+          case (1)
+             n1 = domain_decomp% NYAA
+             n2 = domain_decomp% NXAA / world_size
+             allocate (aux2d( n1, n2 ))                                            
+             aux2d = self%transposed_phys( slice_index, :, :)
+             dum_ptr =>  aux2d(1,1)
+             call diskWrite_contiguous_memory_chunk(dum_ptr, &
+                                                    n1*n2,   &
+                                                    fileName,&
+                                                int(n1*n2*my_rank, &
+                                                kind=mpi_offset_kind))
+             deallocate (aux2d)
+          case (2)
+             n1 = domain_decomp% NZAA
+             n2 = domain_decomp% NXAA / world_size
+             allocate (aux2d( n1, n2 ))                                            
+             aux2d = self%transposed_phys(:, slice_index,  :)
+             dum_ptr =>  aux2d(1,1)
+             call diskWrite_contiguous_memory_chunk(dum_ptr, &
+                                                    n1*n2,   &
+                                                    fileName,&
+                                                int(n1*n2*my_rank, &
+                                                kind=mpi_offset_kind))
+             deallocate (aux2d)
+          case (3)
+            if     ( (slice_index .gt. domain_decomp%NXAA / world_size *  my_rank) &
+               .and. (slice_index .le. domain_decomp%NXAA / world_size * (my_rank+1)) ) then
+               n1 = domain_decomp% NZAA
+               n2 = domain_decomp% NYAA 
+               allocate (aux2d( n1, n2 ))                                            
+               aux2d = self%transposed_phys(:, :, slice_index)
+               open (unit=9, file=fileName, status='replace', access='stream')
+               write(9) aux2d
+               close(unit=9)
+               deallocate (aux2d)
+            end if
+    end select
+
+   if (my_rank.eq.0) Print *, "... writing ", filename
+
+ end subroutine
 
 
 end module transforms
