@@ -237,7 +237,7 @@ module transforms
    !> execute the r2r-transform in z from buf_5 to phys_real    
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   call fftw_execute_r2r (p_r2r_forward_z, buf_5r, self% phys)
+   call fftw_execute_r2r (p_r2r_backward_z, buf_5r, self% phys)
 
  end subroutine c2r_transform
 
@@ -257,7 +257,7 @@ module transforms
    !> execute the r2r-transform in z from phys_real to buf_5    
    !
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   call fftw_execute_r2r (p_r2r_backward_z, self% phys, buf_5r)
+   call fftw_execute_r2r (p_r2r_forward_z, self% phys, buf_5r)
    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    !
    !> shrink buf_5 to buf_4
