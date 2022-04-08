@@ -69,7 +69,6 @@ Program plane_layer_main
  if (my_rank.eq.0) write(*,*) New_line('a')
  if (my_rank.eq.0) print *, '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
  if (my_rank.eq.0) write(*,*) New_line('a')
- if (my_rank.eq.0) print *, ' Module...... Pencils'
  if (my_rank.eq.0) print *, ' Version..... : '
  if (my_rank.eq.0) call display_git_version()
  if (my_rank.eq.0) write(*,*) New_line('a')

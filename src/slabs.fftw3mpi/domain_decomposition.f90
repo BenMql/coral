@@ -88,6 +88,7 @@
    Private
 
    Public :: domain_decomp
+   character(len=8), Public :: parallel_transforms_library = 'fftw-mpi'
 
    Contains
 

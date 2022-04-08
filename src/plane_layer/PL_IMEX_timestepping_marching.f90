@@ -53,10 +53,33 @@
  subroutine LPIMEX_backsolve_to_aux(self)
    class(full_problem_data_structure_T), intent(inOut), target :: self
    integer :: isys
+   integer :: ix, iy
    do isys = 1, self%recipe%numberOf_coupled_kxky_systems
       call self%coupled_kxky_set(isys)%evol%backsolve( &
            self%coupled_kxky_set(isys)%rhs)
-      self%coupled_kxky_set(isys)%aux = self%coupled_kxky_set(isys)%rhs
+      !print*, my_rank , 'rhs/aux shape', &
+                    !shape( self% coupled_kxky_set(isys)% rhs ), &
+                    !shape( self% coupled_kxky_set(isys)% aux )
+      self%coupled_kxky_set(isys)%aux(&
+           1: self% coupled_kxky_set(iSys)% shape% total, &
+           1: self% coupled_kxky_set(iSys)% shape% spectral_local_NY, &
+           1: self% coupled_kxky_set(iSys)% shape% spectral_local_NX&
+                                     )       = & 
+      self%coupled_kxky_set(isys)%rhs(&
+           1: self% coupled_kxky_set(iSys)% shape% total, &
+           1: self% coupled_kxky_set(iSys)% shape% spectral_local_NY, &
+           1: self% coupled_kxky_set(iSys)% shape% spectral_local_NX&
+                                     )
+   !do ix = 1, self% coupled_kxky_set(iSys)% shape% spectral_local_NX
+   !do iy = 1, self% coupled_kxky_set(iSys)% shape% spectral_local_NY
+      !self%coupled_kxky_set(isys)%aux(&
+           !1: self% coupled_kxky_set(iSys)% shape% total, iy, ix &
+                                     !) = &
+      !self%coupled_kxky_set(isys)%rhs(&
+           !1: self% coupled_kxky_set(iSys)% shape% total, iy, ix &
+                                     !) 
+   !end do 
+   !end do
    end do
    if (self%geometry%this_core_has_zero_mode) then
    do isys = 1, self%recipe%numberOf_coupled_zero_systems

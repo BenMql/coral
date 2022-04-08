@@ -513,8 +513,55 @@
 
  end subroutine
    
+ subroutine export_verticallyAvgedSlice_general(self, ivar, iTime, linear_or_quadra)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer, intent(in) :: iVar
+   integer, intent(in) :: iTime
+   character(len=6), intent(in) :: linear_or_quadra
+   select case (parallel_transforms_library)
+          case ('fftw-mpi')
+          call export_verticallyAvgedSlice_fftw_mpi( &
+                               self, ivar, iTime, linear_or_quadra)
+          case ('decomp2d')
+          call export_verticallyAvgedSlice_decomp2d( &
+                               self, ivar, iTime, linear_or_quadra)
+   end select
+ end subroutine
 
- subroutine export_verticallyAvgedSlice(self, ivar, iTime, linear_or_quadra)
+
+ subroutine export_verticallyAvgedSlice_fftw_mpi(self, ivar, iTime, linear_or_quadra)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer, intent(in) :: iVar
+   integer, intent(in) :: iTime
+   character(len=6), intent(in) :: linear_or_quadra
+   character(len=50) :: fileName
+   !----------------------
+   !  Internal variables  
+   !----------------------
+   real(kind=dp), allocatable :: local_cheby_weight(:)
+   ! ======================
+   call gauss_chebyshev_weight_1d( self%gauss_cheby%weight1d, &
+                                   self%geometry%NZAA,&
+                                   self%geometry%gap)
+   allocate( local_cheby_weight ( self%geometry%NZAA ))     ! superfluous? 
+       !< could we use self%gauss_cheby% weight1d directly instead?        
+   local_cheby_weight = self%gauss_cheby%weight1d (1 : self%geometry%NZAA) 
+   call chdir(self%io_bookkeeping%output_directory)
+   419 format ('./Slices/linear_var',(i2.2),'_zAvged_time',(i8.8),'_full.dat')
+   418 format ('./Slices/quadra_var',(i2.2),'_zAvged_time',(i8.8),'_full.dat')
+   select case(linear_or_quadra)
+          case ('linear')
+          write (fileName, 419) iVar, iTime
+          call self%linear_variables(iVar)% zSummed_slice_phys_to_disk (local_cheby_weight, fileName)
+          case ('quadra')
+          write (fileName, 418) iVar, iTime
+          call self%quadratic_variables(iVar)% zSummed_slice_phys_to_disk (local_cheby_weight, fileName)
+   end select
+ end subroutine
+   
+
+
+ subroutine export_verticallyAvgedSlice_decomp2d(self, ivar, iTime, linear_or_quadra)
    class(full_problem_data_structure_T), intent(inOut) :: self
    integer, intent(in) :: iVar
    integer, intent(in) :: iTime
@@ -627,10 +674,6 @@
    displacement = my_cumul*size_of_dble
 
 
-   ! /// delme junk code
-   !print *, my_rank, self%geometry%mpi_Yphys%rank, self%geometry%mpi_Zphys%rank, &
-   !         self%geometry%phys%local_NY, self%geometry%phys%local_NX, my_cumul, displacement
-   ! delme junk code ///
  
    if (self%geometry%mpi_Yphys%rank .eq. 0 ) then
       Call MPI_File_Open(self%geometry%mpi_zphys%comm, filename,&
@@ -645,7 +688,5 @@
    end if
 
    
-   ! STOPPED HERE
-   ! needed : normalisation
 
  end subroutine

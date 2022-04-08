@@ -2,7 +2,7 @@
    ! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    ! USER INPUT : HOW MANY SOURCES DO WE NEED?
    ! -----------------------------------------
-   self%numberOf_sources = 2
+   self%numberOf_sources = 5
    ! -----------------------------------------
    ! /////////////////////////////////////////
    
@@ -23,6 +23,29 @@
    sourceDef = -1._dp 
    call self%add_source( definition = sourceDef,&
                          sourceIndex = 2)   ! this corresponds to source02
+   ! -----------------------------------------
+   ! shear localised at the top U(z)
+   ! -----------------------------------------
+   sourceDef = exp(-(1._dp-z) / self%sourceParams('shearL'))
+   !sourceDef = z
+   call self%add_source( definition = sourceDef,&
+                         sourceIndex = 3)   ! this corresponds to source03
+   ! -----------------------------------------
+   ! shear localised at the top U'(z) (derivative)
+   ! -----------------------------------------
+   sourceDef = exp(-(1._dp-z) / self%sourceParams('shearL')) / &
+                                  self%sourceParams('shearL')
+   !sourceDef = 1._dp + 0._dp*z
+   call self%add_source( definition = sourceDef,&
+                         sourceIndex = 4)   ! this corresponds to source03
+   ! -----------------------------------------
+   ! shear localised at the top U'(z) (derivative)
+   ! -----------------------------------------
+   sourceDef = exp(-(1._dp-z) / self%sourceParams('shearL')) / &
+                                  self%sourceParams('shearL')**2
+   !sourceDef = 0._dp * z
+   call self%add_source( definition = sourceDef,&
+                         sourceIndex = 5)   ! this corresponds to source03
    ! -----------------------------------------
    ! /////////////////////////////////////////
 

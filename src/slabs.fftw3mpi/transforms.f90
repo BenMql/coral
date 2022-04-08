@@ -20,6 +20,7 @@ module transforms
    procedure :: phys_to_spec => r2c_transform
    procedure :: write_phys_to_disk
    procedure :: slice_phys_to_disk
+   procedure :: zSummed_slice_phys_to_disk
    procedure :: read_phys_from_disk
  end type PS_Fields_T
  
@@ -776,6 +777,41 @@ module transforms
       Call MPI_File_Close(file_id, ierr)
  End Subroutine DiskRead_contiguous_memory_chunk
 
+ subroutine zSummed_slice_phys_to_disk (self, cheby_weight, fileName)
+   class(PS_fields_T), intent(inOut) :: self
+   character(len=*), intent(in) :: fileName
+   integer :: n1, n2
+   real(dp), allocatable, target :: aux2d(:,:)
+   real(dp), pointer :: dum_ptr
+   real(dp), allocatable, dimension(:), intent(in):: cheby_weight
+   integer :: ix, iy, iz
+
+   if (.not. self% has_been_transposed) call self% transpose()
+
+   n1 = domain_decomp% NYAA
+   n2 = domain_decomp% NXAA / world_size
+   allocate (aux2d( n1, n2 ))                                            
+   aux2d = 0._dp
+   do ix = 1, domain_decomp% NXAA / world_size
+   do iy = 1, domain_decomp% NYAA 
+   do iz = 1, domain_decomp% NZAA
+   aux2d(iy,ix) = aux2d(iy,ix) + &
+                     self%transposed_phys(iz,iy,ix) * cheby_weight(iz)
+   end do
+   end do
+   end do
+   dum_ptr =>  aux2d(1,1)
+   call diskWrite_contiguous_memory_chunk(dum_ptr, &
+                                            n1*n2,   &
+                                         fileName,&
+                                int(n1*n2*my_rank, &
+                             kind=mpi_offset_kind))
+   deallocate (aux2d)
+   if (my_rank.eq.0) Print *, "... writing ", filename
+
+
+ end subroutine
+
  subroutine slice_phys_to_disk (self, slice_kind, slice_index, fileName)
    class(PS_fields_T), intent(inOut) :: self
    character(len=*), intent(in) :: fileName
@@ -819,7 +855,8 @@ module transforms
                n1 = domain_decomp% NZAA
                n2 = domain_decomp% NYAA 
                allocate (aux2d( n1, n2 ))                                            
-               aux2d = self%transposed_phys(:, :, slice_index)
+               aux2d = self%transposed_phys(:, :, slice_index - &
+                                   domain_decomp%NXAA / world_size )
                open (unit=9, file=fileName, status='replace', access='stream')
                write(9) aux2d
                close(unit=9)

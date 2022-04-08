@@ -19,13 +19,14 @@ module transforms
    procedure :: phys_to_spec => r2c_transform
    procedure :: write_phys_to_disk
    procedure :: slice_phys_to_disk
+   procedure :: zSummed_slice_phys_to_disk
    procedure :: read_phys_from_disk
  end type PS_Fields_T
  
  type :: specField_T
    complex(C_double), pointer :: spec (:,:,:)
- contains
-   procedure :: alloc => allocate_specField
+ !contains
+   !procedure :: alloc => allocate_specField
  end type specField_T
 
  type(C_ptr), private, save :: dct_plan_forward
@@ -37,6 +38,15 @@ module transforms
  integer :: logical_NZ 
 
  contains
+ subroutine zSummed_slice_phys_to_disk (self, dummy_array, fileName)
+   class(PS_fields_T), intent(inOut) :: self
+   character(len=*), intent(in) :: fileName
+   real(dp), allocatable, intent(in) :: dummy_array(:)
+   
+   ! nothing here. this is an empty routine that's never called
+   ! it's here for compatibility. 
+
+ end subroutine
 
  subroutine slice_phys_to_disk (self, slice_kind, slice_index, fileName)
    class(PS_fields_T), intent(inOut) :: self
@@ -192,12 +202,12 @@ module transforms
    self%spec = self%spec *normalization_factor
  end subroutine r2c_transform
 
- subroutine allocate_specfield(self)
-   class(specfield_T), intent(inOut) :: self
-   allocate( self%spec (domain_decomp%spec_iSize(1),&
-                        domain_decomp%spec_iSize(2),&
-                        domain_decomp%spec_iSize(3)))
- end subroutine allocate_specfield
+ !subroutine allocate_specfield(self)
+   !class(specfield_T), intent(inOut) :: self
+   !allocate( self%spec (domain_decomp%spec_iSize(1),&
+                        !domain_decomp%spec_iSize(2),&
+                        !domain_decomp%spec_iSize(3)))
+ !end subroutine allocate_specfield
 
 
  subroutine dct_planner()

@@ -178,7 +178,7 @@ module PL_IMEX_timestepping
    procedure :: export_allPhys
    procedure :: export_allProfiles
    procedure :: export_slice
-   procedure :: export_verticallyAvgedSlice
+   procedure :: export_verticallyAvgedSlice => export_verticallyAvgedSlice_general
    procedure :: export_volume
    procedure :: export_Profile
    procedure :: export_CheckPoints
