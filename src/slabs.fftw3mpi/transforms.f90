@@ -856,7 +856,7 @@ module transforms
                n2 = domain_decomp% NYAA 
                allocate (aux2d( n1, n2 ))                                            
                aux2d = self%transposed_phys(:, :, slice_index - &
-                                   domain_decomp%NXAA / world_size )
+                                   domain_decomp%NXAA / world_size * my_rank )
                open (unit=9, file=fileName, status='replace', access='stream')
                write(9) aux2d
                close(unit=9)
