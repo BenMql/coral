@@ -343,6 +343,8 @@ module P3_IMEX_timestepping
    if (my_rank.eq.0) print *, '/// Done with coupling matrices for (kx,ky)-modes systems.'
    if (my_rank.eq.0) print *, '================================================================='
    
+ call self%coupled_kxky_set(1)%mass% write2disk('mass.dat')
+ call self%coupled_kxky_set(1)%stif% write2disk('stif.dat')
  !///////////////////// ZERO MODE ////////////////////////////////////////////////
  !  zero-mode counterpart here
  !///////////////////// ZERO MODE ////////////////////////////////////////////////

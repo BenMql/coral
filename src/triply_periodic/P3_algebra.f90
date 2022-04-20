@@ -35,6 +35,7 @@
     Procedure :: check  => check_inverse_zOp5
     Procedure :: zOp5_sum_zOp5_zarrays
     Procedure :: zOp5_sum_zOp5_dtypes
+    Procedure :: write2disk => write_zOp5_to_disk
     generic   :: equals_sum_of => zOp5_sum_zOp5_dtypes, zOp5_sum_zOp5_zarrays
     Procedure :: fill_in => fill_zOp5
     generic   :: dot  => action_zOp5_upon_zOp5_derivedTypesOnly_outOfPlace,&
@@ -48,6 +49,21 @@
 
  Contains
  
+ subroutine write_zOp5_to_disk(self, fileName)
+   class(operator_3d_T) :: self
+   character(len=*), intent(in) :: fileName
+   integer :: u
+   Open (Unit=u, File=fileName, Status='replace', Access='stream')
+   Write(u) self%mat
+   close(u)
+   print *, 'size of operator: ', self%n1, self%n2, self%n3, self%nvar
+   print *, 'shape of operator: ', shape(self%mat)
+   print *, 'shape of inverse:  ', shape(self%inv)
+   
+ end subroutine
+
+
+
  !> @brief
  !! creates an empty operator
  subroutine initialise_zOp5(self, nnvar, nn1, nn2, nn3)
