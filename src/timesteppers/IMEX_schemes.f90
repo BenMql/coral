@@ -210,8 +210,8 @@
  Subroutine Define_Lstable_222(shandle,verb)
    Logical, intent(in) :: verb
    Type(Scheme_handle), Intent(Out) :: shandle 
-   Real(8) :: gam
-   Real(8) :: delta
+   Real(dp) :: gam
+   Real(dp) :: delta
    if (verb) then
    write (*,*) '======================================================'
    write (*,*) '>>> IMEX SCHEME:'
@@ -256,12 +256,12 @@
  Subroutine Define_Lstable_343(shandle, verb)
    Logical, intent(in) :: verb
    Type(Scheme_handle), Intent(Out) :: shandle 
-   Real(8) :: gam
-   Real(8) :: upg
-   Real(8) :: umg
-   Real(8) :: b1
-   Real(8) :: b2
-   Real(8) :: a42hat
+   Real(dp) :: gam
+   Real(dp) :: upg
+   Real(dp) :: umg
+   Real(dp) :: b1
+   Real(dp) :: b2
+   Real(dp) :: a42hat
    if (verb) then
    write (*,*) '======================================================'
    write (*,*) '>>> IMEX SCHEME:'
@@ -401,59 +401,6 @@
    shandle%C_hat(5)   = 1.0_dp
  End Subroutine Define_Lstable_443
 
-
-   
-
- !Subroutine scalar_eq_onetimestep( L, u0, shandle, dt)
-   !Real(dp), Intent(In) :: L
-   !Real(dp), Intent(InOut) :: u0
-   !Type(scheme_handle), Intent(In) :: shandle
-   !Real(dp), Intent(In) :: dt
-   !! INTERNAL VARIABLES:
-   !Integer :: i, j
-   !Real(dp), Dimension(:), Allocatable :: Kvar
-   !Real(dp), Dimension(:), Allocatable :: Khat
-   !Real(dp) :: ui
-   !Real(dp) :: aux
-!
-   !Allocate( Kvar(shandle%imp_stages) )
-   !Allocate( Khat(shandle%exp_stages) )
-!
-   !Do i = 1, shandle%imp_stages
-      !If (i.eq.1) Then
-        !Call scalar_nonlinearity(u0,Khat(i))
-      !Else 
-        !ui = aux + dt * shandle%A_arr((i-1),(i-1)) * Kvar(i-1)
-        !Call scalar_nonlinearity(ui,Khat(i))
-      !End If
-      !aux = u0
-      !Do j=1,i-1
-        !aux = aux + dt * shandle%a_arr(i,  j) * Kvar(j) 
-        !aux = aux + dt * shandle%a_hat(i+1,j) * Khat(j)
-      !End Do
-      !aux = aux + dt * shandle%a_hat(i+1,i) * Khat(i)
-      !!solve for kvar(i):
-      !kvar(i) = l*aux / (1.0d0- l*dt * shandle%a_arr(i,i) )
-   !End Do
-   !If (shandle%Exp_stages.eq.(shandle%imp_stages+1)) then
-        !ui = aux + dt * shandle%A_arr(shandle%imp_stages,shandle%imp_stages) &
-                                               !* Kvar(shandle%imp_stages)
-        !Call scalar_nonlinearity(ui,Khat(shandle%exp_stages))
-   !End If
-!
-   !Do j=1,shandle%imp_stages
-      !u0 = u0 + dt*shandle%b_arr(j)*Kvar(j)
-   !End Do
-   !Do j=1,shandle%exp_stages
-      !u0 = u0 + dt*shandle%b_hat(j)*Khat(j)
-   !End Do
- !End Subroutine scalar_eq_onetimestep
-!
- !Subroutine scalar_nonlinearity(u,q)
-   !Real(dp), Intent(In)  :: u
-   !Real(dp), Intent(Out) :: q
-   !q =-u**3
- !End Subroutine scalar_nonlinearity
 
 
  End Module IMEX_schemes

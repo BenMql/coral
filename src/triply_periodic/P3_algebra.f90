@@ -53,8 +53,11 @@
    class(operator_3d_T) :: self
    character(len=*), intent(in) :: fileName
    integer :: u
-   Open (Unit=u, File=fileName, Status='replace', Access='stream')
+   Open (Unit=u, File=fileName//'.mat', Status='replace', Access='stream')
    Write(u) self%mat
+   close(u)
+   Open (Unit=u, File=fileName//'.inv', Status='replace', Access='stream')
+   Write(u) self%inv
    close(u)
    print *, 'size of operator: ', self%n1, self%n2, self%n3, self%nvar
    print *, 'shape of operator: ', shape(self%mat)
