@@ -302,10 +302,7 @@ module transforms
 
 
  subroutine dct_planner()
-   integer(kind=C_intPtr_T) :: n_fft(2)
    type(c_ptr) :: buf_A, buf_B
-   real(dp), pointer :: x_real(:,:,:)
-   complex(dp), pointer :: x_cplx(:,:,:)
    type(c_ptr) :: p1, p2
    real(kind=dp), pointer :: meanField_physical(:)
    real(kind=dp), pointer :: meanField_spectral(:)

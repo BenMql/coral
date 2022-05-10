@@ -8,7 +8,7 @@ module PL_string_to_data
 
  type :: atom_linearOp_T
     character(len=:), allocatable :: str
-    type(unsorted_T), dimension(3) :: unsorted
+    type(unsorted_T), dimension(5) :: unsorted
     integer :: nOf_unsortedStrings
     character(len=:), allocatable :: param_str
     character(len=:), allocatable :: var_str
@@ -106,7 +106,7 @@ module PL_string_to_data
             unsorted_index = unsorted_index + 1
         end if
       if (.not.(next_dot.gt.0)) exit
-      if (unsorted_index.gt.3) then
+      if (unsorted_index.gt.5) then
          STOP 'too many unrecognized characters in full variable definition'                
       end if
       end do

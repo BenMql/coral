@@ -404,7 +404,8 @@
    ! add sources!                              
    !====================================
    do iSource = 1, self%recipe%sources%n_sources
-     nl_buffer_zero(:) = self%sources( self%recipe%sources%term(iSource)%source_index)%spectral &
+     nl_buffer_zero = 0._dp
+     nl_buffer_zero(:) = self%sources( self%recipe%sources%term(iSource)%source_index)%spectral (1: domain_decomp% spec_iSize(1)) &
                        * self%recipe%sources%term(iSource)%dsca
      insert_in_equation =  self%recipe%sources%term(iSource)%eqn_index
      insert_in_system   =  self%recipe%sources%term(iSource)%sys_index
@@ -676,15 +677,22 @@
  character(len=6), intent(in) :: paramString
  integer :: iParam
  sourceParams = 0._dp
+ !print *, "DELME searching,", paramString,","
  do iParam = 1, self%recipe%sources% n_sourceParams
+ !print *, "DELME reading  ,", self%recipe%sources%sourceParams(iParam)%str,","
     if (paramString .eq. self%recipe%sources%sourceParams(iParam)%str) then
        sourceParams= self%recipe%sources%sourceParams(iParam)%dsca
        exit
     end if
     if (iParam .eq. self%recipe%sources% n_sourceParams) then
+        if (my_rank.eq.0) then
+          print *, " ----------------- WRONG CORAL.EQUATION FILE AT RUNTIME ----------------"
         print *, 'In user-defined sources, LP_user_sources_definitions.f90, '
         print *, 'the parameter name did not match any definition from input file coral.equations'
-        error stop
+          print *, " ----------------- WRONG CORAL.EQUATION FILE AT RUNTIME ----------------"
+        end if
+        call MPI_finalize(ierr)
+        stop
     end if
  end do
  end function

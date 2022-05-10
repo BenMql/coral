@@ -1049,9 +1049,11 @@ Module PL_equations
    self%sources%term(n_old+iAtom)%eqn_index = counter_eqn
    self%sources%term(n_old+iAtom)%sys_index = this_recipe
    do i_str = 1, atom_linear_ops(iAtom)%nOf_unsortedStrings
+       !print *, "DELME :", atom_linear_ops(iAtom)%unsorted(i_str)%str,":"
+       !print *, "DELME :", trim(atom_linear_ops(iAtom)%unsorted(i_str)%str),":"
        this_string_is_identified = .False.
        ! perhaps the unsorted string is a source?
-       if (len(atom_linear_ops(iAtom)%unsorted(i_str)%str).eq.8) then
+       if (len(trim(atom_linear_ops(iAtom)%unsorted(i_str)%str)).eq.8) then
        if     (atom_linear_ops(iAtom)%unsorted(i_str)%str(1:6) .eq.'source' ) then
           read(atom_linear_ops(iAtom)%unsorted(i_str)%str(7:8),*,iostat=stat)&
                self%sources%term(n_old+iAtom)%source_index
