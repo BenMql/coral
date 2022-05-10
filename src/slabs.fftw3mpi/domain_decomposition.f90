@@ -102,6 +102,20 @@
       Real(C_double), pointer :: X_in_core(:,:,:), Y_in_core(:,:,:)
       
 
+
+      ! start by checking that the number of processes divides n3/3 and n2
+      if ((mod(n3/3, world_size) .ne. 0 ) &
+                                 .or.     & 
+          (mod(  n2, world_size) .ne. 0 ) ) then
+          call MPI_finalize(ierr)
+          print *, " ----------------- WRONG PARAMETERS PROVIDED AT RUNTIME ----------------"
+          print *, "Coral slab version: number of processes incompatible with the resolution"
+          print *, "Please run with a number of cores that divides NX/2 *and* 3.NY/2, ",&
+                   "where NX and NY are the values entered in coral.parameters.in"
+          print *, "Terminating now. " 
+          print *, " ----------------- WRONG PARAMETERS PROVIDED AT RUNTIME ----------------"
+          stop
+      end if
       self% NXAA = n3
       self% NYAA = n2
       self% NZAA = n1
