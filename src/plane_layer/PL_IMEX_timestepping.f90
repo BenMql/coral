@@ -261,7 +261,7 @@ module PL_IMEX_timestepping
    real(kind=dp), allocatable, target :: deriv(:)
    real(kind=dp), pointer :: fDummyPtr(:)
    type(C_Ptr) :: dummyPtr
-   integer :: ix,iy,iz
+   integer :: iz
    integer, intent(in) :: dOrder
    integer :: iOrder
    if (dOrder.lt.1) then

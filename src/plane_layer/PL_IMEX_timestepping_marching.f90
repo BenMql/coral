@@ -53,7 +53,6 @@
  subroutine LPIMEX_backsolve_to_aux(self)
    class(full_problem_data_structure_T), intent(inOut), target :: self
    integer :: isys
-   integer :: ix, iy
    do isys = 1, self%recipe%numberOf_coupled_kxky_systems
       call self%coupled_kxky_set(isys)%evol%backsolve( &
            self%coupled_kxky_set(isys)%rhs)
@@ -269,8 +268,6 @@
    complex(kind=dp), allocatable :: nl_buffer_deAliased(:,:,:)
    real   (kind=dp), allocatable :: nl_buffer_zero(:)
    integer :: iSource
-   real(kind=dp) :: varAvg
-   integer :: iz
 
    call self%compute_full_variables_in_physical_space()
    
