@@ -114,6 +114,7 @@ Layer_pencil_Objects += $(LAYER)plane_layer_main.o
 pencils: $(Layer_pencil_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.pencils.2dcmp.x $^ -lfftw3 -l2decomp_fft -L$(FFTW_LIB) -L$(DECOMP2D_ROOT)/lib $(MKL_LIB) -I$(MODDIR) -I$(DECOMP2D_ROOT)/include -I$(MKLROOT)/include  
+	cp $(BUILD_DIR)coral.layer.pencils.2dcmp.x coral_LP.exe
 	$(MAKE) clean
 
 
@@ -164,74 +165,12 @@ Slabs49_layer_Objects += $(LAYER)PL_IMEX_timestepping.o
 Slabs49_layer_Objects += $(LAYER)plane_layer_main.o
 
 
-#Slabs49_layer_Objects := $(MISC_SRC)chdir_mod.o    
-#Slabs49_layer_Objects += $(MISC_SRC)fortran_kinds.o
-#Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
-#Slabs49_layer_Objects += $(FFTW_SRC)fftw3_mpi.o
-#Slabs49_layer_Objects += $(MPI_SRC)MPI_vars.o
-#Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)domain_decomposition.o
-#Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)transforms.o
-#Slabs49_layer_Objects += $(SLABS_49_FFTW3MPI)driver_decomp.o
-
 slabs: $(Slabs49_layer_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $^ $(MPI_FFTW_link) -L$(FFTW_LIB) -I$(FFTW_INC) $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
+	cp $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x coral_SL.exe
 	$(MAKE) clean
 
-
-
-
-
-                        ##################
-                        ##################
-# ~~~~~~~~~~~~~~~~~~~   #  LAYER SLABS   #  ~~~~~~~~~~~~~~~~~~~
-                        ##################
-                        ##################
-
-
-Slabs_layer_Objects := $(MISC_SRC)chdir_mod.o    
-Slabs_layer_Objects += $(MISC_SRC)fortran_kinds.o
-Slabs_layer_Objects += $(MISC_SRC)read_command_line_args.o
-Slabs_layer_Objects += $(FFTW_SRC)fftw3_mpi.o
-Slabs_layer_Objects += $(TEXT_SRC)cwraps.o
-Slabs_layer_Objects += $(TEXT_SRC)cfun_parse_text.o
-Slabs_layer_Objects += $(TEXT_SRC)ftext_parsing.o
-Slabs_layer_Objects += $(MPI_SRC)MPI_vars.o
-Slabs_layer_Objects += $(OUT_SRC)output_misc.o          
-Slabs_layer_Objects += $(MISC_SRC)timeKeeping.o
-Slabs_layer_Objects += $(MISC_SRC)time_mpi.o
-Slabs_layer_Objects += $(TSTEP_SRC)IMEX_schemes.o
-Slabs_layer_Objects += $(MISC_SRC)read_command_line_args.o
-Slabs_layer_Objects += $(MISC_SRC)include_git_version.o
-Slabs_layer_Objects += $(MISC_SRC)wallclock.o
-Slabs_layer_Objects += $(SLABS_LAYER_FFTW3MPI)domain_decomposition.o
-Slabs_layer_Objects += $(LAYER)PL_geometry.o
-Slabs_layer_Objects += $(LAYER)PL_cheby_misc.o
-Slabs_layer_Objects += $(MISC_SRC)include_git_version.o
-Slabs_layer_Objects += $(CHEBY_SRC)lapack_module.o
-Slabs_layer_Objects += $(LAYER)PL_string_to_data.o
-Slabs_layer_Objects += $(LAYER)PL_equations.o             
-Slabs_layer_Objects += $(SPARSE_SRC)sparse_formats_d.o
-Slabs_layer_Objects += $(SPARSE_SRC)sparse_formats_z.o
-Slabs_layer_Objects += $(SPARSE_SRC)sparse_formats.o
-Slabs_layer_Objects += $(SPARSE_SRC)sparse_conversions.o
-Slabs_layer_Objects += $(SPARSE_SRC)sparse_blas.o
-Slabs_layer_Objects += $(SPARSE_SRC)sparse_manipulations.o
-Slabs_layer_Objects += $(CHEBY_SRC)chebyshev_elementary.o
-Slabs_layer_Objects += $(CHEBY_SRC)chebyshev_galerkin_2.o
-Slabs_layer_Objects += $(LAYER)PL_algebra_d_1D.o
-Slabs_layer_Objects += $(LAYER)PL_algebra_z_1D.o
-Slabs_layer_Objects += $(LAYER)PL_algebra_z_3D.o
-Slabs_layer_Objects += $(LAYER)PL_algebra.o             
-Slabs_layer_Objects += $(SLABS_LAYER_FFTW3MPI)transforms.o
-Slabs_layer_Objects += $(LAYER)PL_IMEX_timestepping.o
-Slabs_layer_Objects += $(LAYER)plane_layer_main.o
-
-
-slabsPadded: $(Slabs_layer_Objects)
-	mkdir -p $(BUILD_DIR)
-	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $^ $(MPI_FFTW_link) -L$(FFTW_LIB) -I$(FFTW_INC) $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
-	$(MAKE) clean
 
 
 
