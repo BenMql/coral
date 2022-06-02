@@ -114,7 +114,7 @@ Layer_pencil_Objects += $(LAYER)plane_layer_main.o
 pencils: $(Layer_pencil_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.pencils.2dcmp.x $^ -lfftw3 -l2decomp_fft -L$(FFTW_LIB) -L$(DECOMP2D_ROOT)/lib $(MKL_LIB) -I$(MODDIR) -I$(DECOMP2D_ROOT)/include -I$(MKLROOT)/include  
-	cp $(BUILD_DIR)coral.layer.pencils.2dcmp.x coral_LP.exe
+	cp $(BUILD_DIR)coral.layer.pencils.2dcmp.x $(BUILD_DIR)coral_LP.exe
 	$(MAKE) clean
 
 
@@ -168,7 +168,7 @@ Slabs49_layer_Objects += $(LAYER)plane_layer_main.o
 slabs: $(Slabs49_layer_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $^ $(MPI_FFTW_link) -L$(FFTW_LIB) -I$(FFTW_INC) $(MKL_LIB) -I$(MODDIR) -I$(MKLROOT)/include  
-	cp $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x coral_SL.exe
+	cp $(BUILD_DIR)coral.layer.slabs.fftw3mpi.x $(BUILD_DIR)coral_SL.exe
 	$(MAKE) clean
 
 
