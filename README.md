@@ -1,6 +1,6 @@
 ![baniere.png](http://www.normalesup.org/~benmiquel/misc/baniere.png)
 
-# Coral v1.1
+# Coral v1.3
 
 
 Coral is a spectral PDEs solver for the plane-layer geometry, written in modern Fortran and highly scalable. 
