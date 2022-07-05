@@ -318,7 +318,19 @@
    ! compute Chebyshev coefficients into self%linear_variables(1)%spec
    self%linear_variables(1)%spec = self%coupled_kxky_set(iSys)% aux (:,:,:,iVar)
    write (fileName,406) iSys, iVar, self%io_bookkeeping%rolling_integer
+      !print *, 'CHCKPT(1,1,1) ', iVar, self%linear_variables(1)% spec(1, 1, 1) !delme
+      !print *, 'CHCKPT(1,12,1) ', iVar, self%linear_variables(1)% spec(1, 12, 1) !delme
+      !print *, 'CHCKPT(12,1,1) ', iVar, self%linear_variables(1)% spec(12, 1, 1) !delme
+      !print *, 'CHCKPT(12,14,16) ', iVar, self%linear_variables(1)% spec(12, 14, 16) !delme
+                !if (ivar.eq.1) then
+          !Open (Unit=9, File='spec_CHCK.bin', Status='replace', access='stream')
+          !Write(9) self% linear_variables(1)%spec
+          !close (unit=9)
+          !end if
+
+
    call self%linear_variables(1)%spec_to_phys()
+      !print *, 'CHCKPT ', iVar, self%linear_variables(1)% phys(12, 14, 16) !delme
    call decomp_2d_write_one(3, self%linear_variables(1)%phys, fileName)              
    ! now tranform back to Galerkin coefficients, stored in 'field'
    call self%linear_variables(1)%phys_to_spec()

@@ -173,6 +173,12 @@
       call self%quadratic_variables(iQvar)%phys_to_spec()
    end do
 
+   !! delme
+   !do iVar = 1, 5                                             
+      !print *, iVar, self%linear_variables(iVar)% phys(12, 14, 16)
+   !end do
+   !! /delme
+
    if (i.eq.1) call self%output_global_quantities()
    if (i.eq.1) call self%output_slices_volumes_and_profiles()
   
@@ -241,9 +247,12 @@
                         self%geometry%spec%local_NX) )
    ! ==================================================
    ! >>> spectral space computations
+   !print *, "now in compute_full_variables_in_physical_space" ! delme
    do iVar = 1, self%recipe%numberOf_linear_variables_full
+   !print *, "iVar = ", iVar                                   ! delme
    self%linear_variables(iVar)%spec = cmplx(0._dp, 0._dp, kind=dp)
    do iTerm = 1, self%recipe%linear_vars_full( iVar )%n_terms
+   !print *, "iTerm = ", iTerm                                   ! delme
      select case (self%recipe%linear_vars_full( iVar)%Term(iTerm)%var_kind)
        case ('kxky')
           system_of_interest =               &
@@ -255,12 +264,19 @@
                self%recipe%linear_vars_full( iVar )%term(iTerm)%var_index&
                                            )%at_position
                    
+          !print *, "dsca = ", self% recipe% linear_vars_full(iVar)% term(iterm)% dsca ! delme
           datBuffer = self% recipe% linear_vars_full(iVar)% term(iterm)% dsca * &
                       self% coupled_kxky_set(system_of_interest)% aux(:,:,:,position_of_interest)
+          !print *, "aux (12,14,16) = ",   self% coupled_kxky_set(system_of_interest)% aux(12,14,16,position_of_interest)
+
+
+          !print *, "dx_exponent", self%recipe%linear_vars_full(iVar)%Term(iTerm)%dx_exponent !delme
+          !print *, "dy_exponent", self%recipe%linear_vars_full(iVar)%Term(iTerm)%dx_exponent !delme
+          !print *, "dz_exponent", self%recipe%linear_vars_full(iVar)%Term(iTerm)%dx_exponent !delme
 
           do ix = 1, self%geometry%spec%local_NX
           do iy = 1, self%geometry%spec%local_NY
-          do iz = 1, self%geometry%Nz       
+          do iz = 1, self%geometry%NzAA       
           self%linear_variables(iVar)%spec(iz,iy,ix) = &
                        self%linear_variables(iVar)%spec(iz,iy,ix) + &
                        datBuffer(iz,iy,ix)*&
@@ -270,6 +286,17 @@
           end do
           end do
           end do
+          !print *, "spec(1,1,1) = ",   self% linear_variables(iVar)%spec(1,1,1)
+          !print *, "spec(12,1,1) = ",   self% linear_variables(iVar)%spec(12,1,1)
+          !print *, "spec(1,12,1) = ",   self% linear_variables(iVar)%spec(1,12,1)
+          !print *, "spec(12,14,16) = ",   self% linear_variables(iVar)%spec(12,14,16)
+          !if (ivar.eq.1) then
+          !Open (Unit=9, File='spec_NL.bin', Status='replace', access='stream')
+          !Write(9) self% linear_variables(iVar)%spec
+          !close (unit=9)
+          !end if
+
+
 
        case ('zero')
  !///////////////////// ZERO MODE ////////////////////////////////////////////////
@@ -284,6 +311,7 @@
    ! ==================================================
    ! >>> spectral to physical tranforms  
    call self%linear_variables(iVar)%spec_to_phys()
+          !print *, "phys(12,14,16) = ",   self% linear_variables(iVar)%phys(12,14,16)
    ! /// done: transforms                     
    ! ==================================================
    end do

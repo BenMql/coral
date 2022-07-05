@@ -59,9 +59,9 @@
    Open (Unit=u, File=fileName//'.inv', Status='replace', Access='stream')
    Write(u) self%inv
    close(u)
-   print *, 'size of operator: ', self%n1, self%n2, self%n3, self%nvar
-   print *, 'shape of operator: ', shape(self%mat)
-   print *, 'shape of inverse:  ', shape(self%inv)
+   !print *, 'size of operator: ', self%n1, self%n2, self%n3, self%nvar
+   !print *, 'shape of operator: ', shape(self%mat)
+   !print *, 'shape of inverse:  ', shape(self%inv)
    
  end subroutine
 
@@ -86,6 +86,7 @@
    self%nVar = nnvar
 
    allocate(self%mat(nn1, nn2, nn3, nnvar, nnvar), source=cmplx(0._dp, 0._dp, kind=dp))
+   allocate(self%inv(0, 0, 0, 0, 0) )                                                   
 
  end subroutine initialise_zOp5
 
