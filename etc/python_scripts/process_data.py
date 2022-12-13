@@ -7,18 +7,19 @@ def compute_a_clean_mean(le_signal, le_temps):
    return np.sum(s_dt)/(le_temps[-1] - le_temps[0])
 
 class plane_layer_volume:
-   def __init__(self, list_var_str, time_int,path_to_run = './') :
+   def __init__(self, list_var_str=[], time_int=10000, path_to_run = './') :
+     self.dat=[]
+     self.profiles=[]
+     self.verticalSums=[]
+     self.lut=[]
+     self.lut_profiles=[]
+     self.lut_verticalSums=[]
+     self.lut=[]
+     if len(list_var_str)>0:
       ddecomp = gcp.domDecomp(0) 
       NX = ddecomp.NX                                                                     
       NY = ddecomp.NY                                                                     
       NZ = ddecomp.NZ                                                                     
-      self.dat=[]
-      self.profiles=[]
-      self.verticalSums=[]
-      self.lut=[]
-      self.lut_profiles=[]
-      self.lut_verticalSums=[]
-      self.lut=[]
       svar = list_var_str[0]
       geom = gcp.coralGeom(0) 
       self.lx = geom.Lx                           
@@ -54,6 +55,27 @@ class plane_layer_volume:
       self.xgrid = np.linspace(0,self.lx,self.NX, endpoint=False)
       self.ygrid = np.linspace(0,self.ly,self.NY, endpoint=False)
       self.zgrid = 0.5+0.5*np.cos((2.*np.arange(self.NZ)+1.)*np.pi/(2.*self.NZ))*self.lz
+     # if the list is empty, instantiate with a known function to perform debugging tests
+     else:
+       self.lx = 10.
+       self.ly = 10.
+       self.lz = 1.
+       self.NX = 128
+       self.NY = 128
+       self.NZ = 128
+       self.xgrid = np.linspace(0,self.lx,self.NX, endpoint=False)
+       self.ygrid = np.linspace(0,self.ly,self.NY, endpoint=False)
+       self.zgrid = 0.5+0.5*np.cos((2.*np.arange(self.NZ)+1.)*np.pi/(2.*self.NZ))*self.lz
+       self.dat.append( np.zeros((self.NX, self.NY, self.NZ), dtype=np.float_) )
+       for ix in range (self.NX):
+        for iy in range(self.NY):
+          phi = (self.xgrid[ix]+2*self.ygrid[iy]) * 2 * np.pi / 10. + 3.
+          self.dat[0][ix,iy,:] = np.exp(-np.cos( phi ) **2 )
+       meanVal = np.mean(self.dat[0][:,:,0],axis=(0,1))
+       for iz in range(self.NZ):
+           self.dat[0][:,:,iz] -= meanVal
+       self.lut.append( 'exp(-cos( phi(x,y) ) **2 )' )
+      
 
    def plot_slice(self, varInt= 0, x=-100000, y=-100000, z=-100000):
        '''
