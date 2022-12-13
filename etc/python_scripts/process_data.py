@@ -114,12 +114,12 @@ class plane_layer_volume:
          self.dat.append(np.copy(self.dat[pos_in_list]))
          self.lut.append(self.lut[pos_in_list])
       else:
-         from numpy.fft import rfft, irfft, fftfreq
+         from scipy.fft import rfft, irfft, fftfreq
          fft_coefs = rfft(self.dat[pos_in_list], axis=0)
-         kx = fftfreq (self.NX, d=self.lx)
+         kx = fftfreq (self.NX, d=self.lx/self.NX)
          fft_coefs[0, :, :] *= 0.
          for ix in range(self.NX//2):
-            fft_coefs[ix, :, :] *= pow (1j * kx[ix+1], order)
+            fft_coefs[ix+1, :, :] *= pow (1j *2*np.pi* kx[ix+1], order)
          self.dat.append  ( irfft( fft_coefs , axis=0))
          if (order==1):
              self.lut.append('[d/dx]'+self.lut[pos_in_list])
@@ -132,12 +132,12 @@ class plane_layer_volume:
          self.dat.append(np.copy(self.dat[pos_in_list]))
          self.lut.append(self.lut[pos_in_list])
       else:
-         from numpy.fft import rfft, irfft, fftfreq
+         from scipy.fft import rfft, irfft, fftfreq
          fft_coefs = rfft(self.dat[pos_in_list], axis=1)
-         ky = fftfreq (self.NY, d=self.ly)
+         ky = fftfreq (self.NY, d=self.ly/self.NY)
          fft_coefs[:, 0, :] *= 0.
          for iy in range(self.NY//2):
-            fft_coefs[:, iy, :] *= pow (1j * ky[iy+1], order)
+            fft_coefs[:, iy+1, :] *= pow (1j * 2*np.pi*ky[iy+1], order)
          self.dat.append  ( irfft( fft_coefs, axis=1))
          if (order==1):
              self.lut.append('[d/dy]'+self.lut[pos_in_list])
@@ -146,15 +146,15 @@ class plane_layer_volume:
    
 
    def inverseHorizontalLaplacian(self, pos_in_list):
-      from numpy.fft import rfft, irfft, fftfreq, fft, ifft
+      from scipy.fft import rfft, irfft, fftfreq, fft, ifft
       xfft_coefs = rfft(self.dat[pos_in_list], axis=0)
       xyfft_coefs = fft(xfft_coefs, axis = 1)          
-      kx = fftfreq (self.NX, d=self.lx)
-      ky = fftfreq (self.NY, d=self.ly)
-      xyfft_coefs[0, 0, :] *= 0.
+      kx = fftfreq (self.NX, d=self.lx/self.NX)
+      ky = fftfreq (self.NY, d=self.ly/self.NY)
       for  ix in range(self.NX//2+1):
        for iy in range(self.NY):
-         xyfft_coefs[ix, iy, :] *= pow (-kx[ix]**2-ky[iy]**2, -1)
+        if ( (ix+iy) > 1.e-10):
+         xyfft_coefs[ix, iy, :] *= 1./ 4 / np.pi**2/(-kx[ix]**2-ky[iy]**2)
       xyfft_coefs[0,0,:] = 0.
       xfft_coefs = ifft(xyfft_coefs, axis=1)
       self.dat.append  ( irfft( xfft_coefs , axis=0))
@@ -261,7 +261,16 @@ class plane_layer_volume:
       self.lut_profiles.append('<'+self.lut[pos_in_list]+ '>_{x,y}')
 
    def _xdiff_FD(self, pos_in_list):
-      my_var = np.copy(self.dat[pos_in_list])
+      # 1. compute values at mid-points along x
+      my_var = np.zeros( (self.NX+1, self.NY, self.NZ), dtype=np.float_)
+      #    mid-point 0 is between the first grid point and the last (because of periodicity)
+      my_var [0,:,:] = self.dat[pos_in_list][0,:,:] + self.dat[pos_in_list][-1,:,:]
+      #    other mid-points are obtained as averages between two consecutive grid positions 
+      for ix in range(1,self.NX):
+         my_var[ix,:,:] = self.dat[pos_in_list][ix-1,:,:] + self.dat[pos_in_list][ix,:,:]
+      my_var [self.NX,:,:] = my_var[0,:,:]
+      #    normalize properly
+      my_var *= 0.5
       self.dat.append  (np.diff(my_var,axis=0)/self.lx*self.NX)
       del my_var
       self.lut.append('[d/dx]'+self.lut[pos_in_list])
