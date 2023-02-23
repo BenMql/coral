@@ -201,6 +201,22 @@ class plane_layer_volume:
       self.dat.append(deriv_phys)
       self.lut.append('[d/dz]'+self.lut[pos_in_list])
 
+    def zdiff_profile(self, pos_in_list):
+      from cheby_tools import chebyshev_elementary_integration
+      from scipy.sparse.linalg import factorized
+      import scipy.sparse as sp
+      from scipy.fftpack import dct, idct
+      cheb_I = chebyshev_elementary_integration(N=self.NZ, center = 0.5, gap=self.lz)
+      field_spec = 2*dct(self.profiles[pos_in_list], axis=0, type=2)
+      #field_spec[:,:,0]/=2.
+      deriv_spec = np.zeros(field_spec.shape, dtype=np.float_)
+      solve = factorized(cheb_I.todense()[1:,:-1])
+      deriv_spec[:-1] = 0.5*solve(field_spec[1:])
+      deriv_spec[0]*=2.
+      deriv_phys = idct(deriv_spec, axis=0)/self.NZ
+      self.profiles.append(deriv_phys)
+      self.lut_profiles.append('[d/dz]'+self.lut_profiles[pos_in_list])     
+      
    def zint_Vol(self, pos_in_list):
       from scipy.fftpack import dct, idct
       from cheby_tools import chebyshev_elementary_integration
