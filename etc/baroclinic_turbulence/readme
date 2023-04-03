@@ -1,0 +1,13 @@
+These files were used by Meunier, Miquel and Gallet to study 
+baroclinic turbulence.
+
+To reproduce the results, one should recompile coral after the 
+PL_user_sources_definition.f90 file has been copied to:
+ ../../src/plane_layer/.
+
+The resulting executable should be run with the provided
+coral.equations and coral.parameters.in files. A list of 
+suggested diagnostics is defined in coral.timeseries and 
+coral.usrOutput
+
+

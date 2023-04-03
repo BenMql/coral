@@ -1,0 +1,249 @@
+>>Param :: rossby := 0.03d0 <<
+>>Param :: a0N2 := 50.d0 <<
+>>Param :: a1N2 := 350.d0 <<
+>>Param :: fParam := 1.0d0 <<    
+>>Param :: betaParam := 4.0d-5 <<
+>>Param :: nuZ := 3.d-6 <<           
+>>Param :: nuPerp := 0.003d0 <<            
+>>Param :: nubZ := 3.d-7 <<           
+>>Param :: nubPerp := 0.001d0 <<           
+>>Param :: friction := 150.d0 <<
+>>====================================<<
+>>Param :: two := 2.d0 <<
+>>Param :: three := 3.d0 <<
+>>Param :: four := 4.d0 <<
+>>Param :: oneHalf := 0.5d0 <<
+>>Param :: oneQuarter := 0.25d0 <<
+>>Param :: one := 1.d0 <<
+>>====================================<<
+>>sourceParam :: HovEll := 0.5d0 <<
+>>sourceParam :: shearL := 0.5d0 <<
+>>====================================<<
+>>linear_variable_kxky :: psi <<
+>>linear_variable_kxky :: phi <<
+>>linear_variable_kxky :: psiTilde <<
+>>linear_variable_kxky :: phiTilde <<
+>>linear_variable_kxky :: b <<
+>>linear_variable_mean :: uMean <<
+>>linear_variable_mean :: vMean <<
+>>linear_variable_mean :: uMeanTilde <<
+>>linear_variable_mean :: vMeanTilde <<
+>>linear_variable_mean :: bMean <<
+>>linear_variable_mean :: UShearMean <<
+>>linear_variable_mean :: UShearPrimeMean <<
+>>linear_variable_mean :: UShearSecondMean <<
+>>====================================<<
+>>linear_variable_full       :: uFull <<
+>>linear_variable_full_build :: + uMean <<
+>>linear_variable_full_build :: + dy.psi <<
+>>linear_variable_full_build :: + dx.dz.phi <<
+>>====================================<<
+>>linear_variable_full       :: vFull <<
+>>linear_variable_full_build :: + vMean <<
+>>linear_variable_full_build :: - dx.psi <<
+>>linear_variable_full_build :: + dz.dy.phi <<
+>>====================================<<
+>>linear_variable_full       :: wFull <<
+>>linear_variable_full_build :: - dx.dx.phi <<
+>>linear_variable_full_build :: - dy.dy.phi <<
+>>====================================<<
+>>linear_variable_full       :: bFull <<
+>>linear_variable_full_build :: + bMean <<
+>>linear_variable_full_build :: + b <<
+>>====================================<<
+>>linear_variable_full       :: UShear <<
+>>linear_variable_full_build :: + UShearMean <<
+>>====================================<<
+>>linear_variable_full       :: UShearPrime <<
+>>linear_variable_full_build :: + UShearPrimeMean <<
+>>====================================<<
+>>linear_variable_full       :: PsiFull <<
+>>linear_variable_full_build :: + psi <<
+>>====================================<<
+>>linear_variable_full       :: PhiFull <<
+>>linear_variable_full_build :: + phi <<
+>>====================================<<
+>>quadratic_variable :: uu := uFull.uFull <<
+>>quadratic_variable :: uv := uFull.vFull <<
+>>quadratic_variable :: uw := uFull.wFull <<
+>>quadratic_variable :: vv := vFull.vFull <<
+>>quadratic_variable :: vw := vFull.wFull <<
+>>quadratic_variable :: ww := wFull.wFull <<
+>>quadratic_variable :: bu := bFull.uFull <<
+>>quadratic_variable :: bv := bFull.vFull <<
+>>quadratic_variable :: bw := bFull.wFull <<
+>>quadratic_variable :: UB := UShear.bFull <<
+>>quadratic_variable :: UPsi := UShear.PsiFull <<
+>>quadratic_variable :: UPhi := UShear.PhiFull <<
+>>quadratic_variable :: UPrimePsi := UShearPrime.PsiFull <<
+>>quadratic_variable :: UPrimePhi := UShearPrime.PhiFull <<
+>>quadratic_variable :: UPrimeV := UShearPrime.vFull <<
+>>====================================<<
+>>====================================<<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: psi <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: phi <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: psiTilde <<
+>>add_BC_for_this_var :: 21 <<
+>>linearly_coupled_var :: phiTilde <<
+>>add_BC_for_this_var :: 41 <<
+>>linearly_coupled_var :: b <<
+>>add_BC_for_this_var :: 21 <<
+>>====================================<<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: - Iz.Iz.dx.dx.psi <<
+>>add_d/dt_term  :: - Iz.Iz.dy.dy.psi <<
+>>add_rhs_linear :: - nuPerp.Iz.Iz.dy.dy.dy.dy.psi <<
+>>add_rhs_linear :: - nuPerp.Iz.Iz.dx.dx.dx.dx.psi <<
+>>add_rhs_linear :: - two.nuPerp.Iz.Iz.dx.dx.dy.dy.psi <<
+>>add_rhs_linear :: - nuZ.dy.dy.psi <<
+>>add_rhs_linear :: - nuZ.dx.dx.psi <<
+>>add_rhs_linear :: - fParam.Iz.dx.dx.phi <<
+>>add_rhs_linear :: - fParam.Iz.dy.dy.phi <<
+>>add_rhs_linear :: + betaParam.Iz.Iz.dx.psi <<
+>>add_rhs_NL     :: - Iz.Iz.dx.dx.uv <<
+>>add_rhs_NL     :: - Iz.Iz.dx.dy.vv <<
+>>add_rhs_NL     :: + Iz.Iz.dx.dy.uu <<
+>>add_rhs_NL     :: + Iz.Iz.dy.dy.uv <<
+>>add_rhs_NL     :: - Iz.dx.vw <<
+>>add_rhs_NL     :: + Iz.dy.uw <<
+>>add_rhs_NL     :: + rossby.Iz.Iz.dx.dx.dx.UPsi <<
+>>add_rhs_NL     :: - rossby.Iz.Iz.dy.dx.dx.UPrimePhi <<
+>>add_rhs_NL     :: + rossby.Iz.Iz.dx.dy.dy.UPsi <<
+>>add_rhs_NL     :: - rossby.Iz.Iz.dy.dy.dy.UPrimePhi <<
+>>====================================<<
+>>====================================<<
+>>====================================<<
+>>new_equation :: 4 <<
+>>add_d/dt_term  :: + Iz.Iz.Iz.Iz.dx.dx.dx.dx.phi <<
+>>add_d/dt_term  :: + Iz.Iz.Iz.Iz.dy.dy.dy.dy.phi <<
+>>add_d/dt_term  :: + two.Iz.Iz.Iz.Iz.dy.dy.dx.dx.phi <<
+>>add_d/dt_term  :: + Iz.Iz.dx.dx.phi <<
+>>add_d/dt_term  :: + Iz.Iz.dy.dy.phi <<
+>>====================================<<
+>>add_rhs_linear :: + nuZ.Iz.Iz.dy.dy.dy.dy.phi <<
+>>add_rhs_linear :: + nuZ.Iz.Iz.dx.dx.dx.dx.phi <<
+>>add_rhs_linear :: + two.nuZ.Iz.Iz.dx.dx.dy.dy.phi <<
+>>add_rhs_linear :: + nuZ.dy.dy.phi <<
+>>add_rhs_linear :: + nuZ.dx.dx.phi <<
+>>====================================<<
+>>add_rhs_linear :: + nuPerp.Iz.Iz.Iz.Iz.dx.dx.dy.dy.dy.dy.phi <<
+>>add_rhs_linear :: + nuPerp.Iz.Iz.Iz.Iz.dx.dx.dx.dx.dx.dx.phi <<
+>>add_rhs_linear :: + two.nuPerp.Iz.Iz.Iz.Iz.dx.dx.dx.dx.dy.dy.phi <<
+>>add_rhs_linear :: + nuPerp.Iz.Iz.dx.dx.dy.dy.phi <<
+>>add_rhs_linear :: + nuPerp.Iz.Iz.dx.dx.dx.dx.phi <<
+>>====================================<<
+>>add_rhs_linear :: + nuPerp.Iz.Iz.Iz.Iz.dy.dy.dy.dy.dy.dy.phi <<
+>>add_rhs_linear :: + nuPerp.Iz.Iz.Iz.Iz.dy.dy.dx.dx.dx.dx.phi <<
+>>add_rhs_linear :: + two.nuPerp.Iz.Iz.Iz.Iz.dy.dy.dx.dx.dy.dy.phi <<
+>>add_rhs_linear :: + nuPerp.Iz.Iz.dy.dy.dy.dy.phi <<
+>>add_rhs_linear :: + nuPerp.Iz.Iz.dy.dy.dx.dx.phi <<
+>>====================================<<
+>>add_rhs_linear :: - fParam.Iz.Iz.Iz.dx.dx.psi <<
+>>add_rhs_linear :: - fParam.Iz.Iz.Iz.dy.dy.psi <<
+>>add_rhs_linear :: - Iz.Iz.Iz.Iz.dy.dy.b <<
+>>add_rhs_linear :: - Iz.Iz.Iz.Iz.dx.dx.b <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dx.dx.dx.uw <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dx.dy.dy.uw <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dy.dx.dx.vw <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.Iz.dy.dy.dy.vw <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.dy.dy.ww <<
+>>add_rhs_NL     :: + Iz.Iz.Iz.dx.dx.ww <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.dx.dx.uu <<
+>>add_rhs_NL     :: - Iz.Iz.Iz.dy.dy.vv <<
+>>add_rhs_NL     :: - two.Iz.Iz.Iz.dx.dy.uv <<
+>>add_rhs_NL     :: - Iz.Iz.dx.uw <<
+>>add_rhs_NL     :: - Iz.Iz.dy.vw <<
+>>====================================<<
+>>add_rhs_NL     :: - rossby.Iz.Iz.Iz.Iz.dx.dx.dx.dx.dx.UPhi <<
+>>add_rhs_NL     :: - rossby.Iz.Iz.Iz.Iz.dx.dy.dy.dx.dx.UPhi <<
+>>add_rhs_NL     :: - rossby.Iz.Iz.dx.dx.dx.UPhi <<
+>>add_rhs_NL     :: + two.rossby.Iz.Iz.Iz.dx.dx.dx.UPrimePhi <<
+>>add_rhs_NL     :: - rossby.Iz.Iz.Iz.Iz.dx.dx.dx.dy.dy.UPhi <<
+>>add_rhs_NL     :: - rossby.Iz.Iz.Iz.Iz.dx.dy.dy.dy.dy.UPhi <<
+>>add_rhs_NL     :: - rossby.Iz.Iz.dx.dy.dy.UPhi <<
+>>add_rhs_NL     :: + two.rossby.Iz.Iz.Iz.dx.dy.dy.UPrimePhi <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.b <<
+>>add_rhs_linear :: + nubPerp.Iz.Iz.dx.dx.b + nubPerp.Iz.Iz.dy.dy.b + nubZ.b <<
+>>add_rhs_linear :: + a0N2.Iz.Iz.dx.dx.phi + a0N2.Iz.Iz.dy.dy.phi <<
+>>add_rhs_linear :: + a1N2.Iz.Iz.mz.dx.dx.phi + a1N2.Iz.Iz.mz.dy.dy.phi <<
+>>add_rhs_NL     :: - Iz.Iz.dx.bu - Iz.Iz.dy.bv - Iz.bw <<
+>>add_rhs_NL     :: - rossby.Iz.Iz.dx.UB << 
+>>add_rhs_NL     :: + rossby.Iz.Iz.UPrimeV << 
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - psi <<
+>>add_rhs_linear :: - oneHalf.friction.mz.mz.psiTilde <<
+>>add_rhs_linear :: + friction.mz.psiTilde <<
+>>add_rhs_linear :: + psiTilde <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - phi <<
+>>add_rhs_linear :: - oneQuarter.friction.mz.mz.phiTilde <<
+>>add_rhs_linear :: + oneHalf.friction.mz.phiTilde <<
+>>add_rhs_linear :: + phiTilde <<
+>>====================================<<
+>>====================================<<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: uMean <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: vMean <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: uMeanTilde <<
+>>add_BC_for_this_var :: 21 <<
+>>linearly_coupled_var :: vMeanTilde <<
+>>add_BC_for_this_var :: 21 <<
+>>linearly_coupled_var :: bMean <<
+>>add_BC_for_this_var :: 21 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.uMean <<
+>>add_rhs_linear :: + nuZ.uMean <<
+>>add_rhs_linear :: + fParam.Iz.Iz.vMean <<
+>>add_rhs_NL     :: - Iz.uw <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.vMean <<
+>>add_rhs_linear :: + nuZ.vMean <<
+>>add_rhs_linear :: - fParam.Iz.Iz.uMean <<
+>>add_rhs_NL     :: - Iz.vw <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.bMean <<
+>>add_rhs_linear :: + nubZ.bMean <<
+>>add_rhs_NL     :: + rossby.Iz.Iz.UPrimeV << 
+>>add_rhs_NL     :: - Iz.bw <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - uMean <<
+>>add_rhs_linear :: - oneHalf.friction.mz.mz.uMeanTilde <<
+>>add_rhs_linear :: + friction.mz.uMeanTilde <<
+>>add_rhs_linear :: + uMeanTilde <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - vMean <<
+>>add_rhs_linear :: - oneHalf.friction.mz.mz.vMeanTilde <<
+>>add_rhs_linear :: + friction.mz.vMeanTilde <<
+>>add_rhs_linear :: + vMeanTilde <<
+>>====================================<<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: UShearMean <<
+>>add_BC_for_this_var :: 0 <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - UShearMean <<
+>>add_rhs_source :: + one.source03 <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: UShearPrimeMean <<
+>>add_BC_for_this_var :: 0 <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - UShearPrimeMean <<
+>>add_rhs_source :: + one.source04 <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: UShearSecondMean <<
+>>add_BC_for_this_var :: 0 <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - UShearSecondMean <<
+>>add_rhs_source :: + one.source05 <<
+>>====================================<<
+>>EOF<<

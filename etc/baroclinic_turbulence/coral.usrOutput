@@ -1,0 +1,9 @@
+>>Volume :: uFull ;; Period= 5000 <<
+>>Volume :: vFull ;; Period= 5000 <<
+>>Volume :: wFull ;; Period= 5000 <<
+>>Volume :: bFull ;; Period= 5000 <<
+>>Zsummed:: uFull ;; Period= 1000 <<
+>>Zsummed:: vFull ;; Period= 1000 <<
+>>Zsummed:: wFull ;; Period= 1000 <<
+>>Zsummed:: bFull ;; Period= 1000 <<
+>>EOF<<
