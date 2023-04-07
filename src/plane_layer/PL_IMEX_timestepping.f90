@@ -447,8 +447,13 @@ module PL_IMEX_timestepping
  subroutine initialise_the_data_structure(self, scheme_id)
    class(full_problem_data_structure_T), intent(inOut) :: self
    character(len=7), intent(in) :: scheme_id
-   integer :: ix, num_args
+   integer :: ix, num_args, isys
    character(len=32), dimension(:), allocatable :: args
+   logical :: output_matrices = .False.
+   character(len=255) :: cwd
+   character(len=:), allocatable :: matrices_path
+   integer :: matrices_path_len
+   integer :: istatus
    call self%shandle%init(scheme_id, (my_rank.eq.0))
    call self%allocate_all_buffers()
    call self%prepare_building_tools()
@@ -467,6 +472,8 @@ module PL_IMEX_timestepping
    end do
    do ix = 1, num_args
       select case (args(ix)) 
+             case ('--output-matrices')
+                  output_matrices = .True.
              case ('--noises-amplitude')
                   read (args(ix+1),*) self%cargo%initialCondition_amp_kxky 
                   read (args(ix+1),*) self%cargo%initialCondition_amp_zero 
@@ -480,7 +487,24 @@ module PL_IMEX_timestepping
                   read (args(ix+1),*) self%cargo% smagorinsky_prefactor
       end select
    end do
+   if (output_matrices) then
+      if (my_rank.eq.0) then
+      print *, '*** Per user request (flag ''--output-matrices'' is present), matrices are written to the disk'
+      call getcwd(cwd)
+      matrices_path_len = len(trim(cwd)) + 13
+      allocate (character(len=matrices_path_len) :: matrices_path)
+      matrices_path = trim(cwd) // '/../Matrices/'
+      do isys = 1, self%recipe%numberOf_coupled_kxky_systems
+         call self%coupled_kxky_set(isys)%mass%csr(2,2)%write2disk( &
+                'mass', 4, my_rank, matrices_path, matrices_path_len)
+         call self%coupled_kxky_set(isys)%stif%csr(2,2)%write2disk( &
+                'stif', 4, my_rank, matrices_path, matrices_path_len)
+      end do
+      call chdir(trim(cwd), istatus)
+      end if
+   end if
  end subroutine
+
 
  subroutine allocate_all_buffers(self)
    class(full_problem_data_structure_T), intent(inOut) :: self
