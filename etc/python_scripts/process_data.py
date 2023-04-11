@@ -201,7 +201,7 @@ class plane_layer_volume:
       self.dat.append(deriv_phys)
       self.lut.append('[d/dz]'+self.lut[pos_in_list])
 
-    def zdiff_profile(self, pos_in_list):
+   def zdiff_profile(self, pos_in_list):
       from cheby_tools import chebyshev_elementary_integration
       from scipy.sparse.linalg import factorized
       import scipy.sparse as sp

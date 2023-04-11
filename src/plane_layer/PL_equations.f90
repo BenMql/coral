@@ -109,6 +109,10 @@ Module PL_equations
    character(len=:), allocatable :: str
    integer :: N_terms
    type(a_linear_contribution_T), dimension(:), allocatable :: term
+   ! below are variables useful only in case of penalisation
+   logical :: penalisation = .False.
+   real(dp) :: penalisation_strength = 0.d0
+   real(dp) :: penalisation_width    = 0.d0
  end type fullVars_recipe_T
 
  type :: coupled_system_vars_info_T
@@ -194,6 +198,9 @@ Module PL_equations
    procedure :: build_zero_sources     => build_zero_sources_in_full_recipe
    procedure :: build_kxky_NL_term     => build_kxky_NL_term_in_full_recipe
    procedure :: summarize              => summarize_full_recipe
+   procedure :: enable_penalisation
+   procedure :: set_penalisation_strength
+   procedure :: set_penalisation_width
  end type full_problem_recipe_T
 
  type(full_problem_recipe_T) :: master_recipe
@@ -438,6 +445,16 @@ Module PL_equations
            call interpret_full_variable_definition(text_list(iLine)(1:1024), &
                                                    pieces_of_definition, 'dz')
            call self%build_current_full_var( pieces_of_definition)
+       case (591)
+           call get_linear_variable_name(text_list(iLine)(1:1024), linear_var_name)
+           call self%add_full_var( linear_var_name )
+           call self%enable_penalisation () ! this is not a regular linear var!
+       case (592)
+           call extract_one_float(text_list(iLine)(1:1024), dsca )
+           call self%set_penalisation_strength(dsca)
+       case (593)
+           call extract_one_float(text_list(iLine)(1:1024), dsca )
+           call self%set_penalisation_width(dsca)
        case (6)
            if (have_not_considered_smagorinsky_yet) then
               if (self%smagorinsky_flag) then
@@ -929,6 +946,23 @@ Module PL_equations
    call move_alloc( from=mySource%term, to=myTarget%term)
  end subroutine
  
+ subroutine enable_penalisation(self)
+   class(full_problem_recipe_T) :: self
+   self%linear_vars_full( self%numberOf_linear_variables_full) % penalisation = .True. 
+ end subroutine 
+
+ subroutine set_penalisation_strength(self, dsca)
+   class(full_problem_recipe_T) :: self
+   real(dp), intent(In) :: dsca
+   self%linear_vars_full( self%numberOf_linear_variables_full) % penalisation_strength = dsca
+ end subroutine 
+
+ subroutine set_penalisation_width(self, dsca)
+   class(full_problem_recipe_T) :: self
+   real(dp), intent(In) :: dsca
+   self%linear_vars_full( self%numberOf_linear_variables_full) % penalisation_width = dsca
+ end subroutine 
+
  subroutine add_full_linear_variable_to_full_recipe(self, linear_var_name)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: linear_var_name
@@ -1670,13 +1704,37 @@ Module PL_equations
          end if
        ! from 'linear_variable_build', accepted values are 'linear_variable_{full_build/full}'
        !                                                   'quadratic_variable'
+       !                                                   'enable_penalisation'
        case (5)
          if (text_line(3:28).eq.'linear_variable_full_build') then
             bstep = 5
          else if (text_line(3:22).eq.'linear_variable_full') then
             bstep = 4
+         else if (text_line(3:21).eq.'enable_penalisation') then
+            bstep = 591
          else if (text_line(3:20).eq.'quadratic_variable') then
             bstep = 6
+         else
+            stopSig = .True.
+         end if
+       ! from 'enable_penalisation', accepted values are 'penalisation_strength' 
+       case (591)
+         if (text_line(3:23).eq.'penalisation_strength') then
+            bstep = 592
+         else
+            stopSig = .True.
+         end if
+       ! from 'penalisation_strength', accepted values are 'penalisation_width' 
+       case (592)
+         if (text_line(3:20).eq.'penalisation_width') then
+            bstep = 593
+         else
+            stopSig = .True.
+         end if
+       ! from 'penalisation_width', accepted values are 'quadratic_variable'
+       case (593)
+         if (text_line(3:20).eq.'quadratic_variable') then
+            bstep = 6  
          else
             stopSig = .True.
          end if

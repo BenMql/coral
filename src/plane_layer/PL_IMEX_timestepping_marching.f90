@@ -513,6 +513,7 @@
    ! ==================================================
    ! >>> spectral to physical tranforms  
    ! *except* for nuSmago
+   if ( .not. self%recipe%linear_vars_full(iVar)% penalisation) then
    if ( self%recipe%linear_vars_full(iVar)%str .eq. 'nuSmago' ) then
        ! fixSmago fixSmago: below is not the exact expression!
        ! for the time being, we define nuSmago as the horizontal average of the 
@@ -541,6 +542,7 @@
        self%linear_variables(iVar)%phys = self%cargo% smagorinsky_prefactor * sqrt( self%linear_variables(iVar)%phys )
    else 
        call self%linear_variables(iVar)%spec_to_phys()
+   end if
    end if
    ! /// done: transforms                     
    ! ==================================================
@@ -736,6 +738,51 @@
    end do
  end subroutine
 
+ subroutine init_penalisation(self)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer :: ix, iy, iz
+   real(dp), allocatable, dimension(:) :: penalisation_mask
+   integer :: N_masks
+   integer :: i_mask, iVar
+   real(dp) :: pm, pi
+   real(dp) :: x,y,z, lx, ly, zgap, zcenter
+
+   call gauss_chebyshev_grid_1d( self%geometry%zGrid, &
+                                 self%geometry%NZAA,&
+                                 self%geometry%center,&
+                                 self%geometry%gap)
+
+   lx = self%geometry% Lx
+   ly = self%geometry% Ly
+   zgap = self%geometry% gap
+   zcenter = self%geometry% center
+
+   do iVar = 1, self%recipe% numberOf_linear_variables_full
+      if (self%recipe% linear_vars_full (iVar) % penalisation) then
+         do iy = 1, size(self%geometry% yGrid, 1) 
+         do ix = 1, size(self%geometry% xGrid, 1) 
+         do iz = 1, self%geometry% NZAA
+          x = self%geometry% xGrid(ix)
+          y = self%geometry% yGrid(iy)
+          z = self%geometry% zGrid(iz)
+
+          i_mask = 0 
+          include "PL_user_penalisation_mask.f90"
+
+          pm = maxval(penalisation_mask)
+          pm = dtanh ( self%recipe% linear_vars_full(iVar)% penalisation_width* pm )
+          pm = ( 1._dp + pm ) / 2._dp
+          pm = self% recipe% linear_vars_full(iVar)% penalisation_strength * pm
+        
+          self%linear_variables(iVar)% phys(iz,ix,iy) = pm
+         end do
+         end do
+         end do
+         ! call self%linear_variables(iVar)% phys_to_spec()
+      end if
+   end do
+
+ end subroutine init_penalisation
 
  !> @brief  
  !> Initialisation of the spectral coefficients array of volumic heat source.

@@ -117,6 +117,26 @@ module PL_string_to_data
 
  end subroutine
 
+ subroutine extract_one_float(myLine, myFloat)
+   real(dp), intent(out) :: myFloat  
+   character(len=1024), intent(In) :: myLine
+                                  !< input line, extracted from the equations file
+   character(len=:), allocatable :: val_str
+                                  !< raw value, read as a string               
+   Integer :: double_colon_index, dollar_sign_index
+                                  !< position of some delimiters
+
+      double_colon_index = index(myLine,'::')+2
+      dollar_sign_index  = index(myLine,'<<') -2
+      if (Allocated(val_str)) deAllocate(val_str)
+      Allocate(character(dollar_sign_index-double_colon_index+1) :: val_str)
+      val_str = myLine(double_colon_index:dollar_sign_index)
+      if (val_str(len(val_str):len(val_str))==char(0)) then
+        val_str(len(val_str):len(val_str))=char(32)
+      end if
+      read(val_str,*) myFloat  
+ end subroutine
+
  subroutine extract_one_integer(myLine, myInteger)
    integer, intent(out) :: myInteger
    character(len=1024), intent(In) :: myLine

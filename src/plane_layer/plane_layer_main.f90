@@ -112,6 +112,7 @@ Program plane_layer_main
 
    call main%Factorize_operators (timings%dt, .True.)
 
+
  if (is_string_in_the_list('--rolling-qsaves', 16)) misc_cargo%rolling_qsaves = .True.
  if (is_string_in_the_list('--checks',8)) then
 
@@ -129,6 +130,7 @@ Program plane_layer_main
 
  wClock%limit = misc_cargo%time_limit
  call main%init_all_sources()
+ call main%init_penalisation()
  call main%initialise_bookkeeping_counters(timings%i_timestep)
 
  do while (.not.wClock%Time_is_elapsed)

@@ -51,6 +51,9 @@ module PL_geometry
    logical :: this_core_has_zero_mode
    type(subset_communicator_T) :: mpi_zPhys
    type(subset_communicator_T) :: mpi_yPhys
+   real(dp), allocatable, dimension(:) :: zGrid
+   real(dp), allocatable, dimension(:) :: xGrid
+   real(dp), allocatable, dimension(:) :: yGrid
   contains
    procedure :: init => initialize_geometry
    procedure :: read_params => read_input_file_parameters
@@ -129,6 +132,19 @@ module PL_geometry
    allocate (self%py (self%spec%local_NY ))
    allocate (self%deAliase_x (self%spec%local_NX ))
    allocate (self%deAliase_y (self%spec%local_NY ))
+
+   allocate (self%xGrid( domain_decomp% phys_iSize(2)))
+   allocate (self%yGrid( domain_decomp% phys_iSize(3)))
+   do ix = 1, domain_decomp%phys_iSize(2)
+   self% xGrid (ix) = (domain_decomp% phys_iStart(2) + ix) * 1._dp * &
+                                 self% Lx / self% NXAA
+   end do
+   do iy = 1, domain_decomp%phys_iSize(3)
+   self% yGrid (iy) = (domain_decomp% phys_iStart(3) + iy) * 1._dp * &
+                                 self% Ly / self% NYAA
+   end do
+
+
   
    ! we determine which processes share a common z in physical space
    call MPI_comm_split(MPI_comm_world,&
