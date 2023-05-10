@@ -431,6 +431,115 @@
    integer, intent(in) :: iVar
    integer, intent(in) :: iTime
    character(len=6), intent(in) :: linear_or_quadra
+   select case (parallel_transforms_library)
+          case ('fftw-mpi')
+          call export_Profile_fftw_mpi( &
+                               self, ivar, iTime, linear_or_quadra)
+          case ('decomp2d')
+          call export_Profile_decomp2d( &
+                               self, ivar, iTime, linear_or_quadra)
+   end select
+ end subroutine
+
+ subroutine export_Profile_fftw_mpi(self, ivar, iTime, linear_or_quadra)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer, intent(in) :: iVar
+   integer, intent(in) :: iTime
+   character(len=6), intent(in) :: linear_or_quadra
+   character(len=45) :: fileName
+   real(kind=dp), allocatable :: local_profile(:)
+   real(kind=dp), allocatable :: global_profile(:)
+   !----------------------
+   ! Internal variables
+   !----------------------
+   Integer(kind=MPI_Offset_Kind) :: displacement
+                     !< Convert \p cumul_nElems to bytes
+   Integer :: size_of_dble
+                     !< size of a double precision number in bytes
+   Integer :: file_id
+                     !< mpiIO keeps tracks of what it's doing
+   Integer, Dimension(:), Allocatable :: array_of_nelems
+   Integer :: my_cumul
+   Integer :: icore
+   integer :: my_nElems
+
+   allocate( local_profile  (self%geometry%phys%local_NZ) )
+   allocate( global_profile (self%geometry%phys%local_NZ) )
+
+   call chdir(self%io_bookkeeping%output_directory)
+   409 format ('./Profiles/linear_var',(i2.2),'_time',(i8.8),'_full.dat')
+   410 format ('./Profiles/quadra_var',(i2.2),'_time',(i8.8),'_full.dat')
+   ! first, each process averages over x and y
+   select case (linear_or_quadra)
+          case ('linear')
+          local_profile = sum(sum(self%linear_variables(iVar)%phys, 3),2)
+          write (fileName,409) iVar, iTime
+          case ('quadra')
+          write (fileName,410) iVar, iTime
+          local_profile = sum(sum(self%quadratic_variables(iVar)%phys, 3),2)
+   end select
+   local_profile = local_profile / self%geometry%NXAA                   
+   local_profile = local_profile / self%geometry%NYAA                   
+   ! averaged of distributed y
+   call MPI_reduce(local_profile, &  !send buffer
+                   global_profile, & !recv buffer
+                   self%geometry%phys%local_NZ, & !count
+                   MPI_double, &     !dtype
+                   MPI_sum, &
+                   0, &
+                   self%geometry%mpi_Zphys%comm, ierr)
+   ! now the z-distributed (but x,y-averaged) global_profiles are collectively written
+   ! by the 0-rank processes of self%mpi_Yphys%comm
+   ! // ugly, fixme one day
+   if (my_rank .eq. 0 ) then 
+      my_nElems    = self%geometry%phys%local_NZ
+   else 
+      my_nElems = 0
+   end if
+   !    ugly, fixme one day // 
+   ! ~~~~~~~~~~~~~~~~~~~~
+   ! compute cumul_nElems is missing, we compute it
+   ! ~~~~~~~~~~~~~~~~~~~~
+   Allocate(array_of_nElems(0:self%geometry%MPI_yphys%size-1))
+   Call MPI_Gather(my_nElems, 1, MPI_Integer,&
+          array_of_nElems, 1, MPI_integer, 0, self%geometry%MPI_yPhys%comm, ierr)
+   Call MPI_Bcast(array_of_nElems, self%geometry%MPI_yphys%size, MPI_integer, 0, self%geometry%MPI_yPhys%comm, ierr)
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ! compute the number of elements owned by predecessors
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   my_cumul = 0
+   Do icore = 0, self%geometry%MPI_yPhys%rank-1
+     my_cumul = my_cumul + array_of_nelems(icore)
+   End Do
+   DeAllocate(array_of_nElems)
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ! compute the displacement
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   Call MPI_Type_Size(MPI_Double, size_of_dble, ierr)
+   displacement = my_cumul*size_of_dble
+
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+   !      Write the Profile           !
+   ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+   call MPI_File_Open(self%geometry%MPI_yPhys%comm, fileName,&
+                      MPI_Mode_WROnly + MPI_Mode_Create,&
+                      MPI_Info_Null, file_id, ierr)
+   call MPI_File_set_view(file_id, displacement, MPI_Double, &
+                          MPI_Double, 'native', &
+                          MPI_Info_Null, ierr)
+   call MPI_File_Write(file_id, global_profile, my_nElems, MPI_Double, &
+                          MPI_Status_Ignore, Ierr)
+   call MPI_File_Close(file_id, ierr)
+ end subroutine
+
+
+
+
+ subroutine export_Profile_decomp2d(self, iVar, iTime, linear_or_quadra)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer, intent(in) :: iVar
+   integer, intent(in) :: iTime
+   character(len=6), intent(in) :: linear_or_quadra
    character(len=45) :: fileName
    real(kind=dp), allocatable :: local_profile(:)
    real(kind=dp), allocatable :: global_profile(:)
@@ -509,7 +618,6 @@
    call MPI_File_Write(file_id, global_profile, my_nElems, MPI_Double, &
                           MPI_Status_Ignore, Ierr)
    call MPI_File_Close(file_id, ierr)
-
 
  end subroutine
    

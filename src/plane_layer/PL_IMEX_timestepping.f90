@@ -181,6 +181,8 @@ module PL_IMEX_timestepping
    procedure :: export_verticallyAvgedSlice => export_verticallyAvgedSlice_general
    procedure :: export_volume
    procedure :: export_Profile
+   procedure :: export_Profile_fftw_mpi
+   procedure :: export_Profile_decomp2d
    procedure :: export_CheckPoints
    procedure :: factorize_operators 
    procedure :: kxky_matrices_manyGalkn_to_uniqueCheby
