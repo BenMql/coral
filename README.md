@@ -4,7 +4,7 @@
 
 
 Coral is a spectral PDEs solver for the plane-layer geometry, written in modern Fortran and highly scalable. 
-The name comes from the initial motivation, which was **Co**nvection in **Ra**pidly rotating **L**ayers (eventhough the code has now a much more general scope).
+The name comes from the initial motivation, which was **Co**nvection in **Ra**pidly rotating **L**ayers (even though the code has now a much more general scope).
 
 See current version and history [here](https://github.com/BenMql/coral/wiki/versions)
 
