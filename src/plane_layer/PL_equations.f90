@@ -91,6 +91,7 @@ Module PL_equations
 
  type :: list_of_nlVars_T
     character(len=:), allocatable :: str
+    logical :: remove_z_integral
     integer :: ivar1
     integer :: ivar2
     character(len=:), allocatable :: svar1
@@ -466,7 +467,11 @@ Module PL_equations
            end if
            call interpret_quadratic_variable_definition(text_list(iLine)(1:1024), Qvar_name, &
                                                                         Lvar1_name, Lvar2_name)
-           call self%add_quadratic_var(Qvar_name, Lvar1_name, Lvar2_name)
+           call self%add_quadratic_var(Qvar_name, Lvar1_name, Lvar2_name, 'untouched')
+       case (62)
+           call interpret_quadratic_variable_definition(text_list(iLine)(1:1024), Qvar_name, &
+                                                                        Lvar1_name, Lvar2_name)
+           call self%add_quadratic_var(Qvar_name, Lvar1_name, Lvar2_name, 'zero_Mean')
        case(7)
            call self%add_coupled_kxky_eqns()
        case(71)
@@ -818,11 +823,12 @@ Module PL_equations
    
  end subroutine
 
- Subroutine add_quadratic_variable_to_full_recipe(self, qvname, lv1name, lv2name)
+ Subroutine add_quadratic_variable_to_full_recipe(self, qvname, lv1name, lv2name, filtered_or_not)
    class(full_problem_recipe_T) :: self
    type(list_of_NLVars_T), dimension(:), allocatable :: temporary_list
    character(len=:), intent(in), allocatable :: qvName 
    character(len=:), intent(in), allocatable :: lv1Name, lv2Name
+   character(len=9), intent(in) :: filtered_or_not
    integer :: ivar, entry_index
    ! first initialize the list if it was empty
    if (self%numberOf_quadratic_variables.eq.0) then
@@ -845,6 +851,14 @@ Module PL_equations
    self%nl_vars(entry_index)%svar2 = lv2name
    self%nl_vars(entry_index)%ivar1 = 0
    self%nl_vars(entry_index)%ivar2 = 0
+   if (filtered_or_not=='untouched') then
+   self%nl_vars(entry_index)%remove_z_integral = .False.
+   else if (filtered_or_not=='zero_Mean') then
+   self%nl_vars(entry_index)%remove_z_integral = .True.
+   else
+       print *, 'WRONG ''FILTERED_OR_NOT'' VAR. IN PL_EQUATIONS.F90'
+       stop
+   end if
    do ivar = 1, self%numberOf_Linear_variables_full
      if (lv1name==self%linear_vars_full(ivar)%str) then 
         self%nl_vars(entry_index)%ivar1 = ivar
@@ -1740,11 +1754,27 @@ Module PL_equations
          end if
        ! from 'quadratic_variable', accepted values are 'quadratic_variable', 
        !                                                'add_set_of_coupled_kxky_equations'
+       !                                                'zFiltered_quadratic_variable'
        case (6)
          if (text_line(3:35).eq.'add_set_of_coupled_kxky_equations') then
             bstep = 7
          else if (text_line(3:20).eq.'quadratic_variable') then
             bstep = 6
+         else if (text_line(3:30).eq.'zFiltered_quadratic_variable') then
+            bstep = 62
+         else
+            stopSig = .True.
+         end if
+       ! from 'zFiltered_quadratic_variable', accepted values are 'quadratic_variable', 
+       !                                                'add_set_of_coupled_kxky_equations'
+       !                                                'zFiltered_quadratic_variable'
+       case (62)
+         if (text_line(3:35).eq.'add_set_of_coupled_kxky_equations') then
+            bstep = 7
+         else if (text_line(3:20).eq.'quadratic_variable') then
+            bstep = 6
+         else if (text_line(3:30).eq.'zFiltered_quadratic_variable') then
+            bstep = 62
          else
             stopSig = .True.
          end if

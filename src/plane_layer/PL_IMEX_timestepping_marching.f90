@@ -275,26 +275,18 @@
    call self%compute_cfl_based_timestep()
 
    do iQvar = 1, self%recipe%numberOf_quadratic_variables
-      ! the recipe is self%recipe%nl_vars(iQvar
       ! largeArrayWarning 
       self%quadratic_variables(iQvar)%phys = &
               self%linear_variables( self%recipe%nl_vars(iQvar)%iVar1 )%phys *&
               self%linear_variables( self%recipe%nl_vars(iQvar)%iVar2 )%phys
-       !varAvg  = 0._dp                                                       
-       !do ix = 1, self%geometry%phys%local_NX
-       !do iy = 1, self%geometry%phys%local_NY
-       !do iz = 1, self%geometry%phys%local_NZ
-       !varAvg = varAvg + self%quadratic_variables(iQVar)%phys(iz,iy,ix) &
-                       !* self%gauss_cheby%weight1d( domain_decomp%phys_iStart(1) -1 + iz)
-       !end do
-       !end do
-       !end do
-      !print *, iQvar, 'pouet',  self%recipe%nl_vars(iQvar)%iVar1 ,  &
-           !self%recipe%nl_vars(iQvar)%iVar2, self%quadratic_variables(iQvar)%phys(1,1,1), &
-                                  !varAvg
      
       call self%quadratic_variables(iQvar)%phys_to_spec()
+      if (self%recipe%nl_vars(iQvar)% remove_z_integral) then
+      call self%remove_vertical_mean_of_quadratic_var (iQvar)
+      call self%quadratic_variables(iQvar)%spec_to_phys()
+      end if
    end do
+
 
    if (i.eq.1) call self%output_global_quantities()
    if (i.eq.1) call self%output_slices_volumes_and_profiles()
@@ -331,13 +323,7 @@
       !   (ditching the lowest projections, polluted by integration constants)
       !   kind of wasteful to do that here, but probably not a biggy
       insert_in_equation =  self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%eqn_index 
-      !if (my_rank.eq.0) print *, self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dsca, &
-              !self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dx_exponent, &
-              !self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%dy_exponent, &
-              !self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%Iz_exponent, &
-              !self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%quad_var_index, &
-              !self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%eqn_index, &
-              !self%recipe%kxky_recipes(iSys)%eqn_order( insert_in_equation )+1
+
       call self%coupled_kxky_set(iSys)%building_tools%cheb_IM ( &
                           self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%Iz_exponent+1, &
                           self%recipe%kxky_recipes(iSys)%NL%term(iTerm)%z_multiply +1  &

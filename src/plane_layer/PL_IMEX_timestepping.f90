@@ -197,6 +197,7 @@ module PL_IMEX_timestepping
    procedure :: prepare_building_tools
    procedure :: prepare_stencils
    procedure :: prepare_chebyshev_integration
+   procedure :: remove_vertical_mean_of_quadratic_var
    procedure :: stif_aux_to_K_std  => LPIMEX_stif_aux_to_K_std
    procedure :: zero_matrices_manyGalkn_to_uniqueCheby
    procedure :: allocate_sources
@@ -212,6 +213,21 @@ module PL_IMEX_timestepping
  end type full_problem_data_structure_T
 
  contains
+
+ subroutine remove_vertical_mean_of_quadratic_var( self, iQ)
+   class(full_problem_data_structure_T), intent(inOut) :: self
+   integer, intent(in) :: iQ
+   integer :: q
+   self%quadratic_variables (iQ) %spec (1, :,:) = cmplx(0._dp, 0._dp, kind=dp)
+   do q =1, self%geometry%NZ /2-1
+      self%quadratic_variables(iQ) %spec (1,:,:)           &
+       =   self%quadratic_variables(iQ) %spec (1,:,:)      &
+       -   self%quadratic_variables(iQ) %spec (2*q+1,:,:)  &
+           * (  0.5_dp  / (2._dp * q + 1._dp)              &
+             -  0.5_dp  / (2._dp * q - 1._dp)  )
+   end do
+ end subroutine
+
 
  subroutine differentiate_kxky ( self, field, dOrder)
    class(full_problem_data_structure_T), intent(inOut) :: self
