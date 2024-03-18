@@ -39,8 +39,49 @@ reso2 = {'x': NZAA, 'y': NZAA, 'z' : NYAA}
 grid1 = {'x': y, 'y': x, 'z' : x}
 grid2 = {'x': z, 'y': z, 'z' : y}
 
+try:
+   a = np.fromfile('Slices/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_'+posStr+'_time'+timeStr.zfill(8)+'_full.dat', dtype=np.float_).reshape(reso1[posStr[0]], reso2[posStr[0]])
+except FileNotFoundError:
+   print ('/!\ The following file does not exist:')
+   print ('/!\ ------ ./Slices/'
+        +varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_'+posStr+'_time'+timeStr.zfill(8)
+        +'_full.dat')
+   print ('/!\ Now looking for:')
+   print ('/!\ ------ '
+        +'Volumes/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_time'+timeStr.zfill(8)+'_full.dat')
+   try:
+      aVol = np.fromfile(
+         'Volumes/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_time'+timeStr.zfill(8)+'_full.dat',
+         dtype=np.float_
+                     ).reshape(NXAA, NYAA, NZAA)
+   except FileNotFoundError:
+      print ('/!\ It does not exist either.')
+      print ('/!\ Now looking for:')
+      print ('/!\ ------ '
+       +'Volumes/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_time'+timeStr.zfill(8)+'_twoThirds.dat')
+      NX = NXAA//3*2
+      NY = NYAA//3*2
+      NZ = NZAA//3*2
+      aVol = np.fromfile(
+         'Volumes/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_time'+timeStr.zfill(8)+'_twoThirds.dat',
+         dtype=np.float_
+                     ).reshape(NX, NY, NZ)
+      reso1 = {'x': NY, 'y': NX, 'z' : NX}
+      reso2 = {'x': NZ, 'y': NZ, 'z' : NY}
+      z = geom.center+ 0.5*geom.gap*np.cos ((
+       np.linspace(0,NZ, num=NZ, endpoint=False)*2+1.)*np.pi/2./NZ)
+      x = np.linspace(0,geom.Lx, NX)
+      y = np.linspace(0,geom.Ly, NY)
+      grid1 = {'x': y, 'y': x, 'z' : x}
+      grid2 = {'x': z, 'y': z, 'z' : y}
+   if (posStr[0] == 'x'):
+       a = aVol[int(posStr[1:])-1, :, :]
+   if (posStr[0] == 'y'):
+       a = aVol[:, int(posStr[1:])-1, :]
+   if (posStr[0] == 'z'):
+       a = aVol[:, :, int(posStr[1:])-1]
+   del aVol
 
-a = np.fromfile('Slices/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_'+posStr+'_time'+timeStr.zfill(8)+'_full.dat', dtype=np.float_).reshape(reso1[posStr[0]], reso2[posStr[0]])
 
 
 plt.figure()
