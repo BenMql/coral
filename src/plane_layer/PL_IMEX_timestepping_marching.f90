@@ -276,9 +276,17 @@
 
    do iQvar = 1, self%recipe%numberOf_quadratic_variables
       ! largeArrayWarning 
-      self%quadratic_variables(iQvar)%phys = &
+      if (self%recipe%nl_vars(iQvar)%iVar1 == -1) then
+        self%quadratic_variables(iQvar)%phys = &
+              self%linear_variables( self%recipe%nl_vars(iQvar)%iVar2 )%phys
+      else if (self%recipe%nl_vars(iQvar)%iVar2 == -1) then
+        self%quadratic_variables(iQvar)%phys = &
+              self%linear_variables( self%recipe%nl_vars(iQvar)%iVar1 )%phys
+      else
+        self%quadratic_variables(iQvar)%phys = &
               self%linear_variables( self%recipe%nl_vars(iQvar)%iVar1 )%phys *&
               self%linear_variables( self%recipe%nl_vars(iQvar)%iVar2 )%phys
+      end if
      
       call self%quadratic_variables(iQvar)%phys_to_spec()
       if (self%recipe%nl_vars(iQvar)% remove_z_integral) then
@@ -529,6 +537,11 @@
        call self%horizontal_average_of_physical_quantity_inPlace( iVar )
        self%linear_variables(iVar)%phys = self%cargo% smagorinsky_prefactor * sqrt( self%linear_variables(iVar)%phys )
    else 
+       if (self%recipe%linear_vars_full(iVar)%extract_value_at == 'BotSurf') then
+           self%linear_variables(iVar)%spec(1,1,1) = 0.d0 ! code placeholder FIXFIXFIX
+       else if (self%recipe%linear_vars_full(iVar)%extract_value_at == 'TopSurf') then
+           self%linear_variables(iVar)%spec(1,1,1) = 0.d0 ! code placeholder FIXFIXFIX
+       end if
        call self%linear_variables(iVar)%spec_to_phys()
    end if
    end if

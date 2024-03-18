@@ -108,6 +108,7 @@ Module PL_equations
    !! In the example above, self%N_terms = 3 and each of these 3 terms is stored in
    !! self % term (1:3)
    character(len=:), allocatable :: str
+   character(len=7) :: extract_value_at ! 'TopSurf', 'BotSurf', 'nowhere'
    integer :: N_terms
    type(a_linear_contribution_T), dimension(:), allocatable :: term
    ! below are variables useful only in case of penalisation
@@ -208,7 +209,7 @@ Module PL_equations
 
  contains 
 
- Subroutine add_timeseries( self, text_list)
+ subroutine add_timeseries( self, text_list)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: text_list(:)
    character(len=1024) :: restOfmyLine
@@ -441,14 +442,20 @@ Module PL_equations
            call self%add_linear_var( linear_var_name, 'zero')
        case (4)
            call get_linear_variable_name(text_list(iLine)(1:1024), linear_var_name)
-           call self%add_full_var( linear_var_name)
+           call self%add_full_var( linear_var_name, 'nowhere')
+       case (41)
+           call get_linear_variable_name(text_list(iLine)(1:1024), linear_var_name)
+           call self%add_full_var( linear_var_name, 'BotSurf')
+       case (42)
+           call get_linear_variable_name(text_list(iLine)(1:1024), linear_var_name)
+           call self%add_full_var( linear_var_name, 'TopSurf')
        case (5) 
            call interpret_full_variable_definition(text_list(iLine)(1:1024), &
                                                    pieces_of_definition, 'dz')
            call self%build_current_full_var( pieces_of_definition)
        case (591)
            call get_linear_variable_name(text_list(iLine)(1:1024), linear_var_name)
-           call self%add_full_var( linear_var_name )
+           call self%add_full_var( linear_var_name, 'nowhere')
            call self%enable_penalisation () ! this is not a regular linear var!
        case (592)
            call extract_one_float(text_list(iLine)(1:1024), dsca )
@@ -461,7 +468,7 @@ Module PL_equations
               if (self%smagorinsky_flag) then
                   !allocate( character(len=7) :: nuSmagoStr, source='nuSmago')
                   allocate( nuSmagoStr, source='nuSmago')
-                  call self%add_full_var( nuSmagoStr )     
+                  call self%add_full_var( nuSmagoStr, 'nowhere')
               end if
               have_not_considered_smagorinsky_yet = .False.
            end if
@@ -859,6 +866,9 @@ Module PL_equations
        print *, 'WRONG ''FILTERED_OR_NOT'' VAR. IN PL_EQUATIONS.F90'
        stop
    end if
+   ! ///////////////////////////////////////////////
+   ! ... try matching vars with linear variables
+   ! --------
    do ivar = 1, self%numberOf_Linear_variables_full
      if (lv1name==self%linear_vars_full(ivar)%str) then 
         self%nl_vars(entry_index)%ivar1 = ivar
@@ -867,10 +877,23 @@ Module PL_equations
         self%nl_vars(entry_index)%ivar2 = ivar
      end if
    end do
+   ! ///////////////////////////////////////////////
+   ! ... try detecting multiplication by 1       
+   ! --------
+   if (lv1name=='ONE') self%nl_vars(entry_index)%ivar1 = -1
+   if (lv2name=='ONE') self%nl_vars(entry_index)%ivar2 = -1
+   ! ///////////////////////////////////////////////
+   ! ... or else there must be a problem         
+   ! --------
    if ((self%NL_vars(entry_index)%ivar1==0) .or. &
        (self%NL_vars(entry_index)%ivar2==0) ) then
        STOP 'bad NL var definition (wrong reference to linear var.)'
    end if 
+   if ((self%NL_vars(entry_index)%ivar1==-1) .and. &
+       (self%NL_vars(entry_index)%ivar2==-1) ) then
+       STOP 'Do not define a quad.var as one to the square. Use a source instead'
+   end if 
+
  End Subroutine add_quadratic_variable_to_full_recipe
 
  Subroutine add_linear_variable_to_full_recipe(self, varName, varKind)
@@ -977,9 +1000,10 @@ Module PL_equations
    self%linear_vars_full( self%numberOf_linear_variables_full) % penalisation_width = dsca
  end subroutine 
 
- subroutine add_full_linear_variable_to_full_recipe(self, linear_var_name)
+ subroutine add_full_linear_variable_to_full_recipe(self, linear_var_name, extract_to)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: linear_var_name
+   character(len=7), intent(in) :: extract_to
    type(fullVars_recipe_T), dimension(:), allocatable :: tmp
    ! increment the total number of "full variables"
    self%numberOf_linear_variables_full = self%numberOf_linear_variables_full + 1
@@ -989,6 +1013,7 @@ Module PL_equations
    tmp(self%numberof_linear_variables_full)%N_terms = 0
    allocate(character(len=len(linear_var_name)) :: tmp(self%numberOf_linear_variables_full)%str)
    tmp(self%numberOf_linear_variables_full)%str = linear_var_name
+   tmp(self%numberOf_linear_variables_full)%extract_value_at = extract_to
    allocate(tmp(self%numberOf_linear_variables_full)%term(0))
    call move_alloc(tmp, self%linear_vars_full)
  end subroutine add_full_linear_variable_to_full_recipe
