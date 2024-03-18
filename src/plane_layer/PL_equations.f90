@@ -1719,11 +1719,51 @@ Module PL_equations
        ! from 'linear_variable_build', accepted values are 'linear_variable_{full_build/full}'
        !                                                   'quadratic_variable'
        !                                                   'enable_penalisation'
+       !                            'linear_variable_bottom_boundary_value'
+       !                            'linear_variable_top_boundary_value'
        case (5)
          if (text_line(3:28).eq.'linear_variable_full_build') then
             bstep = 5
          else if (text_line(3:22).eq.'linear_variable_full') then
             bstep = 4
+         else if (text_line(3:39).eq.'linear_variable_bottom_boundary_value') then
+            bstep = 53
+         else if (text_line(3:36).eq.'linear_variable_top_boundary_value') then
+            bstep = 54
+         else if (text_line(3:21).eq.'enable_penalisation') then
+            bstep = 591
+         else if (text_line(3:20).eq.'quadratic_variable') then
+            bstep = 6
+         else
+            stopSig = .True.
+         end if
+       ! from 'linear_variable_bottom_boundary_value', accepted values
+       !                                                   'quadratic_variable'
+       !                                                   'enable_penalisation'
+       !                            'linear_variable_bottom_boundary_value'
+       !                            'linear_variable_top_boundary_value'
+       case (53)
+         if (text_line(3:39).eq.'linear_variable_bottom_boundary_value') then
+            bstep = 53
+         else if (text_line(3:36).eq.'linear_variable_top_boundary_value') then
+            bstep = 54
+         else if (text_line(3:21).eq.'enable_penalisation') then
+            bstep = 591
+         else if (text_line(3:20).eq.'quadratic_variable') then
+            bstep = 6
+         else
+            stopSig = .True.
+         end if
+       ! from 'linear_variable_top_boundary_value', accepted values
+       !                            'quadratic_variable'
+       !                            'enable_penalisation'
+       !                            'linear_variable_bottom_boundary_value'
+       !                            'linear_variable_top_boundary_value'
+       case (54)
+         if (text_line(3:39).eq.'linear_variable_bottom_boundary_value') then
+            bstep = 53
+         else if (text_line(3:36).eq.'linear_variable_top_boundary_value') then
+            bstep = 54
          else if (text_line(3:21).eq.'enable_penalisation') then
             bstep = 591
          else if (text_line(3:20).eq.'quadratic_variable') then
