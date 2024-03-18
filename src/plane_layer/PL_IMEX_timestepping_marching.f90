@@ -282,7 +282,9 @@
      
       call self%quadratic_variables(iQvar)%phys_to_spec()
       if (self%recipe%nl_vars(iQvar)% remove_z_integral) then
+      ! first we filter the vertically invariant component in spectral space
       call self%remove_vertical_mean_of_quadratic_var (iQvar)
+      ! and we propagate that back to physical space, for output purposes
       call self%quadratic_variables(iQvar)%spec_to_phys()
       end if
    end do
