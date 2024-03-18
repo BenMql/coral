@@ -980,6 +980,10 @@ Module PL_equations
    type(fullVars_recipe_T), intent(inOut) :: mySource, myTarget
    call move_alloc( from=mySource%str, to=myTarget%str)
    myTarget%N_terms = mySource%N_terms
+   myTarget%extract_value_at = mySource%extract_value_at
+   myTarget%penalisation = mySource%penalisation
+   myTarget%penalisation_strength = mySource%penalisation_strength
+   myTarget%penalisation_width = mySource%penalisation_width
    call move_alloc( from=mySource%term, to=myTarget%term)
  end subroutine
  

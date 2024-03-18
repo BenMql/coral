@@ -419,7 +419,7 @@
    class(full_problem_data_structure_T), intent(inOut) :: self
    integer :: iVar, jVar
    integer :: iTerm
-   integer :: ix, iy
+   integer :: ix, iy, iz
    integer :: system_of_interest, position_of_interest
    complex (kind=dp), allocatable :: datBuffer (:,:,:)
    real    (kind=dp), allocatable :: datBufferZero (:)
@@ -507,7 +507,7 @@
    ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!     
 
    ! ==================================================
-   ! >>> spectral to physical tranforms  
+   ! >>> spectral to physical transforms  
    ! *except* for nuSmago
    if ( .not. self%recipe%linear_vars_full(iVar)% penalisation) then
    if ( self%recipe%linear_vars_full(iVar)%str .eq. 'nuSmago' ) then
@@ -537,10 +537,17 @@
        call self%horizontal_average_of_physical_quantity_inPlace( iVar )
        self%linear_variables(iVar)%phys = self%cargo% smagorinsky_prefactor * sqrt( self%linear_variables(iVar)%phys )
    else 
+       ! print *, self%recipe%linear_vars_full(iVar)%extract_value_at 
        if (self%recipe%linear_vars_full(iVar)%extract_value_at == 'BotSurf') then
            self%linear_variables(iVar)%spec(1,1,1) = 0.d0 ! code placeholder FIXFIXFIX
        else if (self%recipe%linear_vars_full(iVar)%extract_value_at == 'TopSurf') then
-           self%linear_variables(iVar)%spec(1,1,1) = 0.d0 ! code placeholder FIXFIXFIX
+          ! print *, 'now filtering'
+           do iz =2, self%geometry%NZAA
+           self%linear_variables(iVar)%spec(1,:,:) = &
+                   self%linear_variables(iVar)%spec (1,:,:) &
+                 + self%linear_variables(iVar)%spec(iz,:,:) 
+           self%linear_variables(iVar)%spec(iz,:,:)  = cmplx(0._dp, 0._dp, kind=dp)
+           end do
        end if
        call self%linear_variables(iVar)%spec_to_phys()
    end if
