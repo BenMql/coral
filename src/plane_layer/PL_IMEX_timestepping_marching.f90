@@ -423,6 +423,7 @@
    integer :: system_of_interest, position_of_interest
    complex (kind=dp), allocatable :: datBuffer (:,:,:)
    real    (kind=dp), allocatable :: datBufferZero (:)
+   integer :: parity_factor
 
    allocate( datBuffer (domain_decomp% spec_iSize(1), &
                         domain_decomp% spec_iSize(2), &
@@ -539,10 +540,18 @@
    else 
        ! print *, self%recipe%linear_vars_full(iVar)%extract_value_at 
        if (self%recipe%linear_vars_full(iVar)%extract_value_at == 'BotSurf') then
-           self%linear_variables(iVar)%spec(1,1,1) = 0.d0 ! code placeholder FIXFIXFIX
+           do iz =2, self%geometry%NZ
+           parity_factor = (-1)**iz
+           self%linear_variables(iVar)%spec(1,:,:) = &
+                   self%linear_variables(iVar)%spec (1,:,:) &
+                 - self%linear_variables(iVar)%spec(iz,:,:) * parity_factor
+           self%linear_variables(iVar)%spec(iz,:,:)  = cmplx(0._dp, 0._dp, kind=dp)
+           end do
        else if (self%recipe%linear_vars_full(iVar)%extract_value_at == 'TopSurf') then
-          ! print *, 'now filtering'
-           do iz =2, self%geometry%NZAA
+           do iz =2, self%geometry%NZ
+           !call c_f_pointer(p1, self%spec,  [domain_decomp% NZ_long,&
+                                             !domain_decomp% NYAA_long,&
+                                             !domain_decomp% local_NX_spec]) 
            self%linear_variables(iVar)%spec(1,:,:) = &
                    self%linear_variables(iVar)%spec (1,:,:) &
                  + self%linear_variables(iVar)%spec(iz,:,:) 
