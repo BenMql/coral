@@ -57,6 +57,9 @@ Program check_equations
    !deAllocate( arr_of_lines_out, arr_of_lines_eqn, arr_of_lines_tms)
 
    call recipe%summarize()
+      print *, ' * * * THE EQUATION FILE WAS SUCCESSFULLY READ AND INTERPRETED !! * * *'
+
+
 
   call MPI_finalize(ierr)
 
