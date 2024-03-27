@@ -218,3 +218,36 @@ triply: $(Triply_periodic_Objects)
 
 
 
+
+                        #############################
+                        #############################
+# ~~~~~~~~~~~~~~~~~~~   #      CHECK EQUATIONS      #  ~~~~~~~~~~~~~~~~~~~
+                        #############################
+                        #############################
+
+
+
+Slabs49_layer_Objects := $(MISC_SRC)chdir_mod.o    
+Slabs49_layer_Objects += $(MISC_SRC)fortran_kinds.o
+Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
+Slabs49_layer_Objects += $(TEXT_SRC)cwraps.o
+Slabs49_layer_Objects += $(TEXT_SRC)cfun_parse_text.o
+Slabs49_layer_Objects += $(TEXT_SRC)ftext_parsing.o
+Slabs49_layer_Objects += $(MPI_SRC)MPI_vars.o
+Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
+Slabs49_layer_Objects += $(MISC_SRC)include_git_version.o
+Slabs49_layer_Objects += $(LAYER)PL_string_to_data.o
+Slabs49_layer_Objects += $(LAYER)PL_equations.o             
+Slabs49_layer_Objects += $(LAYER)check_equations.o
+
+
+checks: $(Slabs49_layer_Objects)
+	mkdir -p $(BUILD_DIR)
+	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.checks.x $^ -I$(MODDIR)   
+	$(MAKE) clean
+
+
+
+
+
+
