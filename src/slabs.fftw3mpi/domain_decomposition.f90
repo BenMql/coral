@@ -5,7 +5,7 @@
  ! MODULE: domain_decomposition
  ! 
  !> @author
- !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@tutanota.com
+ !> Ben Miquel, www.normalesup.org/~benmiquel, benjamin.miquel@cnrs.com
  !
  ! DESCRIPTION
  !> Domain decomposition for linking with fftw3-mpi library.

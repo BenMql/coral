@@ -31,6 +31,12 @@ else:
   posStr    = input('Slice position? [eg x00001, y00512, z00064] >> ')
   timeStr   = input('Time? [integer]                             >> ')
 
+# allow a condensed notation for the position, e.g.: 'z2' -> 'z00002'
+posStr = posStr[0]+posStr[1:].zfill(5)
+# allow 'k' and 'M' suffixes for the time-step index 
+timeStr = timeStr.replace('k', '000').replace('M','000000')
+
+
 varDict = {"l" : "linear", "q" : "quadratic",
            "L" : "linear", "Q" : "quadratic"}
 
