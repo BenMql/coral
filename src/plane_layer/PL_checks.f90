@@ -37,41 +37,62 @@
    end do
    end do
    end do
-   ! DELME BELOW
-   main%linear_variables(1)%spec = cmplx( 0._dp, 0._dp, kind=dp)
-   main%linear_variables(1)%spec( 2,4,6 )  =cmplx( 1.0_dp , 0._dp, kind=dp)
-   call main%linear_variables(1)%spec_to_phys()
-   open (unit=9, file='phys.bin', status='replace', access='stream')
-   write(9) main% linear_variables(1)% phys 
-   close(unit=9)
-   ! DELME above
+
    call wclock%init()
    call main%linear_variables(1)%phys_to_spec()
    call main%linear_variables(1)%spec_to_phys()
    call wclock%check(.false.)
-   !print *, main%linear_variables(1)%phys
+
    first_moment = sum(main%linear_variables(1)%phys)
    second_moment = sum((main%linear_variables(1)%phys)**2)
    third_moment = sum((main%linear_variables(1)%phys)**3)
+
+
+   if (my_rank==0) print *, " >>> BEFORE THE TRANSFORMS:"
+
+   4253 Format ('core ',I4,', moments before transforms | m1=',ES10.3,' | m2=',ES10.3,' | m3=',ES10.3)
+   do irank = 0, world_size
+   if (my_rank == irank) then
+   write(*,4253)  my_rank,& 
+                    first_moment,&
+                    second_moment,&
+                    third_moment
+   end if
+   call mpi_barrier(mpi_comm_world, ierr)
+   end do
+
    call wclock%init()
    call main%linear_variables(1)%phys_to_spec()
    call main%linear_variables(1)%spec_to_phys()
    call wclock%check(.false.)
-   !print*, my_rank, first_moment, &
-   !                 sum(main%linear_variables(1)%phys),&
-   !                 abs(first_moment- sum(main%linear_variables(1)%phys)),&
-   !                 second_moment,&
-   !                 sum((main%linear_variables(1)%phys)**2),&
-   !                 abs(second_moment- sum((main%linear_variables(1)%phys)**2)),&
-   !                 third_moment,&
-   !                 sum((main%linear_variables(1)%phys)**3),&
-   !                 abs(third_moment- sum((main%linear_variables(1)%phys)**2))
    
+   if (my_rank==0) print *, " >>> AFTER THE TRANSFORMS:"
+
+   4254 Format ('core ',I4,', moments after transforms | m1=',ES10.3,' | m2=',ES10.3,' | m3=',ES10.3)
+   do irank = 0, world_size
+   if (my_rank == irank) then
+   write(*,4254)  my_rank,& 
+                    sum(main%linear_variables(1)%phys),&
+                    sum((main%linear_variables(1)%phys)**2),&
+                    sum((main%linear_variables(1)%phys)**3)
+   end if
+   call mpi_barrier(mpi_comm_world, ierr)
+   end do
+
+   if (my_rank==0) print *, " >>> RELATIVE ERRORS (should be approx. machine precision):"
+
    4262 Format ('core ',I4,' | E1=',ES10.3,' | E2=',ES10.3,' | E3=',ES10.3)
+   do irank = 0, world_size
+   if (my_rank == irank) then
    write(*,4262)  my_rank,& 
                     abs((first_moment- sum(main%linear_variables(1)%phys))/first_moment),&
                     abs((second_moment- sum((main%linear_variables(1)%phys)**2))/second_moment),&
                     abs((third_moment- sum((main%linear_variables(1)%phys)**3))/third_moment)
+   end if
+   call mpi_barrier(mpi_comm_world, ierr)
+   end do
+
+   if (my_rank==0) print *, " >>> TIMING:"
    if (my_rank.eq.0) then
       print *, "One forward/backward transform takes: ", wclock% time_now - wclock% start_time, " seconds"
    end if

@@ -1,13 +1,14 @@
- Module MPI_vars
- Use fortran_kinds
- Use MPI
- Implicit None
+ module MPI_vars
+ use fortran_kinds
+ use MPI
+ implicit none
 
- Integer :: my_rank
- Integer :: world_size
- Integer :: ierr
- Integer :: tag
- Integer :: status(MPI_STATUS_SIZE)
+ integer :: my_rank
+ integer :: world_size
+ integer :: ierr
+ integer :: tag
+ integer :: status(MPI_STATUS_SIZE)
+ integer :: irank
 
 
- End Module MPI_Vars
+ end module MPI_Vars

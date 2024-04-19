@@ -17,6 +17,8 @@
    use fortran_kinds
    use decomp_2d
    use decomp_2d_fft
+   use decomp_2d_mpi
+   use decomp_2d_constants
    use MPI_vars
 
 
@@ -64,7 +66,8 @@
       self%phys_istart = zstart !< copy 2decomp's internal var.
       self%phys_iEnd   = zend   !< copy 2decomp's internal var.
       self%phys_iSize  = zsize  !< copy 2decomp's internal var. 
-      call decomp_2d_fft_init(IN_CORE_CHEBYSHEV)
+      call decomp_2d_fft_init(PHYSICAL_IN_Z, &
+                              opt_skip_XYZ_c2c=[.True., .False., .False.])
       call decomp_2d_fft_get_size(self%spec_iStart, &
                                   self%spec_iEnd,   &
                                   self%spec_iSize   )

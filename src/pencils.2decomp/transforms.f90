@@ -53,8 +53,10 @@ module transforms
    character(len=*), intent(in) :: fileName
    integer, intent(in) :: slice_kind
    integer, intent(in) :: slice_index
-   call decomp_2d_write_plane(3, self%phys, slice_kind, &
-                                     slice_index, fileName)              
+   ! nothing here. this is an empty routine that's never called
+   ! it's here for compatibility. 
+   !call decomp_2d_write_plane(3, self%phys, slice_kind, &
+    !                                 slice_index, fileName)              
  end subroutine
 
  subroutine write_phys_to_disk (self, filename)
