@@ -55,8 +55,17 @@ module transforms
    integer, intent(in) :: slice_index
    ! nothing here. this is an empty routine that's never called
    ! it's here for compatibility. 
-   !call decomp_2d_write_plane(3, self%phys, slice_kind, &
-    !                                 slice_index, fileName)              
+   !call decomp_2d_write_plane(3,& ! iPencil
+                              !self%phys,  & ! var
+                              !slice_kind, & ! iPlane
+                              !slice_index,& ! n
+                              !fileName)              
+   !call decomp_2d_write_plane(3,& ! iPencil
+    !                          self%phys,& ! var
+     !                         'toto',  & ! varname
+      !                        opt_nplanes = slice_index, &
+       !                       opt_iplane  = slice_kind, &
+        !                      opt_dirname='/home/ben/data/checks/Slices/')
  end subroutine
 
  subroutine write_phys_to_disk (self, filename)

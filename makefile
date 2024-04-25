@@ -163,7 +163,7 @@ Layer_pencil_legacy_Objects += $(PENCILS_LEGACY_2DECOMP)transforms.o
 Layer_pencil_legacy_Objects += $(LAYER)PL_IMEX_timestepping.o
 Layer_pencil_legacy_Objects += $(LAYER)plane_layer_main.o
 
-pencils: $(Layer_pencil_Objects)
+pencils: $(Layer_pencil_legacy_Objects)
 	mkdir -p $(BUILD_DIR)
 	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.pencils.2dcmp.x $^ -lfftw3 -l2decomp_fft -L$(FFTW_LIB) -L$(DECOMP2D_ROOT)/lib $(MKL_LIB) -I$(MODDIR) -I$(DECOMP2D_ROOT)/include -I$(MKLROOT)/include  
 	cp $(BUILD_DIR)coral.layer.pencils.2dcmp.x $(BUILD_DIR)coral_LP.exe
