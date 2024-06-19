@@ -47,7 +47,7 @@ export MPIFLAGS=-O2\ -march=native
 # Flag for indicating where to put the .mod files.
 # Pick the right one for your compiler.
 export MOD_DIR_FLAG=-J      # gnu   compiler
-export MOD_DIR_FLAG=-module # intel compiler
+export MOD_DIR_FLAG=-module\  # intel compiler
 #===========================================================================
 
 
