@@ -180,6 +180,7 @@ pencils: $(Layer_pencil_legacy_Objects)
 
 Slabs49_layer_Objects := $(MISC_SRC)chdir_mod.o    
 Slabs49_layer_Objects += $(MISC_SRC)fortran_kinds.o
+Slabs49_layer_Objects += $(CHEBY_SRC)chebyshev_tau.o
 Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
 Slabs49_layer_Objects += $(FFTW_SRC)fftw3_mpi.o
 Slabs49_layer_Objects += $(TEXT_SRC)cwraps.o
