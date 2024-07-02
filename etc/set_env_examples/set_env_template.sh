@@ -5,7 +5,6 @@
 export CORAL_ROOT=${HOME}/dev/coral/
 #===========================================================================
 
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # 2Decomp_fft library path:                                                    
 export DECOMP2D_ROOT=${HOME}/software/2decomp_fft/
@@ -20,8 +19,6 @@ export DECOMP2D_ROOT=${HOME}/software/2decomp_fft/
 export FFTW_ROOT=/usr/local/
 #===========================================================================
 
-
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # MKL directory
 # --- by default, in /opt/intel/... (with the right year/version numbers)
@@ -29,8 +26,12 @@ export FFTW_ROOT=/usr/local/
 export MKLROOT=/opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 #===========================================================================
 
-
-
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# MKL Lapack sources 
+# --- choose one that points to a file that exists on your machine
+export LAPACK_SOURCES=${MKLROOT}/include/lapack.f90
+export LAPACK_SOURCES=${MKLROOT}/include/mkl_lapack.f90
+#===========================================================================
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Flag for compilation. Pick one (comment/uncomment) below (or create your own)
@@ -40,9 +41,6 @@ export MKLROOT=/opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 export MPIFLAGS=-O2\ -march=native
 #===========================================================================
 
-
-
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Flag for indicating where to put the .mod files.
 # Pick the right one for your compiler.
@@ -50,17 +48,10 @@ export MOD_DIR_FLAG=-J      # gnu   compiler
 export MOD_DIR_FLAG=-module\  # intel compiler
 #===========================================================================
 
-
-
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Update your LD_LIBRARY_PATH with the path to MKL
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MKLROOT}/lib/intel64
 #===========================================================================
-
-
-
-
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Miscellanous                                            

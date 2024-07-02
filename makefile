@@ -30,7 +30,7 @@ MPI_FFTW_link = -lfftw3_mpi -lfftw3 -lm
 $(info $(shell mkdir -p $(BUILD_DIR)))
 $(info $(shell mkdir -p $(MODDIR)))
 
-$(CHEBY_SRC)lapack_module.o: ${MKLROOT}/include/lapack.f90
+$(CHEBY_SRC)lapack_module.o: $(LAPACK_SOURCES)
 	$(MPIFC) $(MPIFLAGS) -c $^ -o $@ $(JMODDIR)
 
 $(FFTW_SRC)fftw3_wrap.o: $(FFTW_SRC)/fftw3_wrap.f90
@@ -49,7 +49,7 @@ $(MISC_SRC)include_git_version.o: get_git_version
 	$(MPIFC) $(MPIFLAGS) -c $(MISC_SRC)include_git_version.f90 -o $@ $(JMODDIR)
 
 %.o: %.f90
-	$(MPIFC) $(MPIFLAGS) -c $^ -o $@ $(JMODDIR) -I$(DECOMP2D_ROOT)/include
+	$(MPIFC) $(MPIFLAGS) -c $^ -o $@ $(JMODDIR) $(INC2DECOMP)
 
 %.o: %.c  
 	$(MPICC) -Wextra -pedantic -c $^ -o $@ 
@@ -112,9 +112,10 @@ Layer_pencil_Objects += $(PENCILS_LAYER_2DECOMP)transforms.o
 Layer_pencil_Objects += $(LAYER)PL_IMEX_timestepping.o
 Layer_pencil_Objects += $(LAYER)plane_layer_main.o
 
+pencils2.0: INC2DECOMP = -I$(DECOMP2D_ROOT)/include
 pencils2.0: $(Layer_pencil_Objects)
 	mkdir -p $(BUILD_DIR)
-	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.pencils.2dcmp.x $^ -lfftw3 -ldecomp2d -L$(FFTW_LIB) -L$(DECOMP2D_ROOT)/lib $(MKL_LIB) -I$(MODDIR) -I$(DECOMP2D_ROOT)/include -I$(MKLROOT)/include  
+	$(MPIFC) $(MPIFLAGS) -o $(BUILD_DIR)coral.layer.pencils.2dcmp.x $^ -lfftw3 -ldecomp2d -L$(FFTW_LIB) -L$(DECOMP2D_ROOT)/lib $(MKL_LIB) -I$(MODDIR) $(INC2DECOMP) -I$(MKLROOT)/include  
 	cp $(BUILD_DIR)coral.layer.pencils.2dcmp.x $(BUILD_DIR)coral_LP.exe
 	$(MAKE) clean
 
@@ -180,7 +181,6 @@ pencils: $(Layer_pencil_legacy_Objects)
 
 Slabs49_layer_Objects := $(MISC_SRC)chdir_mod.o    
 Slabs49_layer_Objects += $(MISC_SRC)fortran_kinds.o
-Slabs49_layer_Objects += $(CHEBY_SRC)chebyshev_tau.o
 Slabs49_layer_Objects += $(MISC_SRC)read_command_line_args.o
 Slabs49_layer_Objects += $(FFTW_SRC)fftw3_mpi.o
 Slabs49_layer_Objects += $(TEXT_SRC)cwraps.o
