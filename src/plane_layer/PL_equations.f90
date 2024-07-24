@@ -111,6 +111,8 @@ Module PL_equations
    character(len=7) :: extract_value_at ! 'TopSurf', 'BotSurf', 'nowhere'
    integer :: N_terms
    type(a_linear_contribution_T), dimension(:), allocatable :: term
+   logical :: z_axis_decomposition ! if true, enables the baroclinic/barotropic decomposition (see below)
+   character(len=10) :: baroclinic_or_barotropic ! 'baroclinic', 'barotropic' 
    ! below are variables useful only in case of penalisation
    logical :: penalisation = .False.
    real(dp) :: penalisation_strength = 0.d0
@@ -200,6 +202,7 @@ Module PL_equations
    procedure :: build_zero_sources     => build_zero_sources_in_full_recipe
    procedure :: build_kxky_NL_term     => build_kxky_NL_term_in_full_recipe
    procedure :: summarize              => summarize_full_recipe
+   procedure :: filter_linear_variable_full
    procedure :: enable_penalisation
    procedure :: set_penalisation_strength
    procedure :: set_penalisation_width
@@ -400,6 +403,7 @@ Module PL_equations
    integer :: bc_code
    integer :: eqn_order
    logical :: have_not_considered_smagorinsky_yet = .True.
+   character (len=10) :: baroclinic_vs_barotropic
    building_step = 1
    call self%init()
    iLine = 0
@@ -449,6 +453,9 @@ Module PL_equations
        case (42)
            call get_linear_variable_name(text_list(iLine)(1:1024), linear_var_name)
            call self%add_full_var( linear_var_name, 'TopSurf')
+       case (49)
+           call get_linear_variable_zDecomposition(text_list(iLine)(1:1024), baroclinic_vs_barotropic)
+           call self%filter_linear_full_var( baroclinic_vs_barotropic)
        case (5) 
            call interpret_full_variable_definition(text_list(iLine)(1:1024), &
                                                    pieces_of_definition, 'dz')
@@ -1004,6 +1011,20 @@ Module PL_equations
    self%linear_vars_full( self%numberOf_linear_variables_full) % penalisation_width = dsca
  end subroutine 
 
+ subroutine filter_linear_variable_full (self, baroclinic_or_barotropic)
+   class(full_problem_recipe_T) :: self
+   character(len=10), intent(in) :: baroclinic_or_barotropic
+   select case (baroclinic_or_barotropic)
+       case ('baroclinic')
+          self%linear_vars_full(self%numberOf_linear_variables_full)%baroclinic_or_barotropic = 'baroclinic'
+       case ('barotropic')
+          self%linear_vars_full(self%numberOf_linear_variables_full)%baroclinic_or_barotropic = 'barotropic'
+       case default
+            error stop "vertical_decomposition should be baroclinic or barotropic"
+    end select
+ end subroutine
+
+
  subroutine add_full_linear_variable_to_full_recipe(self, linear_var_name, extract_to)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: linear_var_name
@@ -1018,6 +1039,7 @@ Module PL_equations
    allocate(character(len=len(linear_var_name)) :: tmp(self%numberOf_linear_variables_full)%str)
    tmp(self%numberOf_linear_variables_full)%str = linear_var_name
    tmp(self%numberOf_linear_variables_full)%extract_value_at = extract_to
+   tmp(self%numberOf_linear_variables_full)%z_axis_decomposition = .False.
    allocate(tmp(self%numberOf_linear_variables_full)%term(0))
    call move_alloc(tmp, self%linear_vars_full)
  end subroutine add_full_linear_variable_to_full_recipe
