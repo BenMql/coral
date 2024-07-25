@@ -560,6 +560,24 @@
            self%linear_variables(iVar)%spec(iz,:,:)  = cmplx(0._dp, 0._dp, kind=dp)
            end do
        end if
+       ! ---------------------
+       ! /// issue#35
+       ! vertical decomposition (barotropic or baroclinic)
+       ! ---------------------
+       if (self%recipe%linear_vars_full(iVar)% z_axis_decomposition) then
+          select case (self%recipe%linear_vars_full(iVar)% baroclinic_or_barotropic)
+              case ('barotropic')
+                 call self%remove_vertical_fluctuations_of_linear_var (iVar)
+              case ('baroclinic')
+                 call self%remove_vertical_mean_of_linear_var (iVar)
+          end select 
+       end if
+       ! ---------------------
+       ! issue#35 /// 
+       ! ---------------------
+       ! ---------------------
+       ! the tranform to physical space is now computed
+       ! ---------------------
        call self%linear_variables(iVar)%spec_to_phys()
    end if
    end if
