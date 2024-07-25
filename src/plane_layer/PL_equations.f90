@@ -107,6 +107,9 @@ Module PL_equations
    !!    U = [d/dy] psi + [d/dx][d/dz] phi + u0
    !! In the example above, self%N_terms = 3 and each of these 3 terms is stored in
    !! self % term (1:3)
+   !! ....................  /!\ /!\ /!\ /!\/!\ /!\  ....................
+   !! when updating this type, also update the elemental subroutine move_full_recipe  
+   !! ....................  /!\ /!\ /!\ /!\/!\ /!\  ....................
    character(len=:), allocatable :: str
    character(len=7) :: extract_value_at ! 'TopSurf', 'BotSurf', 'nowhere'
    integer :: N_terms
@@ -211,6 +214,19 @@ Module PL_equations
  type(full_problem_recipe_T) :: master_recipe
 
  contains 
+   
+ elemental subroutine move_full_recipes(mySource, myTarget)
+   type(fullVars_recipe_T), intent(inOut) :: mySource, myTarget
+   call move_alloc( from=mySource%str, to=myTarget%str)
+   myTarget%N_terms = mySource%N_terms
+   myTarget%extract_value_at = mySource%extract_value_at
+   myTarget%penalisation = mySource%penalisation
+   myTarget%penalisation_strength = mySource%penalisation_strength
+   myTarget%penalisation_width = mySource%penalisation_width
+   myTarget%z_axis_decomposition = mySource%z_axis_decomposition
+   myTarget%baroclinic_or_barotropic = mySource%baroclinic_or_barotropic
+   call move_alloc( from=mySource%term, to=myTarget%term)
+ end subroutine
 
  subroutine add_timeseries( self, text_list)
    class(full_problem_recipe_T) :: self
@@ -981,18 +997,6 @@ Module PL_equations
    end do
  End Subroutine copy_list_of_parameters
 
-   
-
- elemental subroutine move_full_recipes(mySource, myTarget)
-   type(fullVars_recipe_T), intent(inOut) :: mySource, myTarget
-   call move_alloc( from=mySource%str, to=myTarget%str)
-   myTarget%N_terms = mySource%N_terms
-   myTarget%extract_value_at = mySource%extract_value_at
-   myTarget%penalisation = mySource%penalisation
-   myTarget%penalisation_strength = mySource%penalisation_strength
-   myTarget%penalisation_width = mySource%penalisation_width
-   call move_alloc( from=mySource%term, to=myTarget%term)
- end subroutine
  
  subroutine enable_penalisation(self)
    class(full_problem_recipe_T) :: self
