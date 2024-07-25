@@ -322,19 +322,23 @@ module PL_string_to_data
  subroutine get_linear_variable_zDecomposition(myLine, baroclinic_or_barotropic)
    character(len=1024), intent(In) :: myLine
                                   !< input line, extracted from the equations file
-   character(len=10), allocatable, intent(out) :: baroclinic_or_barotropic
+   character(len=10), intent(out) :: baroclinic_or_barotropic
                                   !< list of parameter names and values (double)
-   character(len=:), allocatable :: val_str
-                                  !< raw value, read as a string               
    Integer :: double_colon_index, eol_index
                                   !< position of some delimiters
 
-      double_colon_index = index(myLine,'::')+2
-      eol_index   = index(myLine,'<<') -1
-      if (Allocated(val_str)) deAllocate(val_str)
-      Allocate(character(eol_index-double_colon_index+1) :: val_str)
-      val_str = myLine(double_colon_index:eol_index)
-      Call clean_str(val_str, baroclinic_or_barotropic)
+   double_colon_index = index(myLine,'::')+2
+   eol_index   = index(myLine,'<<') -2
+   ! this routine is supposed to read either 'baroclinic' or 'barotropic',
+   ! both of which have length 10. This is being checked now. 
+   if (.not.(eol_index-double_colon_index == 10)) then
+      ! return an error message:
+      print *, '.',myLine(double_colon_index+1:eol_index),'.'
+      print *, eol_index-double_colon_index
+      error stop "get_linear_variable_zDecomposition read a string with a length different from 10"
+   else 
+      baroclinic_or_barotropic = myLine(double_colon_index+1:eol_index)
+   end if
  end subroutine
    
  Subroutine clean_str(polluted_string, clean_string)

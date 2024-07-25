@@ -455,7 +455,7 @@ Module PL_equations
            call self%add_full_var( linear_var_name, 'TopSurf')
        case (49)
            call get_linear_variable_zDecomposition(text_list(iLine)(1:1024), baroclinic_vs_barotropic)
-           call self%filter_linear_full_var( baroclinic_vs_barotropic)
+           call self%filter_linear_variable_full( baroclinic_vs_barotropic)
        case (5) 
            call interpret_full_variable_definition(text_list(iLine)(1:1024), &
                                                    pieces_of_definition, 'dz')
@@ -1014,12 +1014,16 @@ Module PL_equations
  subroutine filter_linear_variable_full (self, baroclinic_or_barotropic)
    class(full_problem_recipe_T) :: self
    character(len=10), intent(in) :: baroclinic_or_barotropic
+   ! filtering should be activated ... 
+   self%linear_vars_full(self%numberOf_linear_variables_full)%z_axis_decomposition = .True. 
+   ! ... and we define its nature below
    select case (baroclinic_or_barotropic)
        case ('baroclinic')
           self%linear_vars_full(self%numberOf_linear_variables_full)%baroclinic_or_barotropic = 'baroclinic'
        case ('barotropic')
           self%linear_vars_full(self%numberOf_linear_variables_full)%baroclinic_or_barotropic = 'barotropic'
        case default
+            print *, '.',baroclinic_or_barotropic,'.'
             error stop "vertical_decomposition should be baroclinic or barotropic"
     end select
  end subroutine
@@ -1760,10 +1764,13 @@ Module PL_equations
          else
             stopSig = .True.
          end if
-       ! from 'linear_variable_full', accepted values are 'linear_variable_full_build'
+       ! from 'linear_variable_full', accepted values are 'linear_variable_full_build' 
+       !                                              and 'vertical_decomposition'
        case (4)
          if (text_line(3:28).eq.'linear_variable_full_build') then
             bstep = 5
+         else if (text_line(3:24).eq.'vertical_decomposition') then
+            bstep = 49
          else
             stopSig = .True.
          end if
@@ -1778,6 +1785,13 @@ Module PL_equations
        ! from 'linear_variable_top_boundary_value', accepted values are
        !           - 'linear_variable_full_build'
        case (42)
+         if (text_line(3:28).eq.'linear_variable_full_build') then
+            bstep = 5
+         else
+            stopSig = .True.
+         end if
+       ! from 'vertical_decomposition', accepted values are 'linear_variable_full_build' 
+       case (49)
          if (text_line(3:28).eq.'linear_variable_full_build') then
             bstep = 5
          else
