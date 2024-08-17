@@ -221,6 +221,7 @@
    v_over_dy_max = maxVal(dAbs(self%linear_variables(2)%phys))
    v_over_dy_max = v_over_dy_max * self%geometry%NYAA / self%geometry%Ly
    w_over_dz_max = v_over_dy_max
+   if (self%cargo%cflFactor_along_z > 1.d-10) then
    do ix = 1, self%geometry%phys%local_NX
    do iy = 1, self%geometry%phys%local_NY
    w_over_dz_max = dMax1(w_over_dz_max,&
@@ -229,6 +230,7 @@
                                        self%cargo%cflFactor_along_z   ) )
    end do
    end do
+   end if
    
 
    self%cargo%cfl_based_DT = 1._dp/ dMax1 ( u_over_dx_max,&
@@ -558,6 +560,24 @@
            self%linear_variables(iVar)%spec(iz,:,:)  = cmplx(0._dp, 0._dp, kind=dp)
            end do
        end if
+       ! ---------------------
+       ! /// issue#35
+       ! vertical decomposition (barotropic or baroclinic)
+       ! ---------------------
+       if (self%recipe%linear_vars_full(iVar)% z_axis_decomposition) then
+          select case (self%recipe%linear_vars_full(iVar)% baroclinic_or_barotropic)
+              case ('barotropic')
+                 call self%remove_vertical_fluctuations_of_linear_var (iVar)
+              case ('baroclinic')
+                 call self%remove_vertical_mean_of_linear_var (iVar)
+          end select 
+       end if
+       ! ---------------------
+       ! issue#35 /// 
+       ! ---------------------
+       ! ---------------------
+       ! the tranform to physical space is now computed
+       ! ---------------------
        call self%linear_variables(iVar)%spec_to_phys()
    end if
    end if

@@ -107,10 +107,15 @@ Module PL_equations
    !!    U = [d/dy] psi + [d/dx][d/dz] phi + u0
    !! In the example above, self%N_terms = 3 and each of these 3 terms is stored in
    !! self % term (1:3)
+   !! ....................  /!\ /!\ /!\ /!\/!\ /!\  ....................
+   !! when updating this type, also update the elemental subroutine move_full_recipe  
+   !! ....................  /!\ /!\ /!\ /!\/!\ /!\  ....................
    character(len=:), allocatable :: str
    character(len=7) :: extract_value_at ! 'TopSurf', 'BotSurf', 'nowhere'
    integer :: N_terms
    type(a_linear_contribution_T), dimension(:), allocatable :: term
+   logical :: z_axis_decomposition ! if true, enables the baroclinic/barotropic decomposition (see below)
+   character(len=10) :: baroclinic_or_barotropic ! 'baroclinic', 'barotropic' 
    ! below are variables useful only in case of penalisation
    logical :: penalisation = .False.
    real(dp) :: penalisation_strength = 0.d0
@@ -200,6 +205,7 @@ Module PL_equations
    procedure :: build_zero_sources     => build_zero_sources_in_full_recipe
    procedure :: build_kxky_NL_term     => build_kxky_NL_term_in_full_recipe
    procedure :: summarize              => summarize_full_recipe
+   procedure :: filter_linear_variable_full
    procedure :: enable_penalisation
    procedure :: set_penalisation_strength
    procedure :: set_penalisation_width
@@ -208,6 +214,19 @@ Module PL_equations
  type(full_problem_recipe_T) :: master_recipe
 
  contains 
+   
+ elemental subroutine move_full_recipes(mySource, myTarget)
+   type(fullVars_recipe_T), intent(inOut) :: mySource, myTarget
+   call move_alloc( from=mySource%str, to=myTarget%str)
+   myTarget%N_terms = mySource%N_terms
+   myTarget%extract_value_at = mySource%extract_value_at
+   myTarget%penalisation = mySource%penalisation
+   myTarget%penalisation_strength = mySource%penalisation_strength
+   myTarget%penalisation_width = mySource%penalisation_width
+   myTarget%z_axis_decomposition = mySource%z_axis_decomposition
+   myTarget%baroclinic_or_barotropic = mySource%baroclinic_or_barotropic
+   call move_alloc( from=mySource%term, to=myTarget%term)
+ end subroutine
 
  subroutine add_timeseries( self, text_list)
    class(full_problem_recipe_T) :: self
@@ -400,6 +419,7 @@ Module PL_equations
    integer :: bc_code
    integer :: eqn_order
    logical :: have_not_considered_smagorinsky_yet = .True.
+   character (len=10) :: baroclinic_vs_barotropic
    building_step = 1
    call self%init()
    iLine = 0
@@ -449,6 +469,9 @@ Module PL_equations
        case (42)
            call get_linear_variable_name(text_list(iLine)(1:1024), linear_var_name)
            call self%add_full_var( linear_var_name, 'TopSurf')
+       case (49)
+           call get_linear_variable_zDecomposition(text_list(iLine)(1:1024), baroclinic_vs_barotropic)
+           call self%filter_linear_variable_full( baroclinic_vs_barotropic)
        case (5) 
            call interpret_full_variable_definition(text_list(iLine)(1:1024), &
                                                    pieces_of_definition, 'dz')
@@ -974,18 +997,6 @@ Module PL_equations
    end do
  End Subroutine copy_list_of_parameters
 
-   
-
- elemental subroutine move_full_recipes(mySource, myTarget)
-   type(fullVars_recipe_T), intent(inOut) :: mySource, myTarget
-   call move_alloc( from=mySource%str, to=myTarget%str)
-   myTarget%N_terms = mySource%N_terms
-   myTarget%extract_value_at = mySource%extract_value_at
-   myTarget%penalisation = mySource%penalisation
-   myTarget%penalisation_strength = mySource%penalisation_strength
-   myTarget%penalisation_width = mySource%penalisation_width
-   call move_alloc( from=mySource%term, to=myTarget%term)
- end subroutine
  
  subroutine enable_penalisation(self)
    class(full_problem_recipe_T) :: self
@@ -1004,6 +1015,24 @@ Module PL_equations
    self%linear_vars_full( self%numberOf_linear_variables_full) % penalisation_width = dsca
  end subroutine 
 
+ subroutine filter_linear_variable_full (self, baroclinic_or_barotropic)
+   class(full_problem_recipe_T) :: self
+   character(len=10), intent(in) :: baroclinic_or_barotropic
+   ! filtering should be activated ... 
+   self%linear_vars_full(self%numberOf_linear_variables_full)%z_axis_decomposition = .True. 
+   ! ... and we define its nature below
+   select case (baroclinic_or_barotropic)
+       case ('baroclinic')
+          self%linear_vars_full(self%numberOf_linear_variables_full)%baroclinic_or_barotropic = 'baroclinic'
+       case ('barotropic')
+          self%linear_vars_full(self%numberOf_linear_variables_full)%baroclinic_or_barotropic = 'barotropic'
+       case default
+            print *, '.',baroclinic_or_barotropic,'.'
+            error stop "vertical_decomposition should be baroclinic or barotropic"
+    end select
+ end subroutine
+
+
  subroutine add_full_linear_variable_to_full_recipe(self, linear_var_name, extract_to)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: linear_var_name
@@ -1018,6 +1047,7 @@ Module PL_equations
    allocate(character(len=len(linear_var_name)) :: tmp(self%numberOf_linear_variables_full)%str)
    tmp(self%numberOf_linear_variables_full)%str = linear_var_name
    tmp(self%numberOf_linear_variables_full)%extract_value_at = extract_to
+   tmp(self%numberOf_linear_variables_full)%z_axis_decomposition = .False.
    allocate(tmp(self%numberOf_linear_variables_full)%term(0))
    call move_alloc(tmp, self%linear_vars_full)
  end subroutine add_full_linear_variable_to_full_recipe
@@ -1738,10 +1768,13 @@ Module PL_equations
          else
             stopSig = .True.
          end if
-       ! from 'linear_variable_full', accepted values are 'linear_variable_full_build'
+       ! from 'linear_variable_full', accepted values are 'linear_variable_full_build' 
+       !                                              and 'vertical_decomposition'
        case (4)
          if (text_line(3:28).eq.'linear_variable_full_build') then
             bstep = 5
+         else if (text_line(3:24).eq.'vertical_decomposition') then
+            bstep = 49
          else
             stopSig = .True.
          end if
@@ -1756,6 +1789,13 @@ Module PL_equations
        ! from 'linear_variable_top_boundary_value', accepted values are
        !           - 'linear_variable_full_build'
        case (42)
+         if (text_line(3:28).eq.'linear_variable_full_build') then
+            bstep = 5
+         else
+            stopSig = .True.
+         end if
+       ! from 'vertical_decomposition', accepted values are 'linear_variable_full_build' 
+       case (49)
          if (text_line(3:28).eq.'linear_variable_full_build') then
             bstep = 5
          else
