@@ -25,6 +25,7 @@ class plane_layer_volume:
       self.lx = geom.Lx                           
       self.ly = geom.Ly                             
       self.lz = geom.gap                           
+      self.center = geom.center
       try:
          self.NX = NX
          self.NY = NY
@@ -54,7 +55,7 @@ class plane_layer_volume:
          self.lut.append(list_var_str[ivar])
       self.xgrid = np.linspace(0,self.lx,self.NX, endpoint=False)
       self.ygrid = np.linspace(0,self.ly,self.NY, endpoint=False)
-      self.zgrid = 0.5+0.5*np.cos((2.*np.arange(self.NZ)+1.)*np.pi/(2.*self.NZ))*self.lz
+      self.zgrid = self.center+0.5*np.cos((2.*np.arange(self.NZ)+1.)*np.pi/(2.*self.NZ))*self.lz
      # if the list is empty, instantiate with a known function to perform debugging tests
      else:
        self.lx = 10.
@@ -65,7 +66,7 @@ class plane_layer_volume:
        self.NZ = 128
        self.xgrid = np.linspace(0,self.lx,self.NX, endpoint=False)
        self.ygrid = np.linspace(0,self.ly,self.NY, endpoint=False)
-       self.zgrid = 0.5+0.5*np.cos((2.*np.arange(self.NZ)+1.)*np.pi/(2.*self.NZ))*self.lz
+       self.zgrid = self.center+0.5*np.cos((2.*np.arange(self.NZ)+1.)*np.pi/(2.*self.NZ))*self.lz
        self.dat.append( np.zeros((self.NX, self.NY, self.NZ), dtype=np.float_) )
        for ix in range (self.NX):
         for iy in range(self.NY):
