@@ -241,7 +241,7 @@ class plane_layer_volume:
       #normalization
       integral_spec[:,:,0]*=2.
       #integral_spec[:,:,0]/=np.sqrt(self.NZ)
-      integral_phys = idct(integral_spec, axis=2)/self.NZ
+      integral_phys = idct(integral_spec, axis=2)/self.NZ/8.
       self.dat.append(integral_phys)
       self.lut.append('[Int dz]'+self.lut[pos_in_list])
       return full_int/self.NZ/4.
