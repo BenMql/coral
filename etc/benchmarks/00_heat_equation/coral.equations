@@ -1,0 +1,68 @@
+>>Param :: Prandtl := 3.3d-1 <<
+>>====================================<<
+>>linear_variable_kxky :: u <<
+>>linear_variable_kxky :: v <<
+>>linear_variable_kxky :: w <<
+>>linear_variable_mean :: uMean <<
+>>linear_variable_mean :: vMean <<
+>>linear_variable_mean :: wMean <<
+>>====================================<<
+>>linear_variable_full       :: uFull <<
+>>linear_variable_full_build :: + uMean <<
+>>linear_variable_full_build :: + u <<
+>>====================================<<
+>>linear_variable_full       :: vFull <<
+>>linear_variable_full_build :: + vMean <<
+>>linear_variable_full_build :: + v <<
+>>====================================<<
+>>linear_variable_full       :: wFull <<
+>>linear_variable_full_build :: + w <<
+>>linear_variable_full_build :: + wMean <<
+>>====================================<<
+>>quadratic_variable :: uu := uFull.uFull <<
+>>quadratic_variable :: vv := vFull.vFull <<
+>>quadratic_variable :: ww := wFull.wFull <<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: u <<
+>>add_BC_for_this_var :: 22 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.u <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.dx.dx.u + Prandtl.Iz.Iz.dy.dy.u + Prandtl.u <<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: v <<
+>>add_BC_for_this_var :: 23 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.v <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.dx.dx.v + Prandtl.Iz.Iz.dy.dy.v + Prandtl.v <<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: w <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.w <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.dx.dx.w + Prandtl.Iz.Iz.dy.dy.w + Prandtl.w <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: uMean <<
+>>add_BC_for_this_var :: 22 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.uMean <<
+>>add_rhs_linear :: + Prandtl.uMean <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: vMean <<
+>>add_BC_for_this_var :: 23 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.vMean <<
+>>add_rhs_linear :: + Prandtl.vMean <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: wMean <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.wMean <<
+>>add_rhs_linear :: + Prandtl.wMean <<
+>>EOF<<
+
