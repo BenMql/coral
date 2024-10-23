@@ -155,6 +155,8 @@ module PL_IMEX_timestepping
    integer :: numberOf_sources
    type(zOperator_1d_1coupled_T) :: Chebyshev_Integration_z
    type(dOperator_1d_1coupled_T) :: Chebyshev_Integration_d
+   real(kind=dp), allocatable :: timeseries_buffer (:,:)
+   integer :: buffer_length = 20 ! arbitrarily...
   contains 
    procedure :: add_K_std_to_rhs   => LPIMEX_add_K_std_to_rhs
    procedure :: add_K_hat_to_rhs   => LPIMEX_add_K_hat_to_rhs
@@ -567,7 +569,22 @@ module PL_IMEX_timestepping
 
  subroutine allocate_all_buffers(self)
    class(full_problem_data_structure_T), intent(inOut) :: self
-   integer :: iVar, iStep, iSys
+   integer :: iVar, iStep, iSys, iObj
+   integer :: N_timeseries_objects
+   ! timeseries buffers:
+   N_timeseries_objects = 0
+   do iVar = 1, self%recipe%numberOf_linear_variables_full
+      do iObj = 1, self%recipe%timeseries%numberOf_linearObjects( iVar )
+         N_timeseries_objects = N_timeseries_objects + 1
+      end do
+   end do
+   do iVar = 1, self%recipe%numberOf_quadratic_variables
+      do iObj = 1, self%recipe%timeseries%numberOf_quadraObjects( iVar )
+         N_timeseries_objects = N_timeseries_objects + 1
+      end do
+   end do
+   allocate( self% timeseries_buffer(self%buffer_length, N_timeseries_objects))
+   ! other buffers
    allocate( self%coupled_kxky_set( &
              self%recipe%numberOf_coupled_kxky_systems ))
    allocate( self%coupled_zero_set( &
