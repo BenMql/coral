@@ -4,13 +4,14 @@
 
  subroutine output_global_quantities(self)
    class(full_problem_data_structure_T), intent(inOut) :: self
-   real(kind=dp) :: varAvg, aux_dsca
+   real(kind=dp) :: varAvg
+   real(kind=dp), allocatable :: arr_dsca(:)
    integer :: position_backup
    integer :: current_position
-   logical :: first_or_not
    integer :: iVar, iObj
    integer :: ix, iy, iz
    character(len=17) :: fileExtension
+   integer :: iBuffer
    305 format ('_XYavg_z',(i5.5),'.dat')
    if (self%io_bookkeeping%first_or_not) then
    call gauss_chebyshev_weight_1d( self%gauss_cheby%weight1d, &
@@ -18,170 +19,223 @@
                                    self%geometry%gap)
    end if
    
+   ! ....
+   ! COMPUTATIONS TO FILL IN THE BUFFER
+   ! STARTING WITH TIME
+   ! ....
+   self% buffer_counter = self% buffer_counter + 1
+   ! index 0 is time:
+   self% timeseries_buffer( self%buffer_counter, 0) = &
+            self%io_bookkeeping%absolute_time
+   ! ....
+   ! CONTINUE THE COMPUTATIONS TO FILL IN THE BUFFER
+   ! AVERAGES OF LINEAR VARIABLES FIRST
+   ! ....
+   iBuffer = 0
+   computeLinearVars: do iVar = 1, self%recipe%numberOf_linear_variables_full
+   computeLinearObjs: do iObj = 1, self%recipe%timeseries%numberOf_linearObjects( iVar )
+      iBuffer = iBuffer + 1 
+      select case (self%recipe%timeseries%linear(iVar)%object(iObj)%kind)
+         case ('volume')
+            varAvg  = 0._dp                                                       
+            do ix = 1, self%geometry%phys%local_NX
+            do iy = 1, self%geometry%phys%local_NY
+            do iz = 1, self%geometry%phys%local_NZ
+               varAvg = varAvg + self%linear_variables(iVar)%phys(iz,iy,ix) &
+                     * self%gauss_cheby%weight1d( domain_decomp%phys_iStart(1) -1 + iz)
+            end do
+            end do
+            end do
+         case ('zSlice')
+            if ((self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index &
+                           .ge. domain_decomp%phys_iStart(1)) &
+                                   .and. &
+                (self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index &
+                            .le. domain_decomp%phys_iEnd  (1))) then
+                varAvg  = 0._dp                                                       
+                xLoop: do ix = 1, self%geometry%phys%local_NX
+                yLoop: do iy = 1, self%geometry%phys%local_NY
+                iz = self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index &
+                   - domain_decomp%phys_iStart(1) + 1
+                varAvg = varAvg + self%linear_variables(iVar)%phys(iz,iy,ix) 
+                end do yLoop
+                end do xLoop
+             end if
+          case default
+               write(*,*) 'bad (L) object kind', self%recipe%timeseries%linear(iVar)%object(iObj)%kind, iVar, iObj
+               error stop
+      end select
+      varAvg = varAvg / real(self%geometry%NXAA, kind=dp)
+      varAvg = varAvg / real(self%geometry%NYAA, kind=dp)
+      self% timeseries_buffer( self%buffer_counter, iBuffer) = varAvg
+   end do computeLinearObjs
+   end do computeLinearVars
+   ! ....
+   ! CONTINUE THE COMPUTATIONS TO FILL IN THE BUFFER
+   ! QUADRATIC VARIABLES NEXT
+   ! ....
+   ! initialise the KE
+   self%cargo%KE_display = 0._dp
+   computeQuadraVars: do iVar = 1, self%recipe%numberOf_quadratic_variables
+   computeQuadraObjs: do iObj = 1, self%recipe%timeseries%numberOf_quadraObjects( iVar )
+      iBuffer = iBuffer + 1 
+      select case (self%recipe%timeseries%quadra(iVar)%object(iObj)%kind)
+         case ('volume')
+            varAvg  = 0._dp                                                       
+            do ix = 1, self%geometry%phys%local_NX
+            do iy = 1, self%geometry%phys%local_NY
+            do iz = 1, self%geometry%phys%local_NZ
+               varAvg = varAvg + self%quadratic_variables(iVar)%phys(iz,iy,ix) &
+                     * self%gauss_cheby%weight1d( domain_decomp%phys_iStart(1) -1 + iz)
+            end do
+            end do
+            end do
+            if ((self%recipe%nl_vars(iVar)%str .eq. 'uu')   .or. &
+                (self%recipe%nl_vars(iVar)%str .eq. 'vv')   .or. &
+                (self%recipe%nl_vars(iVar)%str .eq. 'ww') ) then  
+                    self%cargo%KE_display = self%cargo%KE_display + varAvg
+            end if
+         case ('zSlice')
+            if ((self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
+                       .ge. domain_decomp%phys_iStart(1)) &
+                                .and. &
+                (self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
+                       .le. domain_decomp%phys_iEnd  (1))) then
+               varAvg  = 0._dp                                                       
+               do ix = 1, self%geometry%phys%local_NX
+               do iy = 1, self%geometry%phys%local_NY
+               iz = self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index - domain_decomp%phys_iStart(1) + 1
+               varAvg = varAvg + self%quadratic_variables(iVar)%phys(iz,iy,ix) 
+               end do 
+               end do 
+             end if
+          case default
+               print *,'bad (Q) object kind', self%recipe%timeseries%quadra(iVar)%object(iObj)%kind, iVar, iObj
+               error stop
+      end select
+      varAvg = varAvg / real(self%geometry%NXAA, kind=dp)
+      varAvg = varAvg / real(self%geometry%NYAA, kind=dp)
+      self% timeseries_buffer( self%buffer_counter, iBuffer) = varAvg
+   end do computeQuadraObjs
+   end do computeQuadraVars
+
+
+   ! WHEN THE BUFFER IS FULL:
+   !      MPI REDUCE
+   !      WRITE ON THE DISK
+   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   fullBuff: if (self% buffer_counter == self% buffer_length) then
+
+   allocate(arr_dsca(self% buffer_length))
    position_backup = self%io_bookkeeping%dPosition
    !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    self%io_bookkeeping%dPosition = position_backup
    current_position = (timings%i_timestep-1)*8+1
-   first_or_not = .False.
-   if (current_position.eq.1) first_or_not = .True.
-   call output_dsca_in_unique_timeserie(&
-                 self%io_bookkeeping%output_directory,&
-                 self%io_bookkeeping%output_dir_length,&
-                 'time.dat', 8,& 
-                 self%io_bookkeeping%absolute_time,&
-                 first_or_not, &                      
-                 current_position)
+   call output_2Dbundled_dsca_in_unique_timeserie(&
+           self%io_bookkeeping%output_directory,&
+           self%io_bookkeeping%output_dir_length,&
+           'time.dat', 8,& 
+           self% timeseries_buffer,  0, &
+           self% buffer_yet_unwritten, &                      
+           current_position)
       
-   do iVar = 1, self%recipe%numberOf_linear_variables_full
-   do iObj = 1, self%recipe%timeseries%numberOf_linearObjects( iVar )
+   iBuffer = 0
+   writeLinearVars: do iVar = 1, self%recipe%numberOf_linear_variables_full
+   writeLinearObjs: do iObj = 1, self%recipe%timeseries%numberOf_linearObjects( iVar )
+      iBuffer = iBuffer + 1
       select case (self%recipe%timeseries%linear(iVar)%object(iObj)%kind)
-          case ('volume')
-                varAvg  = 0._dp                                                       
-                do ix = 1, self%geometry%phys%local_NX
-                do iy = 1, self%geometry%phys%local_NY
-                do iz = 1, self%geometry%phys%local_NZ
-                   varAvg = varAvg + self%linear_variables(iVar)%phys(iz,iy,ix) &
-                         * self%gauss_cheby%weight1d( domain_decomp%phys_iStart(1) -1 + iz)
-                end do
-                end do
-                end do
-                varAvg = varAvg / real(self%geometry%NXAA, kind=dp)
-                varAvg = varAvg / real(self%geometry%NYAA, kind=dp)
-                !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                self%io_bookkeeping%dPosition = position_backup
-                current_position = (timings%i_timestep-1)*8+1
-                first_or_not = .False.
-                if (current_position.eq.1) first_or_not = .True.
-                call output_cumul_d_in_timeserie(&
-                              self%io_bookkeeping%output_directory,&
-                              self%io_bookkeeping%output_dir_length,&
-                              self%recipe%linear_vars_full(iVar)%str,&
-                              len(self%recipe%linear_vars_full(iVar)%str),&
-                              varAvg,&
-                              first_or_not, &                      
-                              current_position)            
-          case ('zSlice')
-               if ((self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index &
-                               .ge. domain_decomp%phys_iStart(1)) &
-                                       .and. &
-                   (self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index &
-                               .le. domain_decomp%phys_iEnd  (1))) then
-                varAvg  = 0._dp                                                       
-                do ix = 1, self%geometry%phys%local_NX
-                do iy = 1, self%geometry%phys%local_NY
-                iz = self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index - domain_decomp%phys_iStart(1) + 1
-                varAvg = varAvg + self%linear_variables(iVar)%phys(iz,iy,ix) 
-                end do
-                end do
-                varAvg = varAvg / real(self%geometry%NXAA, kind=dp)
-                varAvg = varAvg / real(self%geometry%NYAA, kind=dp)
-                call MPI_reduce(varAvg, &  !send buffer
-                   aux_dsca,   & !recv buffer
-                   1,          & !count
-                   MPI_double, & !dtype
-                   MPI_sum,    &
-                   0, &
-                   self%geometry%mpi_Zphys%comm, ierr)
-                 if (self%geometry%mpi_Zphys%rank.eq.0) then
-                 write (fileExtension, 305) self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index 
-                 current_position = (timings%i_timestep-1)*8+1
-                 first_or_not = .False.
-                 if (current_position.eq.1) first_or_not = .True.
-                 call output_dsca_in_unique_timeserie(&
-                    self%io_bookkeeping%output_directory,&
-                    self%io_bookkeeping%output_dir_length,&
-                    self%recipe%linear_vars_full(iVar)%str//fileExtension,&
-                    len(self%recipe%linear_vars_full(iVar)%str)+17,&
-                    aux_dsca, &                                 
-                    first_or_not, &                      
-                    current_position)            
-                 end if 
+         case ('volume')
+            self%io_bookkeeping%dPosition = position_backup
+            current_position = (timings%i_timestep-1)*8+1
+            call output_2dbundled_cumul_d_in_timeserie(&
+                        self%io_bookkeeping%output_directory,&
+                        self%io_bookkeeping%output_dir_length,&
+                        self%recipe%linear_vars_full(iVar)%str,&
+                        len(self%recipe%linear_vars_full(iVar)%str),&
+                        self% timeseries_buffer,iBuffer, &
+                        self% buffer_length,&
+                        self% buffer_yet_unwritten, &                      
+                        current_position)            
+         case ('zSlice')
+            if ((self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index &
+                         .ge. domain_decomp%phys_iStart(1)) &
+                         .and. &
+                         (self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index &
+                         .le. domain_decomp%phys_iEnd  (1))) then
+               call MPI_reduce( &  
+                    self% timeseries_buffer(:, iBuffer), & ! send buffer
+                    arr_dsca,             & !recv buffer
+                    self% buffer_length,  & !count
+                    MPI_double,           & !dtype
+                    MPI_sum,    &
+                    0, &
+                    self%geometry%mpi_Zphys%comm, ierr)
+               if (self%geometry%mpi_Zphys%rank.eq.0) then
+                  write (fileExtension, 305) self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index 
+                  current_position = (timings%i_timestep-1)*8+1
+                  call output_bundled_dsca_in_unique_timeserie(&
+                     self%io_bookkeeping%output_directory,&
+                     self%io_bookkeeping%output_dir_length,&
+                     self%recipe%linear_vars_full(iVar)%str//fileExtension,&
+                     len(self%recipe%linear_vars_full(iVar)%str)+17,&
+                     arr_dsca, &                                 
+                     self% buffer_yet_unwritten, &                      
+                     current_position)            
                end if
-          case default
-               write(*,*) 'bad (L) object kind', self%recipe%timeseries%linear(iVar)%object(iObj)%kind, iVar, iObj
-               error stop
-          end select
-   end do
-   end do
-   ! initialise the KE
-   self%cargo%KE_display = 0._dp
-   do iVar = 1, self%recipe%numberOf_quadratic_variables
-   do iObj = 1, self%recipe%timeseries%numberOf_quadraObjects( iVar )
+            end if
+         ! 'case default' is useless, for it has been filtered above
+      end select
+   end do writeLinearObjs
+   end do writeLinearVars
+   writeQuadraVars: do iVar = 1, self%recipe%numberOf_quadratic_variables
+   writeQuadraObjs: do iObj = 1, self%recipe%timeseries%numberOf_quadraObjects( iVar )
       select case (self%recipe%timeseries%quadra(iVar)%object(iObj)%kind)
-          case ('volume')
-                varAvg  = 0._dp                                                       
-                do ix = 1, self%geometry%phys%local_NX
-                do iy = 1, self%geometry%phys%local_NY
-                do iz = 1, self%geometry%phys%local_NZ
-                   varAvg = varAvg + self%quadratic_variables(iVar)%phys(iz,iy,ix) &
-                         * self%gauss_cheby%weight1d( domain_decomp%phys_iStart(1) -1 + iz)
-                end do
-                end do
-                end do
-                varAvg = varAvg / real(self%geometry%NXAA, kind=dp)
-                varAvg = varAvg / real(self%geometry%NYAA, kind=dp)
-                !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                self%io_bookkeeping%dPosition = position_backup
-                current_position = (timings%i_timestep-1)*8+1
-                first_or_not = .False.
-                if (current_position.eq.1) first_or_not = .True.
-                call output_cumul_d_in_timeserie(&
-                              self%io_bookkeeping%output_directory,&
-                              self%io_bookkeeping%output_dir_length,&
-                              self%recipe%nl_vars(iVar)%str,&
-                              len(self%recipe%nl_vars(iVar)%str),&
-                              varAvg,&
-                              first_or_not, &                      
-                              current_position)            
-                if ((self%recipe%nl_vars(iVar)%str .eq. 'uu')   .or. &
-                    (self%recipe%nl_vars(iVar)%str .eq. 'vv')   .or. &
-                    (self%recipe%nl_vars(iVar)%str .eq. 'ww') ) then  
-                        self%cargo%KE_display = self%cargo%KE_display + varAvg
-                end if
-          case ('zSlice')
-               if ((self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
-                               .ge. domain_decomp%phys_iStart(1)) &
-                                       .and. &
-                   (self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
-                               .le. domain_decomp%phys_iEnd  (1))) then
-                varAvg  = 0._dp                                                       
-                do ix = 1, self%geometry%phys%local_NX
-                do iy = 1, self%geometry%phys%local_NY
-                iz = self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index - domain_decomp%phys_iStart(1) + 1
-                varAvg = varAvg + self%quadratic_variables(iVar)%phys(iz,iy,ix) 
-                end do
-                end do
-                varAvg = varAvg / real(self%geometry%NXAA, kind=dp)
-                varAvg = varAvg / real(self%geometry%NYAA, kind=dp)
-                call MPI_reduce(varAvg, &  !send buffer
-                   aux_dsca,   & !recv buffer
-                   1,          & !count
-                   MPI_double, & !dtype
-                   MPI_sum,    &
-                   0, &
-                   self%geometry%mpi_Zphys%comm, ierr)
-                 if (self%geometry%mpi_Zphys%rank.eq.0) then
-                 write (fileExtension, 305) self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index 
-                 current_position = (timings%i_timestep-1)*8+1
-                 first_or_not = .False.
-                 if (current_position.eq.1) first_or_not = .True.
-                 call output_dsca_in_unique_timeserie(&
-                    self%io_bookkeeping%output_directory,&
-                    self%io_bookkeeping%output_dir_length,&
-                    self%recipe%nl_vars(iVar)%str//fileExtension,&
-                    len(self%recipe%nl_vars(iVar)%str)+17,&
-                    aux_dsca, &                                 
-                    first_or_not, &                      
-                    current_position)            
-                 end if 
+         case ('volume')
+            self%io_bookkeeping%dPosition = position_backup
+            current_position = (timings%i_timestep-1)*8+1
+            call output_2dbundled_cumul_d_in_timeserie(&
+                          self%io_bookkeeping%output_directory,&
+                          self%io_bookkeeping%output_dir_length,&
+                          self%recipe%nl_vars(iVar)%str,&
+                          len(self%recipe%nl_vars(iVar)%str),&
+                          self% timeseries_buffer, iBuffer, &
+                          self% buffer_length, &
+                          self% buffer_yet_unwritten, &                      
+                          current_position)            
+         case ('zSlice')
+            if ((self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
+                          .ge. domain_decomp%phys_iStart(1)) &
+                          .and. &
+                         (self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index &
+                          .le. domain_decomp%phys_iEnd  (1))) then
+               call MPI_reduce(&
+                    self% timeseries_buffer(:, iBuffer), &  !send buffer
+                    arr_dsca,            & !recv buffer
+                    self% buffer_length, & !count
+                    MPI_double,          & !dtype
+                    MPI_sum, 0,   &
+                    self%geometry%mpi_Zphys%comm, ierr)
+               if (self%geometry%mpi_Zphys%rank.eq.0) then
+                  write (fileExtension, 305) self%recipe%timeseries%quadra(iVar)%object(iObj)%slice_index 
+                  current_position = (timings%i_timestep-1)*8+1
+                  call output_bundled_dsca_in_unique_timeserie(&
+                     self%io_bookkeeping%output_directory,&
+                     self%io_bookkeeping%output_dir_length,&
+                     self%recipe%nl_vars(iVar)%str//fileExtension,&
+                     len(self%recipe%nl_vars(iVar)%str)+17,&
+                     arr_dsca, &                                 
+                     self% buffer_yet_unwritten, &                      
+                     current_position)            
                end if
-          case default
-               print *,'bad (Q) object kind', self%recipe%timeseries%quadra(iVar)%object(iObj)%kind, iVar, iObj
-               error stop
-          end select
-   end do
-   end do
+            end if
+      end select
+   end do writeQuadraObjs
+   end do writeQuadraVars
    self%io_bookkeeping%first_or_not=.False.
+   deAllocate(arr_dsca)
+   self% buffer_yet_unwritten=.False.
+   self% buffer_counter=0
+   end if fullBuff
 
  end subroutine
 

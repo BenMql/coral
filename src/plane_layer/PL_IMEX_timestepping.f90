@@ -157,6 +157,8 @@ module PL_IMEX_timestepping
    type(dOperator_1d_1coupled_T) :: Chebyshev_Integration_d
    real(kind=dp), allocatable :: timeseries_buffer (:,:)
    integer :: buffer_length = 20 ! arbitrarily...
+   integer :: buffer_counter
+   logical :: buffer_yet_unwritten = .True.
   contains 
    procedure :: add_K_std_to_rhs   => LPIMEX_add_K_std_to_rhs
    procedure :: add_K_hat_to_rhs   => LPIMEX_add_K_hat_to_rhs
@@ -583,7 +585,12 @@ module PL_IMEX_timestepping
          N_timeseries_objects = N_timeseries_objects + 1
       end do
    end do
-   allocate( self% timeseries_buffer(self%buffer_length, N_timeseries_objects))
+   allocate( &
+      self% timeseries_buffer(&
+                     self%buffer_length, &
+                     0:N_timeseries_objects)&
+           )
+   self% buffer_counter = 0
    ! other buffers
    allocate( self%coupled_kxky_set( &
              self%recipe%numberOf_coupled_kxky_systems ))
