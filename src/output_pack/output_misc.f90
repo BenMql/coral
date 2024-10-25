@@ -41,7 +41,8 @@
    call MPI_Bcast(my_position, 1, MPI_INTEGER, 0, MPI_Comm_world, ierr)
  end subroutine Output_cumul_d_in_timeserie
 
- Subroutine Output_bundled_cumul_d_in_timeserie(path2file, path2file_len, file_str, file_len, arr_dsca, count, first_or_not, my_position)
+ Subroutine Output_bundled_cumul_d_in_timeserie(path2file, path2file_len, file_str, file_len, &
+                   arr_dsca, count, first_or_not, my_position)
    integer, intent(in) :: path2file_len
    integer, intent(in) :: count
    character(len=path2file_len), intent(in) :: path2file
@@ -124,7 +125,8 @@
    close(unit=9)
  end subroutine Output_dsca_in_unique_timeserie
 
- subroutine Output_bundled_dsca_in_unique_timeserie(path2file, path2file_len, file_str, file_len, arr_dsca, first_or_not, my_position)
+ subroutine output_bundled_dsca_in_unique_timeserie(path2file, path2file_len, &
+                    file_str, file_len, arr_dsca, first_or_not, my_position)
    integer, intent(in) :: path2file_len
    character(len=path2file_len), intent(in) :: path2file
    integer, intent(in) :: file_len
@@ -143,7 +145,7 @@
    write(9, pos = my_position) arr_dsca
    inquire(unit=9, pos = my_position)
    close(unit=9)
- end subroutine Output_bundled_dsca_in_unique_timeserie
+ end subroutine output_bundled_dsca_in_unique_timeserie
 
  !!!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!!!
  !!!!                                                          !!!!
