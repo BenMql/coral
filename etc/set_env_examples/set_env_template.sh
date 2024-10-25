@@ -26,12 +26,6 @@ export FFTW_ROOT=/usr/local/
 export MKLROOT=/opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 #===========================================================================
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# MKL Lapack sources 
-# --- choose one that points to a file that exists on your machine
-export LAPACK_SOURCES=${MKLROOT}/include/lapack.f90
-export LAPACK_SOURCES=${MKLROOT}/include/mkl_lapack.f90
-#===========================================================================
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Flag for compilation. Pick one (comment/uncomment) below (or create your own)
@@ -59,3 +53,24 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MKLROOT}/lib/intel64
 export GCC_COLORS='locus=01;32'
 #===========================================================================
 
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# MKL Lapack sources 
+# --- choose one that points to a file that exists on your machine
+export LAPACK_SOURCES=${MKLROOT}/include/lapack.f90
+echo "Searching for Lapack sources there:"
+echo "$LAPACK_SOURCES"
+if [ -f "$LAPACK_SOURCES" ]; then
+	echo "Lapack sources have been found!"
+else
+	export LAPACK_SOURCES=${MKLROOT}/include/mkl_lapack.f90
+	echo "Searching for Lapack sources somewhere else:"
+	echo "$LAPACK_SOURCES"
+	if [ -f "$LAPACK_SOURCES" ]; then
+		echo "Lapack sources have been found."
+	else
+		echo "Lapack sources have not been found."
+		echo "Compilation is likely to fail."
+	fi
+fi
+
+#===========================================================================
