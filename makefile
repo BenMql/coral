@@ -1,5 +1,5 @@
 # Compiler Options: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-MPIFC = mpif90 -cpp
+MPIFC = mpif90
 MPICC = mpicc 
 
 

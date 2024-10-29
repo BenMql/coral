@@ -14,6 +14,7 @@
    integer :: iBuffer
    integer :: N_saved_objects
    real(kind=dp), allocatable :: mpi_buf_2(:,:)
+   logical :: start_an_empty_file
    305 format ('_XYavg_z',(i5.5),'.dat')
    if (self%io_bookkeeping%first_or_not) then
    call gauss_chebyshev_weight_1d( self%gauss_cheby%weight1d, &
@@ -139,12 +140,14 @@
    !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    self%io_bookkeeping%dPosition = position_backup
    current_position = (timings%i_timestep-self% buffer_length)*8+1
+   start_an_empty_file = .False.
+   if (current_position==1) start_an_empty_file=.True.
    call output_2Dbundled_dsca_in_unique_timeserie(&
            self%io_bookkeeping%output_directory,&
            self%io_bookkeeping%output_dir_length,&
            'time.dat', 8,& 
            self% timeseries_buffer,  0, &
-           self% buffer_yet_unwritten, &                      
+           start_an_empty_file, &                      
            current_position)
    
    allocate(mpi_buf_2(self% buffer_length, N_saved_objects))
@@ -171,7 +174,7 @@
                        self%recipe%linear_vars_full(iVar)%str//'_volAvg.dat',&
                        len(self%recipe%linear_vars_full(iVar)%str)+11,&
                        self% timeseries_buffer,  iBuffer, &
-                       self% buffer_yet_unwritten, &                      
+                       start_an_empty_file, &
                        current_position)
          case ('zSlice')
             write (fileExtension, 305) self%recipe%timeseries%linear(iVar)%object(iObj)%slice_index 
@@ -183,7 +186,7 @@
                        self%recipe%linear_vars_full(iVar)%str//fileExtension,&
                        len(self%recipe%linear_vars_full(iVar)%str)+17,&
                        self% timeseries_buffer,  iBuffer, &
-                       self% buffer_yet_unwritten, &                      
+                       start_an_empty_file, &
                        current_position)
          ! 'case default' is useless, for it has been filtered above
       end select
@@ -202,7 +205,7 @@
                        self%recipe%nl_vars(iVar)%str//'_volAvg.dat',&
                        len(self%recipe%nl_vars(iVar)%str)+11,&
                        self% timeseries_buffer,  iBuffer, &
-                       self% buffer_yet_unwritten, &                      
+                       start_an_empty_file, &
                        current_position)
          case ('zSlice')
             write (fileExtension, 305) self%recipe%timeseries% quadra(iVar)%object(iObj)%slice_index 
@@ -214,7 +217,7 @@
                        self%recipe%nl_vars(iVar)%str//fileExtension,&
                        len(self%recipe%nl_vars(iVar)%str)+17,&
                        self% timeseries_buffer,  iBuffer, &
-                       self% buffer_yet_unwritten, &                      
+                       start_an_empty_file, &
                        current_position)
       end select
    end do writeQuadraObjs

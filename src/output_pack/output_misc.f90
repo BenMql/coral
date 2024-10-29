@@ -21,7 +21,8 @@
    
    call chdir(trim(path2file))
    call chdir('./Timeseries')
-   if (first_or_not) Then
+   if (my_rank==0) then
+   if (first_or_not) then
    open (unit=9, file=trim(file_str), status='replace', access='stream')
    else 
    open (unit=9, file=trim(file_str), status='old',     access='stream')
@@ -29,6 +30,7 @@
    write(9, pos = my_position) arr_dsca(:,index2)
    inquire(unit=9, pos = my_position)
    close(unit=9)
+   endif
  end subroutine Output_2Dbundled_dsca_in_unique_timeserie
 
 
