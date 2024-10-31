@@ -98,6 +98,19 @@ module PL_equations
     character(len=:), allocatable :: svar2
  end type list_of_quadraVars_T
 
+ type :: list_of_quarticVars_T
+    character(len=:), allocatable :: str
+    logical :: remove_z_integral
+    character(len=8) :: combine ! should be '4_linear' or '2_quadra'
+    integer :: ivar1
+    integer :: ivar2
+    integer :: ivar3
+    integer :: ivar4
+    character(len=:), allocatable :: svar1
+    character(len=:), allocatable :: svar2
+    character(len=:), allocatable :: svar3
+    character(len=:), allocatable :: svar4
+ end type list_of_quarticVars_T
 
  type :: fullVars_recipe_T
    !< contains the recipe for building fields that will be computed
@@ -168,10 +181,11 @@ module PL_equations
    type(coupled_system_recipe_T), dimension(:), allocatable :: kxky_recipes
    type(coupled_system_recipe_T), dimension(:), allocatable :: zero_recipes
    type(list_of_parameters_T), dimension(:), allocatable :: list_parameters
-   type(list_of_linVars_T ), dimension(:), allocatable :: linear_vars_kxky
-   type(list_of_linVars_T ), dimension(:), allocatable :: linear_vars_zero
-   type(fullVars_recipe_T ), dimension(:), allocatable :: linear_vars_full
-   type(list_of_quadraVars_T  ), dimension(:), allocatable :: quadra_vars
+   type(list_of_linVars_T), dimension(:), allocatable :: linear_vars_kxky
+   type(list_of_linVars_T), dimension(:), allocatable :: linear_vars_zero
+   type(fullVars_recipe_T), dimension(:), allocatable :: linear_vars_full
+   type(list_of_quadraVars_T), dimension(:), allocatable :: quadra_vars
+   type(list_of_quarticVars_T), dimension(:), allocatable :: quartic_vars
    type(output_lists_T) :: output
    type(output_lists_T) :: timeseries
    type(source_rhs_recipe_T) :: sources
@@ -500,10 +514,15 @@ module PL_equations
            call interpret_quadratic_variable_definition(text_list(iLine)(1:1024), Qvar_name, &
                                                                         Lvar1_name, Lvar2_name)
            call self%add_quadratic_var(Qvar_name, Lvar1_name, Lvar2_name, 'untouched')
-       case (62)
-           call interpret_quadratic_variable_definition(text_list(iLine)(1:1024), Qvar_name, &
-                                                                        Lvar1_name, Lvar2_name)
+       case (601)
+           call interpret_quadratic_variable_definition(&
+                   text_list(iLine)(1:1024), Qvar_name, Lvar1_name, Lvar2_name)
            call self%add_quadratic_var(Qvar_name, Lvar1_name, Lvar2_name, 'zero_Mean')
+       case (64)
+           print *, 'You have defined a quartic variable. I am afraid I cannot do that, Dave.' 
+           !call interpret_quartic_variable_definition(&
+           !        text_list(iLine)(1:1024), Qvar_name, Lvar1_name, Lvar2_name)
+           !call self%add_quartic_var(Qvar_name, Lvar1_name, Lvar2_name, 'zero_Mean')
        case(7)
            call self%add_coupled_kxky_eqns()
        case(71)
@@ -1858,23 +1877,35 @@ module PL_equations
        case (6)
          if (text_line(3:35).eq.'add_set_of_coupled_kxky_equations') then
             bstep = 7
+         else if (text_line(3:18).eq.'quartic_variable') then
+            bstep = 64
          else if (text_line(3:20).eq.'quadratic_variable') then
             bstep = 6
          else if (text_line(3:30).eq.'zFiltered_quadratic_variable') then
-            bstep = 62
+            bstep = 601
          else
             stopSig = .True.
          end if
        ! from 'zFiltered_quadratic_variable', accepted values are 'quadratic_variable', 
        !                                                'add_set_of_coupled_kxky_equations'
        !                                                'zFiltered_quadratic_variable'
-       case (62)
+       case (601)
          if (text_line(3:35).eq.'add_set_of_coupled_kxky_equations') then
             bstep = 7
          else if (text_line(3:20).eq.'quadratic_variable') then
             bstep = 6
          else if (text_line(3:30).eq.'zFiltered_quadratic_variable') then
-            bstep = 62
+            bstep = 601
+         else
+            stopSig = .True.
+         end if
+       ! from 'quartic_variable', accepted values are 'quartic_variable', 
+       !                                                'add_set_of_coupled_kxky_equations'
+       case (64)
+         if (text_line(3:35).eq.'add_set_of_coupled_kxky_equations') then
+            bstep = 7
+         else if (text_line(3:18).eq.'quartic_variable') then
+            bstep = 64
          else
             stopSig = .True.
          end if
