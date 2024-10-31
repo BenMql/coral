@@ -13,7 +13,7 @@
 !
 !=============================================================================
 
-Module PL_equations
+module PL_equations
  use Fortran_kinds
  use MPI_vars, only: my_rank
  use PL_string_to_data
@@ -89,14 +89,14 @@ Module PL_equations
     real(C_Double), allocatable :: val
  end type list_of_parameters_T
 
- type :: list_of_nlVars_T
+ type :: list_of_quadraVars_T
     character(len=:), allocatable :: str
     logical :: remove_z_integral
     integer :: ivar1
     integer :: ivar2
     character(len=:), allocatable :: svar1
     character(len=:), allocatable :: svar2
- end type list_of_nlVars_T
+ end type list_of_quadraVars_T
 
 
  type :: fullVars_recipe_T
@@ -163,6 +163,7 @@ Module PL_equations
    integer :: numberOf_linear_variables_k
    integer :: numberOf_linear_variables_0
    integer :: numberOf_quadratic_variables         
+   integer :: numberOf_quartic_variables           
    integer :: numberOf_linear_variables_full       
    type(coupled_system_recipe_T), dimension(:), allocatable :: kxky_recipes
    type(coupled_system_recipe_T), dimension(:), allocatable :: zero_recipes
@@ -170,7 +171,7 @@ Module PL_equations
    type(list_of_linVars_T ), dimension(:), allocatable :: linear_vars_kxky
    type(list_of_linVars_T ), dimension(:), allocatable :: linear_vars_zero
    type(fullVars_recipe_T ), dimension(:), allocatable :: linear_vars_full
-   type(list_of_NLVars_T  ), dimension(:), allocatable :: nl_vars
+   type(list_of_quadraVars_T  ), dimension(:), allocatable :: nl_vars
    type(output_lists_T) :: output
    type(output_lists_T) :: timeseries
    type(source_rhs_recipe_T) :: sources
@@ -186,6 +187,7 @@ Module PL_equations
    procedure :: add_source_parameter => add_source_parameter_to_full_recipe
    procedure :: add_linear_var => add_linear_variable_to_full_recipe
    procedure :: add_quadratic_var => add_quadratic_variable_to_full_recipe
+   procedure :: add_quartic_var => add_quartic_variable_to_full_recipe
    procedure :: add_full_var => add_full_linear_variable_to_full_recipe
    procedure :: add_coupled_kxky_eqns => add_coupled_kxky_equations_to_full_recipe
    procedure :: add_coupled_zero_eqns => add_coupled_zero_equations_to_full_recipe
@@ -311,7 +313,7 @@ Module PL_equations
  end subroutine
  
 
- Subroutine add_outputs( self, text_list)
+ subroutine add_outputs( self, text_list)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: text_list(:)
    character(len=1024) :: restOfmyLine
@@ -403,7 +405,7 @@ Module PL_equations
    end do
  end subroutine
 
- Subroutine build_full_recipe_from_text_file( self, text_list)
+ subroutine build_full_recipe_from_text_file( self, text_list)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: text_list(:)
    character(len=1024) :: myLine
@@ -654,7 +656,7 @@ Module PL_equations
    self%sources%n_sourceParams = 0
    allocate(self%sources%term(0))
    allocate(self%sources%sourceParams(0))                           
- End Subroutine initialize_full_recipe
+ end subroutine initialize_full_recipe
 
  subroutine specify_boundaryConditions_in_kxky_eqns(self, bc_code)
     class(full_problem_recipe_T) :: self
@@ -853,9 +855,14 @@ Module PL_equations
    
  end subroutine
 
- Subroutine add_quadratic_variable_to_full_recipe(self, qvname, lv1name, lv2name, filtered_or_not)
+ subroutine add_quartic_variable_to_full_recipe(self)
    class(full_problem_recipe_T) :: self
-   type(list_of_NLVars_T), dimension(:), allocatable :: temporary_list
+   print *, 'empty'
+ end subroutine add_quartic_variable_to_full_recipe
+
+ subroutine add_quadratic_variable_to_full_recipe(self, qvname, lv1name, lv2name, filtered_or_not)
+   class(full_problem_recipe_T) :: self
+   type(list_of_quadraVars_T), dimension(:), allocatable :: temporary_list
    character(len=:), intent(in), allocatable :: qvName 
    character(len=:), intent(in), allocatable :: lv1Name, lv2Name
    character(len=9), intent(in) :: filtered_or_not
@@ -917,9 +924,9 @@ Module PL_equations
        STOP 'Do not define a quad.var as one to the square. Use a source instead'
    end if 
 
- End Subroutine add_quadratic_variable_to_full_recipe
+ end subroutine add_quadratic_variable_to_full_recipe
 
- Subroutine add_linear_variable_to_full_recipe(self, varName, varKind)
+ subroutine add_linear_variable_to_full_recipe(self, varName, varKind)
    class(full_problem_recipe_T) :: self
    type(list_of_linVars_T), dimension(:), allocatable :: temporary_list
    character(len=:), intent(in), allocatable :: varName
@@ -945,10 +952,10 @@ Module PL_equations
    else
       Stop 'bad varKind value in add_linear_variable_to_full_recipe'
    end if
- End Subroutine add_linear_variable_to_full_recipe
+ end subroutine add_linear_variable_to_full_recipe
 
 
- Subroutine add_source_parameter_to_full_recipe(self, string, dsca)
+ subroutine add_source_parameter_to_full_recipe(self, string, dsca)
    class(full_problem_recipe_T) :: self
    type(sourceParams_T), allocatable :: temporary_list(:)
    character(len=:), intent(in), allocatable :: string
@@ -959,9 +966,9 @@ Module PL_equations
    temporary_list (   self% sources% n_sourceParams  ) % str = string
    temporary_list (   self% sources% n_sourceParams  ) % dsca= dsca
    call move_alloc (from= temporary_list, to= self%sources%sourceParams )
- End Subroutine add_source_parameter_to_full_recipe
+ end subroutine add_source_parameter_to_full_recipe
 
- Subroutine add_parameter_to_full_recipe(self, string, dsca)
+ subroutine add_parameter_to_full_recipe(self, string, dsca)
    class(full_problem_recipe_T) :: self
    type(list_of_parameters_T), dimension(:), allocatable :: temporary_list
    character(len=:), intent(in), allocatable :: string
@@ -974,16 +981,16 @@ Module PL_equations
    allocate(character(len(string)) :: self%list_parameters(self%numberOf_parameters)%str)
    self%list_parameters(self%numberOf_parameters)%str = string
    self%list_parameters(self%numberOf_parameters)%val = dsca   
- End Subroutine add_parameter_to_full_recipe
+ end subroutine add_parameter_to_full_recipe
 
 
- Subroutine copy_list_of_parameters_from_recipe(self, list_of_p)
+ subroutine copy_list_of_parameters_from_recipe(self, list_of_p)
    class(full_problem_recipe_T) :: self
    type(list_of_parameters_T), dimension(:), allocatable, intent(inOut) :: list_of_p
    call copy_list_of_parameters(self%list_parameters, list_of_p)
  end subroutine copy_list_of_parameters_from_recipe
 
- Subroutine copy_list_of_parameters(self, other)
+ subroutine copy_list_of_parameters(self, other)
    type(list_of_parameters_T), dimension(:), allocatable :: self
    type(list_of_parameters_T), dimension(:), allocatable, intent(inOut) :: other
    integer :: i 
@@ -995,7 +1002,7 @@ Module PL_equations
       allocate(character(len(self(i)%str)) :: other(i)%str)
       other(i)%str = self(i)%str
    end do
- End Subroutine copy_list_of_parameters
+ end subroutine copy_list_of_parameters
 
  
  subroutine enable_penalisation(self)
@@ -2008,4 +2015,4 @@ Module PL_equations
             
  end subroutine determine_kind_of_information
 
- End Module PL_equations
+ end module PL_equations
