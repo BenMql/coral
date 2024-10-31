@@ -95,9 +95,9 @@
             end do
             end do
             end do
-            if ((self%recipe%nl_vars(iVar)%str .eq. 'uu')   .or. &
-                (self%recipe%nl_vars(iVar)%str .eq. 'vv')   .or. &
-                (self%recipe%nl_vars(iVar)%str .eq. 'ww') ) then  
+            if ((self%recipe%quadra_vars(iVar)%str .eq. 'uu')   .or. &
+                (self%recipe%quadra_vars(iVar)%str .eq. 'vv')   .or. &
+                (self%recipe%quadra_vars(iVar)%str .eq. 'ww') ) then  
                     self%cargo%KE_display = self%cargo%KE_display + varAvg
             end if
          case ('zSlice')
@@ -202,8 +202,8 @@
             call output_2Dbundled_dsca_in_unique_timeserie(&
                        self%io_bookkeeping%output_directory,&
                        self%io_bookkeeping%output_dir_length,&
-                       self%recipe%nl_vars(iVar)%str//'_volAvg.dat',&
-                       len(self%recipe%nl_vars(iVar)%str)+11,&
+                       self%recipe%quadra_vars(iVar)%str//'_volAvg.dat',&
+                       len(self%recipe%quadra_vars(iVar)%str)+11,&
                        self% timeseries_buffer,  iBuffer, &
                        start_an_empty_file, &
                        current_position)
@@ -214,8 +214,8 @@
             call output_2Dbundled_dsca_in_unique_timeserie(&
                        self%io_bookkeeping%output_directory,&
                        self%io_bookkeeping%output_dir_length,&
-                       self%recipe%nl_vars(iVar)%str//fileExtension,&
-                       len(self%recipe%nl_vars(iVar)%str)+17,&
+                       self%recipe%quadra_vars(iVar)%str//fileExtension,&
+                       len(self%recipe%quadra_vars(iVar)%str)+17,&
                        self% timeseries_buffer,  iBuffer, &
                        start_an_empty_file, &
                        current_position)

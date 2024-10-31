@@ -278,20 +278,20 @@
 
    do iQvar = 1, self%recipe%numberOf_quadratic_variables
       ! largeArrayWarning 
-      if (self%recipe%nl_vars(iQvar)%iVar1 == -1) then
+      if (self%recipe%quadra_vars(iQvar)%iVar1 == -1) then
         self%quadratic_variables(iQvar)%phys = &
-              self%linear_variables( self%recipe%nl_vars(iQvar)%iVar2 )%phys
-      else if (self%recipe%nl_vars(iQvar)%iVar2 == -1) then
+              self%linear_variables( self%recipe%quadra_vars(iQvar)%iVar2 )%phys
+      else if (self%recipe%quadra_vars(iQvar)%iVar2 == -1) then
         self%quadratic_variables(iQvar)%phys = &
-              self%linear_variables( self%recipe%nl_vars(iQvar)%iVar1 )%phys
+              self%linear_variables( self%recipe%quadra_vars(iQvar)%iVar1 )%phys
       else
         self%quadratic_variables(iQvar)%phys = &
-              self%linear_variables( self%recipe%nl_vars(iQvar)%iVar1 )%phys *&
-              self%linear_variables( self%recipe%nl_vars(iQvar)%iVar2 )%phys
+              self%linear_variables( self%recipe%quadra_vars(iQvar)%iVar1 )%phys *&
+              self%linear_variables( self%recipe%quadra_vars(iQvar)%iVar2 )%phys
       end if
      
       call self%quadratic_variables(iQvar)%phys_to_spec()
-      if (self%recipe%nl_vars(iQvar)% remove_z_integral) then
+      if (self%recipe%quadra_vars(iQvar)% remove_z_integral) then
       ! first we filter the vertically invariant component in spectral space
       call self%remove_vertical_mean_of_quadratic_var (iQvar)
       ! and we propagate that back to physical space, for output purposes

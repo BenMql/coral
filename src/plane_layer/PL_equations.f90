@@ -171,7 +171,7 @@ module PL_equations
    type(list_of_linVars_T ), dimension(:), allocatable :: linear_vars_kxky
    type(list_of_linVars_T ), dimension(:), allocatable :: linear_vars_zero
    type(fullVars_recipe_T ), dimension(:), allocatable :: linear_vars_full
-   type(list_of_quadraVars_T  ), dimension(:), allocatable :: nl_vars
+   type(list_of_quadraVars_T  ), dimension(:), allocatable :: quadra_vars
    type(output_lists_T) :: output
    type(output_lists_T) :: timeseries
    type(source_rhs_recipe_T) :: sources
@@ -293,7 +293,7 @@ module PL_equations
       end if
       end do
       do iVar = 1,self%numberOf_quadratic_variables  
-      if (varNameStr.eq.self%nl_vars(iVar)%str) then
+      if (varNameStr.eq.self%quadra_vars(iVar)%str) then
          self%timeseries%numberOf_quadraObjects(iVar) = self%timeseries%numberOf_quadraObjects(iVar) + 1
          allocate (larger_list_of_objects ( self%timeseries%numberOf_quadraObjects(iVar) ))
          larger_list_of_objects(1:self%timeseries%numberOf_quadraObjects(iVar)-1) = &
@@ -390,7 +390,7 @@ module PL_equations
       end if
       end do
       do iVar = 1,self%numberOf_quadratic_variables  
-      if (varNameStr.eq.self%nl_vars(iVar)%str) then
+      if (varNameStr.eq.self%quadra_vars(iVar)%str) then
          self%output%numberOf_quadraObjects(iVar) = self%output%numberOf_quadraObjects(iVar) + 1
          allocate (larger_list_of_objects ( self%output%numberOf_quadraObjects(iVar) ))
          larger_list_of_objects(1:self%output%numberOf_quadraObjects(iVar)-1) = &
@@ -651,7 +651,7 @@ module PL_equations
    allocate (self%linear_vars_kxky ( 0 ) )
    allocate (self%linear_vars_zero ( 0 ) )
    allocate (self%linear_vars_full ( 0 ) )
-   allocate (self%nl_vars     ( 0 ) )
+   allocate (self%quadra_vars     ( 0 ) )
    self%sources%n_sources = 0
    self%sources%n_sourceParams = 0
    allocate(self%sources%term(0))
@@ -870,28 +870,28 @@ module PL_equations
    ! first initialize the list if it was empty
    if (self%numberOf_quadratic_variables.eq.0) then
        self%numberOf_quadratic_variables = 1
-       deAllocate(self%nl_vars)
-       allocate  (self%nl_vars(1))
+       deAllocate(self%quadra_vars)
+       allocate  (self%quadra_vars(1))
    ! or extend the existing allocatable                           
    else
       self%numberOf_quadratic_variables = self%numberOf_quadratic_variables + 1 
       allocate(temporary_list(self%numberOf_quadratic_variables))
-      temporary_list(1:self%numberOf_quadratic_variables-1) = self%nl_vars
-      deAllocate(self%nl_vars)
-      Allocate(self%nl_vars ( self%numberOf_quadratic_variables))
-      call move_alloc(from=temporary_list, to=self%nl_vars)
+      temporary_list(1:self%numberOf_quadratic_variables-1) = self%quadra_vars
+      deAllocate(self%quadra_vars)
+      Allocate(self%quadra_vars ( self%numberOf_quadratic_variables))
+      call move_alloc(from=temporary_list, to=self%quadra_vars)
    end if 
    ! now fill-in the last entry
    entry_index = self%numberOf_quadratic_variables 
-   self%nl_vars(entry_index)%str = qvname
-   self%nl_vars(entry_index)%svar1 = lv1name
-   self%nl_vars(entry_index)%svar2 = lv2name
-   self%nl_vars(entry_index)%ivar1 = 0
-   self%nl_vars(entry_index)%ivar2 = 0
+   self%quadra_vars(entry_index)%str = qvname
+   self%quadra_vars(entry_index)%svar1 = lv1name
+   self%quadra_vars(entry_index)%svar2 = lv2name
+   self%quadra_vars(entry_index)%ivar1 = 0
+   self%quadra_vars(entry_index)%ivar2 = 0
    if (filtered_or_not=='untouched') then
-   self%nl_vars(entry_index)%remove_z_integral = .False.
+   self%quadra_vars(entry_index)%remove_z_integral = .False.
    else if (filtered_or_not=='zero_Mean') then
-   self%nl_vars(entry_index)%remove_z_integral = .True.
+   self%quadra_vars(entry_index)%remove_z_integral = .True.
    else
        print *, 'WRONG ''FILTERED_OR_NOT'' VAR. IN PL_EQUATIONS.F90'
        stop
@@ -901,26 +901,26 @@ module PL_equations
    ! --------
    do ivar = 1, self%numberOf_Linear_variables_full
      if (lv1name==self%linear_vars_full(ivar)%str) then 
-        self%nl_vars(entry_index)%ivar1 = ivar
+        self%quadra_vars(entry_index)%ivar1 = ivar
      end if
      if (lv2name==self%linear_vars_full(ivar)%str) then 
-        self%nl_vars(entry_index)%ivar2 = ivar
+        self%quadra_vars(entry_index)%ivar2 = ivar
      end if
    end do
    ! ///////////////////////////////////////////////
    ! ... try detecting multiplication by 1       
    ! --------
-   if (lv1name=='ONE') self%nl_vars(entry_index)%ivar1 = -1
-   if (lv2name=='ONE') self%nl_vars(entry_index)%ivar2 = -1
+   if (lv1name=='ONE') self%quadra_vars(entry_index)%ivar1 = -1
+   if (lv2name=='ONE') self%quadra_vars(entry_index)%ivar2 = -1
    ! ///////////////////////////////////////////////
    ! ... or else there must be a problem         
    ! --------
-   if ((self%NL_vars(entry_index)%ivar1==0) .or. &
-       (self%NL_vars(entry_index)%ivar2==0) ) then
+   if ((self%quadra_vars(entry_index)%ivar1==0) .or. &
+       (self%quadra_vars(entry_index)%ivar2==0) ) then
        STOP 'bad NL var definition (wrong reference to linear var.)'
    end if 
-   if ((self%NL_vars(entry_index)%ivar1==-1) .and. &
-       (self%NL_vars(entry_index)%ivar2==-1) ) then
+   if ((self%quadra_vars(entry_index)%ivar1==-1) .and. &
+       (self%quadra_vars(entry_index)%ivar2==-1) ) then
        STOP 'Do not define a quad.var as one to the square. Use a source instead'
    end if 
 
@@ -1094,7 +1094,7 @@ module PL_equations
        this_string_is_identified = .False.
        ! perhaps the unsorted string is a field?
        do ivar = 1, self%numberOf_quadratic_variables               
-         if (atom_linear_ops(iAtom)%unsorted(i_str)%str==self%nl_vars(ivar)%str) then 
+         if (atom_linear_ops(iAtom)%unsorted(i_str)%str==self%quadra_vars(ivar)%str) then 
           self%kxky_recipes(this_recipe)%NL%term(n_old+iAtom)%quad_var_index = ivar
           this_string_is_identified = .True.
           exit
@@ -1243,7 +1243,7 @@ module PL_equations
        this_string_is_identified = .False.
        ! perhaps the unsorted string is a field?
        do ivar = 1, self%numberOf_quadratic_variables               
-         if (atom_linear_ops(iAtom)%unsorted(i_str)%str==self%nl_vars(ivar)%str) then 
+         if (atom_linear_ops(iAtom)%unsorted(i_str)%str==self%quadra_vars(ivar)%str) then 
           self%zero_recipes(this_recipe)%NL%term(n_old+iAtom)%quad_var_index = ivar
           this_string_is_identified = .True.
           exit
