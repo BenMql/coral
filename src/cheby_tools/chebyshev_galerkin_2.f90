@@ -77,6 +77,46 @@ contains
             End do
          S%nelems = fill_in_index - 1  
    !..........................................................
+   ! bc_type = 12: Neuman at +1, Df=0
+   !..........................................................
+      Case(12)
+         S%ncol  = N-1
+         S%nelems = 2*(N-1)
+         Allocate(aux_dat(S%nelems))
+         Allocate(aux_row(S%nelems))
+         Allocate(aux_col(S%nelems))
+            Do j = 1,N-1
+               aux_dat(fill_in_index) = -(j+1._dp)**2
+               aux_row(fill_in_index) =  j
+               aux_col(fill_in_index) =  j
+               fill_in_index = fill_in_index + 1 
+               aux_dat(fill_in_index) = real(j, kind=dp)**2
+               aux_row(fill_in_index) = j+1
+               aux_col(fill_in_index) =  j
+               fill_in_index = fill_in_index + 1 
+            End do
+         S%nelems = fill_in_index - 1  
+   !..........................................................
+   ! bc_type = 13: Neuman at -1, Df=0
+   !..........................................................
+      Case(13)
+         S%ncol  = N-1
+         S%nelems = 2*(N-1)
+         Allocate(aux_dat(S%nelems))
+         Allocate(aux_row(S%nelems))
+         Allocate(aux_col(S%nelems))
+            Do j = 1,N-1
+               aux_dat(fill_in_index) =  (j+1._dp)**2
+               aux_row(fill_in_index) =  j
+               aux_col(fill_in_index) =  j
+               fill_in_index = fill_in_index + 1 
+               aux_dat(fill_in_index) = real(j, kind=dp)**2
+               aux_row(fill_in_index) = j+1
+               aux_col(fill_in_index) =  j
+               fill_in_index = fill_in_index + 1 
+            End do
+         S%nelems = fill_in_index - 1  
+   !..........................................................
    ! bc_type = 20: Both Dirichlet, f=0 
    !..........................................................
       Case(20)
