@@ -1,0 +1,10 @@
+>>Volume :: uFull ;; Period= 1000 <<
+>>Volume :: vFull ;; Period= 1000 <<
+>>Volume :: wFull ;; Period= 1000 <<
+>>Volume :: tFull ;; Period= 1000 <<
+>>YSlice :: tFull ;; Period= 100 ;; Position= 1 <<
+>>YSlice :: wFull ;; Period= 100 ;; Position= 1 <<
+>>YSlice :: uFull ;; Period= 100 ;; Position= 1 <<
+>>YSlice :: vFull ;; Period= 100 ;; Position= 1 <<
+>>Profile:: tFull ;; Period= 50 <<
+>>EOF<<

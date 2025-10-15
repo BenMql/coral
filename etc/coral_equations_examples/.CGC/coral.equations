@@ -1,0 +1,184 @@
+>>Param :: Prandtl := 7.d0 <<
+>>Param :: Rayleigh := 2.d3 <<     
+>>Param :: RATIO := 1.d3 << 
+>>====================================<<
+>>linear_variable_kxky :: u <<
+>>linear_variable_kxky :: v <<
+>>linear_variable_kxky :: w <<
+>>linear_variable_kxky :: t <<
+>>linear_variable_kxky :: tsharp <<
+>>linear_variable_kxky :: tflat <<
+>>linear_variable_kxky :: alphasharp <<
+>>linear_variable_kxky :: alphaflat <<
+>>linear_variable_kxky :: betasharp <<
+>>linear_variable_kxky :: betaflat <<
+>>linear_variable_kxky :: p <<
+>>linear_variable_kxky :: chi <<
+>>linear_variable_mean :: uMean <<
+>>linear_variable_mean :: vMean <<
+>>linear_variable_mean :: tMean <<
+>>linear_variable_mean :: tMeansharp <<
+>>linear_variable_mean :: tMeanflat <<
+>>linear_variable_mean :: alphaMeanflat <<
+>>linear_variable_mean :: alphaMeansharp <<
+>>linear_variable_mean :: betaMeanflat <<
+>>linear_variable_mean :: betaMeansharp <<
+>>====================================<<
+>>linear_variable_full       :: uFull <<
+>>linear_variable_full_build :: + uMean <<
+>>linear_variable_full_build :: + u <<
+>>====================================<<
+>>linear_variable_full       :: vFull <<
+>>linear_variable_full_build :: + vMean <<
+>>linear_variable_full_build :: + v <<
+>>====================================<<
+>>linear_variable_full       :: wFull <<
+>>linear_variable_full_build :: + w <<
+>>====================================<<
+>>linear_variable_full       :: tFull <<
+>>linear_variable_full_build :: + tMean <<
+>>linear_variable_full_build :: + t <<
+>>====================================<<
+>>quadratic_variable :: uu := uFull.uFull <<
+>>quadratic_variable :: uv := uFull.vFull <<
+>>quadratic_variable :: uw := uFull.wFull <<
+>>quadratic_variable :: vv := vFull.vFull <<
+>>quadratic_variable :: vw := vFull.wFull <<
+>>quadratic_variable :: ww := wFull.wFull <<
+>>quadratic_variable :: tu := tFull.uFull <<
+>>quadratic_variable :: tv := tFull.vFull <<
+>>quadratic_variable :: tw := tFull.wFull <<
+>>====================================<<
+>>add_set_of_coupled_kxky_equations <<
+>>linearly_coupled_var :: u <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: v <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: w <<
+>>add_BC_for_this_var :: 20 <<
+>>linearly_coupled_var :: p <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: t <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: chi <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: tflat <<
+>>add_BC_for_this_var :: 10 <<
+>>linearly_coupled_var :: tsharp <<
+>>add_BC_for_this_var :: 11 <<
+>>linearly_coupled_var :: alphasharp <<
+>>add_BC_for_this_var :: 12 <<
+>>linearly_coupled_var :: alphaflat << 
+>>add_BC_for_this_var :: 13 <<
+>>linearly_coupled_var :: betasharp <<
+>>add_BC_for_this_var :: 10 <<
+>>linearly_coupled_var :: betaflat << 
+>>add_BC_for_this_var :: 11 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.u <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.dx.dx.u + Prandtl.Iz.Iz.dy.dy.u + Prandtl.u <<
+>>add_rhs_linear :: - Iz.Iz.dx.p <<
+>>add_rhs_NL     :: - Iz.Iz.dx.uu - Iz.Iz.dy.uv - Iz.uw <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.v <<
+>>add_rhs_linear :: + Prandtl.Iz.Iz.dx.dx.v + Prandtl.Iz.Iz.dy.dy.v + Prandtl.v <<
+>>add_rhs_linear :: - Iz.Iz.dy.p <<
+>>add_rhs_NL     :: - Iz.Iz.dx.uv - Iz.Iz.dy.vv - Iz.vw <<
+>>new_equation :: 1 <<
+>>add_d/dt_term  :: + Iz.w <<
+>>add_rhs_linear :: + Prandtl.Iz.dx.dx.w + Prandtl.Iz.dy.dy.w + Prandtl.chi <<
+>>add_rhs_linear :: - p <<
+>>add_rhs_linear :: + Rayleigh.Prandtl.Iz.t <<
+>>add_rhs_NL     :: - Iz.dx.uw - Iz.dy.vw - ww <<
+>>new_equation :: 1 <<
+>>add_rhs_linear :: + w - Iz.chi <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: + chi + dx.u + dy.v <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.t <<
+>>add_rhs_linear :: + Iz.Iz.dx.dx.t + Iz.Iz.dy.dy.t + t <<
+>>add_rhs_linear :: + Iz.Iz.w <<
+>>add_rhs_NL     :: - Iz.Iz.dx.tu - Iz.Iz.dy.tv - Iz.tw <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.tflat <<
+>>add_rhs_linear :: + Iz.Iz.dx.dx.tflat + Iz.Iz.dy.dy.tflat + tflat <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.tsharp <<
+>>add_rhs_linear :: + Iz.Iz.dx.dx.tsharp + Iz.Iz.dy.dy.tsharp + tsharp <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - alphasharp <<
+>>add_rhs_linear :: + RATIO.t <<
+>>add_rhs_linear :: - tsharp <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - alphaflat <<
+>>add_rhs_linear :: + RATIO.t <<
+>>add_rhs_linear :: - tflat <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - betasharp <<
+>>add_rhs_linear :: + t <<
+>>add_rhs_linear :: - tsharp <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - betaflat <<
+>>add_rhs_linear :: + t <<
+>>add_rhs_linear :: - tflat <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: uMean <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.uMean <<
+>>add_rhs_linear :: + Prandtl.uMean <<
+>>add_rhs_NL     :: - Iz.uw <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: vMean <<
+>>add_BC_for_this_var :: 20 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.vMean <<
+>>add_rhs_linear :: + Prandtl.vMean <<
+>>add_rhs_NL     :: - Iz.vw <<
+>>====================================<<
+>>add_set_of_coupled_zero_equations <<
+>>linearly_coupled_var :: tMean <<
+>>add_BC_for_this_var :: 0 <<
+>>linearly_coupled_var :: tMeansharp <<
+>>add_BC_for_this_var :: 11 <<
+>>linearly_coupled_var :: tMeanflat <<
+>>add_BC_for_this_var :: 10 <<
+>>linearly_coupled_var :: alphaMeansharp <<
+>>add_BC_for_this_var :: 12 <<
+>>linearly_coupled_var :: alphaMeanflat << 
+>>add_BC_for_this_var :: 13 <<
+>>linearly_coupled_var :: betaMeansharp <<
+>>add_BC_for_this_var :: 10 <<
+>>linearly_coupled_var :: betaMeanflat << 
+>>add_BC_for_this_var :: 11 <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.tMean <<
+>>add_rhs_linear :: + tMean <<
+>>add_rhs_NL     :: - Iz.tw <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.tMeanflat <<
+>>add_rhs_linear :: + tMeanflat <<
+>>new_equation :: 2 <<
+>>add_d/dt_term  :: + Iz.Iz.tMeansharp <<
+>>add_rhs_linear :: + tMeansharp <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - alphaMeansharp <<
+>>add_rhs_linear :: + RATIO.tMean <<
+>>add_rhs_linear :: - tMeansharp <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - alphaMeanflat <<
+>>add_rhs_linear :: + RATIO.tMean <<
+>>add_rhs_linear :: - tMeanflat <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - betaMeansharp <<
+>>add_rhs_linear :: + tMean <<
+>>add_rhs_linear :: - tMeansharp <<
+>>new_equation :: 0 <<
+>>add_rhs_linear :: - betaMeanflat <<
+>>add_rhs_linear :: + tMean <<
+>>add_rhs_linear :: - tMeanflat <<
+>>====================================<<
+>>EOF<<
+
