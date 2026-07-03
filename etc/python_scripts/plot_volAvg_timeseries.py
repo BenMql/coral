@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 from sys import argv
 
 plt.figure()
-time = np.fromfile('./Timeseries/time.dat', dtype=np.float_)
+time = np.fromfile('./Timeseries/time.dat', dtype=np.float64)
 for iarg in range(len(argv)-1):
-    avgQty = np.fromfile('./Timeseries/'+argv[iarg+1] +'_volAvg.dat', dtype=np.float_)
+    avgQty = np.fromfile('./Timeseries/'+argv[iarg+1] +'_volAvg.dat', dtype=np.float64)
     #plt.plot(time [:avgQty.shape[0]], avgQty, label=argv[iarg+1])
     plt.semilogy(time [:avgQty.shape[0]], avgQty, label=argv[iarg+1])
 

@@ -34,7 +34,7 @@ class plane_layer_volume:
          suffix = '_twoThirds.dat'
          myArr = np.fromfile(path_to_run+'Volumes/'+list_var_str[0]+'_time'
                              +str(time_int).zfill(8)+suffix,
-                  dtype=np.float_).reshape(
+                  dtype=np.float64).reshape(
                         self.NY, self.NX, self.NZ)
       except IOError:
          self.NX = 3*NX//2
@@ -43,14 +43,14 @@ class plane_layer_volume:
          suffix = '_full.dat'
          myArr = np.fromfile(path_to_run+'Volumes/'+list_var_str[0]+'_time'
                                 +str(time_int).zfill(8)+suffix,
-                     dtype=np.float_).reshape(
+                     dtype=np.float64).reshape(
                            self.NX, self.NY, self.NZ)
       del myArr
       for ivar in range(len(list_var_str)):
          self.dat.append(
               np.fromfile(path_to_run+'Volumes/'+list_var_str[ivar]+'_time'
                              +str(time_int).zfill(8)+suffix,
-                  dtype=np.float_).reshape(
+                  dtype=np.float64).reshape(
                         self.NX, self.NY, self.NZ))
          self.lut.append(list_var_str[ivar])
       self.xgrid = np.linspace(0,self.lx,self.NX, endpoint=False)
@@ -67,7 +67,7 @@ class plane_layer_volume:
        self.xgrid = np.linspace(0,self.lx,self.NX, endpoint=False)
        self.ygrid = np.linspace(0,self.ly,self.NY, endpoint=False)
        self.zgrid = self.center+0.5*np.cos((2.*np.arange(self.NZ)+1.)*np.pi/(2.*self.NZ))*self.lz
-       self.dat.append( np.zeros((self.NX, self.NY, self.NZ), dtype=np.float_) )
+       self.dat.append( np.zeros((self.NX, self.NY, self.NZ), dtype=np.float64) )
        for ix in range (self.NX):
         for iy in range(self.NY):
           phi = (self.xgrid[ix]+2*self.ygrid[iy]) * 2 * np.pi / 10. + 3.
@@ -192,7 +192,7 @@ class plane_layer_volume:
       cheb_I = chebyshev_elementary_integration(N=self.NZ, center = 0.5, gap=self.lz)
       field_spec = 2*dct(self.dat[pos_in_list], axis=2, type=2)
       #field_spec[:,:,0]/=2.
-      deriv_spec = np.zeros(field_spec.shape, dtype=np.float_)
+      deriv_spec = np.zeros(field_spec.shape, dtype=np.float64)
       solve = factorized(cheb_I.todense()[1:,:-1])
       for iy in range(self.NY):
          for ix in range(self.NX):
@@ -210,7 +210,7 @@ class plane_layer_volume:
       cheb_I = chebyshev_elementary_integration(N=self.NZ, center = 0.5, gap=self.lz)
       field_spec = 2*dct(self.profiles[pos_in_list], axis=0, type=2)
       #field_spec[:,:,0]/=2.
-      deriv_spec = np.zeros(field_spec.shape, dtype=np.float_)
+      deriv_spec = np.zeros(field_spec.shape, dtype=np.float64)
       solve = factorized(cheb_I.todense()[1:,:-1])
       deriv_spec[:-1] = 0.5*solve(field_spec[1:])
       deriv_spec[0]*=2.
@@ -226,7 +226,7 @@ class plane_layer_volume:
       cheb_I = chebyshev_elementary_integration(N=self.NZ, center = 0.5, gap=self.lz)
       field_spec = 2*dct(self.dat[pos_in_list], axis=2, type=2)
       field_spec[:,:,0]/=2.
-      integral_spec = np.zeros(field_spec.shape, dtype=np.float_)
+      integral_spec = np.zeros(field_spec.shape, dtype=np.float64)
       CEIdense = cheb_I.todense()
       CEIdense[0,:] = 0.
       for iy in range(self.NY):
@@ -254,7 +254,7 @@ class plane_layer_volume:
       CEI = chebyshev_elementary_integration(gap = gap, center = center, N = self.NZ)
       field_spec = 2*dct(self.profiles[pos_in_list], type=2)
       field_spec[0]/=2.
-      integral_spec = np.zeros(field_spec.shape, dtype=np.float_)
+      integral_spec = np.zeros(field_spec.shape, dtype=np.float64)
       CEIdense = CEI.todense()
       CEIdense[0,:] = 0.
       integral_spec = CEIdense.dot(field_spec)[0,:]
@@ -284,7 +284,7 @@ class plane_layer_volume:
       self.zdiff(pos_in_list=pos_u)
       self.zdiff(pos_in_list=pos_v)
       self.zdiff(pos_in_list=pos_w)
-      aux = np.zeros(self.dat[1].shape, dtype=np.float_)
+      aux = np.zeros(self.dat[1].shape, dtype=np.float64)
       for i in range(9):
          aux += self.dat[init_length+i]**2
       self.dat.append(np.copy(aux))
@@ -301,7 +301,7 @@ class plane_layer_volume:
 
    def _xdiff_FD(self, pos_in_list):
       # 1. compute values at mid-points along x
-      my_var = np.zeros( (self.NX+1, self.NY, self.NZ), dtype=np.float_)
+      my_var = np.zeros( (self.NX+1, self.NY, self.NZ), dtype=np.float64)
       #    mid-point 0 is between the first grid point and the last (because of periodicity)
       my_var [0,:,:] = self.dat[pos_in_list][0,:,:] + self.dat[pos_in_list][-1,:,:]
       #    other mid-points are obtained as averages between two consecutive grid positions 

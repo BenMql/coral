@@ -46,7 +46,7 @@ grid1 = {'x': y, 'y': x, 'z' : x}
 grid2 = {'x': z, 'y': z, 'z' : y}
 
 try:
-   a = np.fromfile('Slices/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_'+posStr+'_time'+timeStr.zfill(8)+'_full.dat', dtype=np.float_).reshape(reso1[posStr[0]], reso2[posStr[0]])
+   a = np.fromfile('Slices/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_'+posStr+'_time'+timeStr.zfill(8)+'_full.dat', dtype=np.float64).reshape(reso1[posStr[0]], reso2[posStr[0]])
 except FileNotFoundError:
    print ('/!\ The following file does not exist:')
    print ('/!\ ------ ./Slices/'
@@ -58,7 +58,7 @@ except FileNotFoundError:
    try:
       aVol = np.fromfile(
          'Volumes/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_time'+timeStr.zfill(8)+'_full.dat',
-         dtype=np.float_
+         dtype=np.float64
                      ).reshape(NXAA, NYAA, NZAA)
    except FileNotFoundError:
       print ('/!\ It does not exist either.')
@@ -70,7 +70,7 @@ except FileNotFoundError:
       NZ = NZAA//3*2
       aVol = np.fromfile(
          'Volumes/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_time'+timeStr.zfill(8)+'_twoThirds.dat',
-         dtype=np.float_
+         dtype=np.float64
                      ).reshape(NX, NY, NZ)
       reso1 = {'x': NY, 'y': NX, 'z' : NX}
       reso2 = {'x': NZ, 'y': NZ, 'z' : NY}

@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 # =========================================================================
 # Read timeseries
 #..........................................................................
-time = np.fromfile('Timeseries/time.dat',  dtype=np.float_)
-uu = np.fromfile('Timeseries/uu_volAvg.dat', dtype=np.float_)
-vv = np.fromfile('Timeseries/vv_volAvg.dat', dtype=np.float_)
-ww = np.fromfile('Timeseries/ww_volAvg.dat', dtype=np.float_)
+time = np.fromfile('Timeseries/time.dat',  dtype=np.float64)
+uu = np.fromfile('Timeseries/uu_volAvg.dat', dtype=np.float64)
+vv = np.fromfile('Timeseries/vv_volAvg.dat', dtype=np.float64)
+ww = np.fromfile('Timeseries/ww_volAvg.dat', dtype=np.float64)
 
 # =========================================================================
 # check that all data has same size 

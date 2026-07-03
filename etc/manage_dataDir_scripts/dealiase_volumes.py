@@ -16,13 +16,13 @@ def read_and_deAlias(path_to_vols, vol_name):
    NXAA = domain_decomp_infos[3]
    NYAA = domain_decomp_infos[4]
    NZAA = domain_decomp_infos[5]
-   readVec = np.fromfile(path_to_vols + vol_name, dtype=np.float_)
+   readVec = np.fromfile(path_to_vols + vol_name, dtype=np.float64)
    curPhys = readVec.reshape(NYAA, NXAA, NZAA)
    del readVec
    volPhys = np.copy(curPhys)
    curPhys =  dct (curPhys, axis=2, type=2)
    curPhys[:,:,0]*=0.5
-   curSpec = np.zeros(curPhys.shape, dtype=np.complex_)
+   curSpec = np.zeros(curPhys.shape, dtype=np.complex128)
    curSpec.real = curPhys
    curSpec =  fft2(curSpec, axes=(0,1))
    aux1 = np.copy  (curSpec[:,:,:NZ])

@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 # =========================================================================
 # Read timeseries
 #..........................................................................
-time = np.fromfile('Timeseries/time.dat',  dtype=np.float_)
-Ttop = np.fromfile('Timeseries/tFull_XYavg_z00001.dat', dtype=np.float_)[:-2]
-Tbot = np.fromfile('Timeseries/tFull_XYavg_z00072.dat', dtype=np.float_)[:-2]
+time = np.fromfile('Timeseries/time.dat',  dtype=np.float64)
+Ttop = np.fromfile('Timeseries/tFull_XYavg_z00001.dat', dtype=np.float64)[:-2]
+Tbot = np.fromfile('Timeseries/tFull_XYavg_z00072.dat', dtype=np.float64)[:-2]
 
 quarterLength = time.shape[0]//4
 

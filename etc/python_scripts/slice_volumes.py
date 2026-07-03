@@ -19,7 +19,7 @@ z = 0.5+ 0.5*np.cos ((
 x = np.linspace(0,30, NXAA)
 y = np.linspace(0,60, NYAA)
 
-a = np.fromfile('Volumes/linear_var'+str(var).zfill(2)+'_time'+str(time).zfill(6)+'.bin', dtype=np.float_).reshape(NXAA, NYAA, NZAA)
+a = np.fromfile('Volumes/linear_var'+str(var).zfill(2)+'_time'+str(time).zfill(6)+'.bin', dtype=np.float64).reshape(NXAA, NYAA, NZAA)
 
 
 plt.figure()

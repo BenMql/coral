@@ -24,9 +24,9 @@ grid_y = np.linspace(0,Ly, num=NY, endpoint=False)
 grid_z = center + gap/2.*np.cos( (2.*np.arange(NZ) + 1.)  *np.pi / 2./NZ)
 X,Y,Z = np.meshgrid(grid_y, grid_x, grid_z)
 # define zero:
-zeroField = np.zeros((NX,NY,NZ), dtype=np.float_)
+zeroField = np.zeros((NX,NY,NZ), dtype=np.float64)
 
-np.array([dtMax, 0.], dtype=np.float_).tofile('./Restart/dt.sav')
+np.array([dtMax, 0.], dtype=np.float64).tofile('./Restart/dt.sav')
 
 ####################################################
 #                                                  #
@@ -60,7 +60,7 @@ temperature_fluctuations.tofile('./Restart/QuickSave.kxky.sys001.var005.rolling1
 #                                                  #
 ####################################################
 # define zero:
-zeroMean = np.zeros((NZ), dtype=np.float_)
+zeroMean = np.zeros((NZ), dtype=np.float64)
 
 ######## Define a new variable
 temperature_mean = grid_z - 0.5 - 4.* (grid_z-0.5)**3
