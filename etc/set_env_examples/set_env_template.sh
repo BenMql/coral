@@ -45,8 +45,8 @@ export MPIFLAGS=-std=gnu\ -fmax-errors=6\ -fcheck=all\ -pedantic\ -g
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Flag for indicating where to put the .mod files.
 # Pick the right one for your compiler.
-export MOD_DIR_FLAG=-J      # gnu   compiler
-#export MOD_DIR_FLAG=-module # intel compiler
+export MOD_DIR_FLAG=-J\       # gnu   compiler
+#export MOD_DIR_FLAG=-module\  # intel compiler
 #===========================================================================
 
 
