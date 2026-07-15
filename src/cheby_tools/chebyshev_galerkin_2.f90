@@ -229,6 +229,7 @@ contains
          aux_dat(fill_in_index) = 1._dp
          aux_row(fill_in_index) = 1
          aux_col(fill_in_index) = 1
+         fill_in_index=fill_in_index+1
          ! j=2
          aux_dat(fill_in_index) = 1._dp
          aux_row(fill_in_index) = 2
@@ -238,6 +239,7 @@ contains
             aux_col(fill_in_index) = j
             aux_row(fill_in_index) = j+2
             aux_dat(fill_in_index) = 1._dp
+            fill_in_index=fill_in_index+1
             ! the alpha's
             aux_col(fill_in_index) = j
             aux_row(fill_in_index) = j
@@ -245,6 +247,7 @@ contains
             aux_dat(fill_in_index) = naux**2*(naux**2+1._dp)/& ! numerator
                                ( (naux**2-3._dp*naux+2._dp) *&
                                  (naux**2-5._dp*naux+6._dp) )
+            fill_in_index=fill_in_index+1
          end do
    !..........................................................
    ! bc_type = 40: Both no-slip (f=0 and Df=0)
