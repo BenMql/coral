@@ -216,6 +216,37 @@ contains
                fill_in_index = fill_in_index + 1 
             End do
    !..........................................................
+   ! bc_type = 24:  both diffusion-free DD = 0      
+   !..........................................................
+      Case(24)
+         S%ncol  = N-2
+         S%nelems = 2*(N-2) -2
+         Allocate(aux_dat(S%nelems))
+         Allocate(aux_row(S%nelems))
+         Allocate(aux_col(S%nelems))
+         fill_in_index=1
+         ! j=1
+         aux_dat(fill_in_index) = 1._dp
+         aux_row(fill_in_index) = 1
+         aux_col(fill_in_index) = 1
+         ! j=2
+         aux_dat(fill_in_index) = 1._dp
+         aux_row(fill_in_index) = 2
+         aux_col(fill_in_index) = 2
+         fill_in_index=fill_in_index+1
+         do j = 3,N-2 
+            aux_col(fill_in_index) = j
+            aux_row(fill_in_index) = j+2
+            aux_dat(fill_in_index) = 1._dp
+            ! the alpha's
+            aux_col(fill_in_index) = j
+            aux_row(fill_in_index) = j
+            naux = real(j+1, kind=dp)
+            aux_dat(fill_in_index) = naux**2*(naux**2+1._dp)/& ! numerator
+                               ( (naux**2-3._dp*naux+2._dp) *&
+                                 (naux**2-5._dp*naux+6._dp) )
+         end do
+   !..........................................................
    ! bc_type = 40: Both no-slip (f=0 and Df=0)
    !..........................................................
       Case(40)
