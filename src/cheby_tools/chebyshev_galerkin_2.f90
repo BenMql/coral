@@ -244,7 +244,7 @@ contains
             aux_col(fill_in_index) = j
             aux_row(fill_in_index) = j
             naux = real(j+1, kind=dp)
-            aux_dat(fill_in_index) = naux**2*(naux**2+1._dp)/& ! numerator
+            aux_dat(fill_in_index) =-naux**2*(naux**2+1._dp)/& ! numerator
                                ( (naux**2-3._dp*naux+2._dp) *&
                                  (naux**2-5._dp*naux+6._dp) )
             fill_in_index=fill_in_index+1
