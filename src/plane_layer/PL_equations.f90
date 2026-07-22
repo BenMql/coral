@@ -230,9 +230,10 @@ module PL_equations
    call move_alloc( from=mySource%term, to=myTarget%term)
  end subroutine
 
- subroutine add_timeseries( self, text_list)
+ subroutine add_timeseries( self, text_list, NZMAX)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: text_list(:)
+   integer, intent(in) :: NZMAX ! horizontal averages can't exceed this index
    character(len=1024) :: restOfmyLine
    integer :: iLine, iVar
    integer :: numOfLines
@@ -268,6 +269,13 @@ module PL_equations
              case ('>>Horizontal_avg ::')
                   call get_timeseriesVarName_period_position( restOfMyLine, varNameStr, positionInt)
                   kindStr = 'zSlice'
+                  ! check that the index is on the grid. If not, ignore the entry, cycle
+                  if (positionInt > NZMAX) then
+                          print *, 'In coral.timeseries, the user requested '//&
+                                   'a horizontal average for variable: '// varNameStr//&
+                                   ' at a position greater than NZAA. This will be ignored.'
+                           cycle
+                  end if
              case default
                   print *, 'Error in coral.timeseries'
                   print *, 'First nineteen characters of each line should be:'

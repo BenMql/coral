@@ -81,15 +81,16 @@ Program plane_layer_main
    call read_equations_text_file()
    main%recipe%smagorinsky_flag = is_string_in_the_list('--withHorizontalSmagorinsky',  27)
    call main%recipe%build (arr_of_lines_eqn)
+   call main%geometry%init() 
    call read_usrOutput_text_file()
    call main%recipe%add_outputs (arr_of_lines_out)
    call read_timeseries_text_file()
-   call main%recipe%add_timeseries (arr_of_lines_tms)
+   call main%recipe%add_timeseries (arr_of_lines_tms, main%geometry%NZAA)
    deAllocate( arr_of_lines_out, arr_of_lines_eqn, arr_of_lines_tms)
 
    if (verbose) call main%recipe%summarize()
 
-   call main%geometry%init()
+   call main%geometry%export_to_disk()
    call timings%init(misc_cargo%dt_max,&
                      misc_cargo%tolerance_factor,&
                      misc_cargo%CFL_C) 

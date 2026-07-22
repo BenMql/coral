@@ -232,7 +232,6 @@ module PL_geometry
    print*, '================================================================='
    end if
 
-   call self%export_to_disk()
 
  end subroutine Initialize_geometry
 
