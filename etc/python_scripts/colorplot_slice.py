@@ -48,12 +48,12 @@ grid2 = {'x': z, 'y': z, 'z' : y}
 try:
    a = np.fromfile('Slices/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_'+posStr+'_time'+timeStr.zfill(8)+'_full.dat', dtype=np.float64).reshape(reso1[posStr[0]], reso2[posStr[0]])
 except FileNotFoundError:
-   print ('/!\ The following file does not exist:')
-   print ('/!\ ------ ./Slices/'
+   print ('/!\\ The following file does not exist:')
+   print ('/!\\ ------ ./Slices/'
         +varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_'+posStr+'_time'+timeStr.zfill(8)
         +'_full.dat')
-   print ('/!\ Now looking for:')
-   print ('/!\ ------ '
+   print ('/!\\ Now looking for:')
+   print ('/!\\ ------ '
         +'Volumes/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_time'+timeStr.zfill(8)+'_full.dat')
    try:
       aVol = np.fromfile(
@@ -61,9 +61,9 @@ except FileNotFoundError:
          dtype=np.float64
                      ).reshape(NXAA, NYAA, NZAA)
    except FileNotFoundError:
-      print ('/!\ It does not exist either.')
-      print ('/!\ Now looking for:')
-      print ('/!\ ------ '
+      print ('/!\\ It does not exist either.')
+      print ('/!\\ Now looking for:')
+      print ('/!\\ ------ '
        +'Volumes/'+varDict[kindOfVar]+'_var'+varNum.zfill(2)+'_time'+timeStr.zfill(8)+'_twoThirds.dat')
       NX = NXAA//3*2
       NY = NYAA//3*2
