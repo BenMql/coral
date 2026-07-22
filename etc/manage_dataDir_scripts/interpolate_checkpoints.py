@@ -22,13 +22,13 @@ def read_and_resize_zeroModes(path_to_vols, vol_name, ntup, toDir='./'):
    ierror = 0
    domain_decomp_infos = np.fromfile(path_to_vols+
                         '../Geometry/domDecmp.core0000', dtype=np.int32)
-   readVec = np.fromfile(path_to_vols + vol_name, dtype=np.float_)
+   readVec = np.fromfile(path_to_vols + vol_name, dtype=np.float64)
    Nold= readVec.shape[0]
    Nnew = ntup[2]
    
    coscoefs = dct(readVec)
    if (Nnew>Nold):
-      newcoefs = np.zeros((Nnew), dtype=np.float_)
+      newcoefs = np.zeros((Nnew), dtype=np.float64)
       newcoefs[:Nold] = coscoefs
    else:
       newcoefs = coscoefs[:Nnew]
@@ -57,10 +57,10 @@ def read_and_resize(path_to_vols, vol_name, ntup, toDir='./'):
    NZAA = domain_decomp_infos[5]
    print ('----------- :: Resizing (' + str(NXAA)+','+str(NYAA)+','+str(NZAA)+') into'+
                         ' (' + str(NX  )+','+str(NY  )+','+str(NZ  )+').')
-   curPhys = np.fromfile(path_to_vols + vol_name, dtype=np.float_).reshape(NXAA, NYAA, NZAA)
+   curPhys = np.fromfile(path_to_vols + vol_name, dtype=np.float64).reshape(NXAA, NYAA, NZAA)
    coscoefs = dct(curPhys, axis=-1)
    if (NZ>NZAA):
-      newcoefs = np.zeros((NXAA,NYAA,NZ), dtype=np.float_)
+      newcoefs = np.zeros((NXAA,NYAA,NZ), dtype=np.float64)
       newcoefs[:,:,:NZAA] = coscoefs
    else:
       newcoefs = coscoefs[:,:,:NZ]
@@ -68,36 +68,36 @@ def read_and_resize(path_to_vols, vol_name, ntup, toDir='./'):
    aux2 = idct(newcoefs,axis=-1)*NZ/NZAA
 
    ## now we need to interpolate in the xy-plane...
-   aux1 = np.zeros((NXAA, ntup[1],ntup[2]), dtype=np.float_)
+   aux1 = np.zeros((NXAA, ntup[1],ntup[2]), dtype=np.float64)
    if (NYAA==ntup[1]):
      aux1=np.copy(aux2)
    elif (NYAA<ntup[1]):
      spectral_buffer = rfft(aux2, axis=1)
-     padded_spectral_buffer = np.zeros((NXAA, ntup[1]//2+1, ntup[2]), dtype=np.complex_)
+     padded_spectral_buffer = np.zeros((NXAA, ntup[1]//2+1, ntup[2]), dtype=np.complex128)
      padded_spectral_buffer[:,:(NYAA//2+1),:] = spectral_buffer
      aux1 = irfft(padded_spectral_buffer, axis=1)/NYAA*ntup[1]
      del padded_spectral_buffer, spectral_buffer
    else:
      spectral_buffer = rfft(aux2, axis=1)
-     truncated_spectral_buffer = np.zeros((NXAA, ntup[1]//2+1, ntup[2]), dtype=np.complex_)
+     truncated_spectral_buffer = np.zeros((NXAA, ntup[1]//2+1, ntup[2]), dtype=np.complex128)
      truncated_spectral_buffer[:,:(ntup[1]//3),:] = spectral_buffer[:,:(ntup[1]//3),:]
      truncated_spectral_buffer.imag[:,-1,:]=0.
      truncated_spectral_buffer.imag[:, 0,:]=0.
      aux1 = irfft(truncated_spectral_buffer, axis=1)/NYAA*ntup[1]
      del truncated_spectral_buffer, spectral_buffer
    del aux2
-   deaPhys = np.zeros((ntup[0], ntup[1],ntup[2]), dtype=np.float_)
+   deaPhys = np.zeros((ntup[0], ntup[1],ntup[2]), dtype=np.float64)
    if (NXAA==ntup[0]):
      deaPhys=np.copy(aux1)
    elif (NXAA<ntup[0]):
      spectral_buffer = rfft(aux1, axis=0)
-     padded_spectral_buffer = np.zeros((ntup[0]//2+1, ntup[1], ntup[2]), dtype=np.complex_)
+     padded_spectral_buffer = np.zeros((ntup[0]//2+1, ntup[1], ntup[2]), dtype=np.complex128)
      padded_spectral_buffer[:(NXAA//2+1),:,:] = spectral_buffer
      deaPhys = irfft(padded_spectral_buffer, axis=0)/NXAA*ntup[0]
      del padded_spectral_buffer, spectral_buffer
    else:
      spectral_buffer = rfft(aux1, axis=0)
-     truncated_spectral_buffer = np.zeros((ntup[0]//2+1, ntup[1], ntup[2]), dtype=np.complex_)
+     truncated_spectral_buffer = np.zeros((ntup[0]//2+1, ntup[1], ntup[2]), dtype=np.complex128)
      truncated_spectral_buffer[:(ntup[0]//3),:,:] = spectral_buffer[:(ntup[0]//3),:,:]
      truncated_spectral_buffer.imag[-1,:,:]=0.
      truncated_spectral_buffer.imag[ 0,:,:]=0.
@@ -133,7 +133,7 @@ old_dir = argv[1]
 new_dir = argv[2]
 
 # first, copy the dt.sav file
-np.fromfile(old_dir+'/CheckPoints/dt.sav', dtype=np.float_, count=2).tofile(new_dir+'/Restart/dt.sav')
+np.fromfile(old_dir+'/CheckPoints/dt.sav', dtype=np.float64, count=2).tofile(new_dir+'/Restart/dt.sav')
 # then resize the checkpoint files
 resize_checkpoints(fromDir = old_dir, toDir = new_dir, 
                    newResolution=(int(argv[3]), int(argv[4]), int(argv[5])))
