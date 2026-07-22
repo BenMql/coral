@@ -83,7 +83,8 @@ Program plane_layer_main
    call main%recipe%build (arr_of_lines_eqn)
    call main%geometry%init() 
    call read_usrOutput_text_file()
-   call main%recipe%add_outputs (arr_of_lines_out)
+   call main%recipe%add_outputs (arr_of_lines_out, &
+                                 main%geometry%NXAA, main%geometry%NYAA, main%geometry%NZAA)
    call read_timeseries_text_file()
    call main%recipe%add_timeseries (arr_of_lines_tms, main%geometry%NZAA)
    deAllocate( arr_of_lines_out, arr_of_lines_eqn, arr_of_lines_tms)

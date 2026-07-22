@@ -321,9 +321,10 @@ module PL_equations
  end subroutine
  
 
- subroutine add_outputs( self, text_list)
+ subroutine add_outputs( self, text_list, NXmax, NYmax, NZmax)
    class(full_problem_recipe_T) :: self
    character(len=:), allocatable, intent(in) :: text_list(:)
+   integer, intent(in) :: NXmax, NYmax, NZmax
    character(len=1024) :: restOfmyLine
    integer :: iLine
    integer :: numOfLines
@@ -361,12 +362,30 @@ module PL_equations
              case ('>>XSlice ::')
                   call get_outputVarName_period_position( restOfMyLine, varNameStr, periodint, positionInt)
                   kindStr = 'xSlice'
+                  if (positionInt > NXmax) then
+                          print *, 'In coral.usrOutput, the user requested '//&
+                                   'a vertical slice for variable: '// varNameStr//&
+                                   ' at index X>NXAA. This will be ignored.'
+                           cycle
+                  end if
              case ('>>YSlice ::')
                   call get_outputVarName_period_position( restOfMyLine, varNameStr, periodint, positionInt)
                   kindStr = 'ySlice'
+                  if (positionInt > NYmax) then
+                          print *, 'In coral.usrOutput, the user requested '//&
+                                   'a vertical slice for variable: '// varNameStr//&
+                                   ' at index Y>NYAA. This will be ignored.'
+                           cycle
+                  end if
              case ('>>ZSlice ::')
                   call get_outputVarName_period_position( restOfMyLine, varNameStr, periodint, positionInt)
                   kindStr = 'zSlice'
+                  if (positionInt > NZmax) then
+                          print *, 'In coral.usrOutput, the user requested '//&
+                                   'a horizontal slice for variable: '// varNameStr//&
+                                   ' at index Z>NZAA. This will be ignored.'
+                           cycle
+                  end if
              case ('>>Zsummed::')
                   call get_outputVarName_period( restOfMyLine, varNameStr, periodint)
                   kindStr = 'zAvged'
